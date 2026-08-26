@@ -1,0 +1,3 @@
+# Eine Instagram-Post-URL pro Zeile. Zeilen mit # werden ignoriert.
+# Beispiel:
+# https://www.instagram.com/p/ABC123xyz/

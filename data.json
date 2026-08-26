@@ -1,0 +1,55 @@
+{
+  "erstellt": "2026-08-26T12:00:00+02:00",
+  "faktencheck_aktiv": false,
+  "hinweise": "Die Faktenchecks sind eigene redaktionelle Einschätzungen und keine offiziellen Bewertungen. Bewertungsskala: korrekt · teils korrekt · irreführend · falsch · Meinung (nicht prüfbar) · ungeprüft.",
+  "accounts": [
+    {
+      "handle": "fdp",
+      "label": "FDP",
+      "ebene": "Bund",
+      "url": "https://www.instagram.com/fdp"
+    },
+    {
+      "handle": "kubickiwo",
+      "label": "Wolfgang Kubicki · Bundesvorsitzender",
+      "ebene": "Bund",
+      "url": "https://www.instagram.com/kubickiwo"
+    },
+    {
+      "handle": "_martinhagen",
+      "label": "Martin Hagen · Generalsekretär",
+      "ebene": "Bund",
+      "url": "https://www.instagram.com/_martinhagen"
+    },
+    {
+      "handle": "fdpnrw",
+      "label": "FDP NRW",
+      "ebene": "NRW",
+      "url": "https://www.instagram.com/fdpnrw"
+    },
+    {
+      "handle": "hhoene",
+      "label": "Henning Höne · Landesvorsitzender NRW",
+      "ebene": "NRW",
+      "url": "https://www.instagram.com/hhoene"
+    }
+  ],
+  "wahltrend": {
+    "bundestag": {
+      "wert": null,
+      "delta": null,
+      "stand": null
+    },
+    "nrw": {
+      "wert": null,
+      "delta": null,
+      "stand": null
+    }
+  },
+  "umfragen": {
+    "stand": null,
+    "bundestag": [],
+    "nrw": []
+  },
+  "posts": []
+}
