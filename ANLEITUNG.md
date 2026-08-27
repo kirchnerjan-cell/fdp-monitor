@@ -40,7 +40,8 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 - `wahltermin`: Datum der nächsten Wahl (YYYY-MM-DD) – bestimmt die Sortierung auf der Seite. Bei der Bundestagswahl `null` lassen, sie steht immer zuerst.
 - `umfrage_max_alter_tage`: Einzelumfragen, deren `datum` älter ist, werden weder von `update.py` gespeichert noch auf der Seite angezeigt (Umfragen ohne Datum ebenfalls). `null`/Feld weglassen = kein Limit. Aktuell: Bund 60 Tage, alle Länder 180 Tage.
 - `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen (der Altersfilter gilt nur für Einzelumfragen, nicht für `wahlergebnis`).
-- Neue Ebene hinzufügen: Objekt mit diesen Feldern anhängen; `update.py` befüllt `umfragen` beim nächsten Lauf automatisch.
+- **Neue Ebene hinzufügen:** einen bestehenden Landtag-Block kopieren und `id`, `name`, `kurz`, `parlament_regex`, `dawum_slug`, `wahltermin` anpassen (`wahlergebnis`/`wahltrend`/`umfragen` auf die leeren Startwerte wie oben zurücksetzen). Danach greifen Routine und `update.py` automatisch mit – keine Codeänderung nötig.
+- **Ebene entfernen:** den ganzen Block aus `data.json["ebenen"]` löschen. Auch dafür ist keine Codeänderung nötig, da weder `update.py` noch die Seite eine feste Liste von Ebenen-IDs kennen (einzige Ausnahme: `"bund"` steht in `sortEbenen()` immer an erster Stelle).
 
 **Wichtig zu den aktuell hinterlegten Wahlterminen (Sachsen-Anhalt, Mecklenburg-Vorpommern, Berlin, NRW):** Diese wurden ohne Zugriff auf die dawum-API/offizielle Quellen eingetragen und sollten vor Veröffentlichung gegen die Landeswahlleiter-Webseiten geprüft werden.
 
