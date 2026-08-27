@@ -7,6 +7,32 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import update
 
 
+class TestFetchOembed:
+    def test_omits_access_token_by_default(self, monkeypatch):
+        monkeypatch.setattr(update, "ACCESS_TOKEN", None)
+        captured = {}
+
+        def fake_get(url, timeout=20):
+            captured["url"] = url
+            return b"{}"
+
+        monkeypatch.setattr(update, "get", fake_get)
+        update.fetch_oembed("https://www.instagram.com/p/ABC123/")
+        assert "access_token" not in captured["url"]
+
+    def test_appends_access_token_when_set(self, monkeypatch):
+        monkeypatch.setattr(update, "ACCESS_TOKEN", "12345|clienttoken")
+        captured = {}
+
+        def fake_get(url, timeout=20):
+            captured["url"] = url
+            return b"{}"
+
+        monkeypatch.setattr(update, "get", fake_get)
+        update.fetch_oembed("https://www.instagram.com/p/ABC123/")
+        assert "access_token=12345%7Cclienttoken" in captured["url"]
+
+
 class TestLoadSaveData:
     def test_round_trip(self, tmp_path, monkeypatch):
         data_file = tmp_path / "data.json"
@@ -114,6 +140,31 @@ class TestAddPosts:
         d = {"posts": [], "accounts": []}
         update.add_posts(d)
         assert d["posts"][0]["thumbnail"] is None
+
+    def test_warns_when_oembed_response_has_no_metadata(self, tmp_path, monkeypatch, capsys):
+        # Reproduces the real-world case: Meta's oEmbed endpoint returns only a
+        # generic placeholder embed (just "html") without an access token.
+        url = "https://www.instagram.com/p/NOMETA1/"
+        monkeypatch.setattr(update, "INBOX", str(self._inbox(tmp_path, url)))
+        monkeypatch.setattr(update, "fetch_oembed", lambda u: {"html": "<blockquote>...</blockquote>"})
+        d = {"posts": [], "accounts": []}
+        update.add_posts(d)
+        out = capsys.readouterr().out
+        assert "ohne Account-Name/Vorschaubild" in out
+        assert d["posts"][0]["handle"] == ""
+        assert d["posts"][0]["thumbnail"] is None
+
+    def test_no_warning_when_oembed_response_has_metadata(self, tmp_path, monkeypatch, capsys):
+        url = "https://www.instagram.com/p/HASMETA1/"
+        monkeypatch.setattr(update, "INBOX", str(self._inbox(tmp_path, url)))
+        monkeypatch.setattr(update, "THUMBS", str(tmp_path / "thumbs"))
+        monkeypatch.setattr(update, "fetch_oembed", lambda u: {
+            "author_name": "fdp", "thumbnail_url": "https://example.com/t.jpg", "html": "<blockquote>...</blockquote>",
+        })
+        monkeypatch.setattr(update, "get", lambda u, timeout=20: b"fake-image-bytes")
+        d = {"posts": [], "accounts": []}
+        update.add_posts(d)
+        assert "ohne Account-Name/Vorschaubild" not in capsys.readouterr().out
 
 
 class TestUpdatePolls:

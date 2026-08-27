@@ -4,9 +4,11 @@ FDP-Monitor – Aktualisierungsskript (nur Python-Standardbibliothek).
 
 Aufruf:  python3 update.py
 Ergebnis:
-  1. Neue URLs aus posts.txt werden per Instagram-oEmbed (tokenlos, nur öffentliche Posts)
-     abgefragt, Vorschaubild nach thumbs/ geladen und in data.json eingetragen
-     (Faktencheck-Status "ungeprüft", Text leer).
+  1. Neue URLs aus posts.txt werden per Instagram-oEmbed abgefragt, Vorschaubild nach
+     thumbs/ geladen und in data.json eingetragen (Faktencheck-Status "ungeprüft", Text
+     leer). Für Account-Name/Vorschaubild verlangt Meta inzwischen meist einen Access
+     Token (IG_OEMBED_TOKEN env var oder --access-token, siehe ANLEITUNG.md); ohne Token
+     kommt nur ein Platzhalter-Embed zurück und das Skript warnt in der Konsole.
   2. Die neuesten FDP-Umfragen (Bund, NRW) werden von api.dawum.de gespeichert –
      als Fallback, falls der Browser die API nicht direkt erreichen kann.
   3. Optional: dawum-Wahltrend setzen (gewichteter Durchschnitt, steht nicht in der API):
@@ -28,6 +30,10 @@ OEMBED = "https://graph.facebook.com/v25.0/instagram_oembed"   # Version ggf. an
 DAWUM = "https://api.dawum.de/newest_surveys.json"
 UA = "Mozilla/5.0 (fdp-monitor; github-pages)"
 TZ = timezone(timedelta(hours=2))  # Europa/Berlin (Sommerzeit); nur für "erstellt"
+# Meta liefert Account-Name/Vorschaubild über oEmbed inzwischen nur noch mit Access Token
+# (Format "<app-id>|<client-token>", siehe ANLEITUNG.md). Ohne Token kommt nur der
+# generische Platzhalter-Embed zurück – siehe Warnung in add_posts().
+ACCESS_TOKEN = os.environ.get("IG_OEMBED_TOKEN")
 
 def get(url, timeout=20):
     req = urllib.request.Request(url, headers={"User-Agent": UA})
@@ -71,7 +77,10 @@ def read_inbox():
     return out
 
 def fetch_oembed(url):
-    q = urllib.parse.urlencode({"url": url, "omitscript": "true", "maxwidth": 540})
+    params = {"url": url, "omitscript": "true", "maxwidth": 540}
+    if ACCESS_TOKEN:
+        params["access_token"] = ACCESS_TOKEN
+    q = urllib.parse.urlencode(params)
     return json.loads(get(f"{OEMBED}?{q}"))
 
 def save_thumb(pid, thumb_url):
@@ -103,6 +112,10 @@ def add_posts(d):
         except Exception as e:
             print(f"  ! Fehler: {e} – übersprungen")
             continue
+        if not o.get("author_name") and not o.get("thumbnail_url"):
+            print("  ! oEmbed-Antwort ohne Account-Name/Vorschaubild (nur Platzhalter-Embed) – "
+                  "Meta verlangt dafür meist einen Access Token (IG_OEMBED_TOKEN/--access-token, siehe ANLEITUNG.md); "
+                  "Post wird trotzdem mit Platzhalterdaten aufgenommen")
         author = (o.get("author_name") or "").lower()
         pid = post_id(url)
         entry = {
@@ -166,7 +179,11 @@ def main():
     ap.add_argument("--trend-nrw", type=float, help="dawum-Wahltrend Landtag NRW in %%")
     ap.add_argument("--stand", help="Stand des Wahltrends (YYYY-MM-DD), Standard heute")
     ap.add_argument("--nur-trend", action="store_true", help="nur Wahltrend setzen, keine Posts/Umfragen abrufen")
+    ap.add_argument("--access-token", help="Instagram-oEmbed Access Token (<app-id>|<client-token>); überschreibt IG_OEMBED_TOKEN")
     a = ap.parse_args()
+    if a.access_token:
+        global ACCESS_TOKEN
+        ACCESS_TOKEN = a.access_token
     d = load_data()
     stand = a.stand or datetime.now(TZ).date().isoformat()
     if a.trend_bund is not None: set_trend(d, "bundestag", a.trend_bund, stand)
