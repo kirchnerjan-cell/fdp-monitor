@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, dfmt, esc, extractFdp, sortEbenen } from "../monitor-utils.js";
+import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -139,6 +139,44 @@ describe("sortEbenen", () => {
     const input = [nrw, bund, sachsenAnhalt];
     const copy = [...input];
     sortEbenen(input);
+    expect(input).toEqual(copy);
+  });
+});
+
+describe("filterByAge", () => {
+  const NOW = new Date("2026-08-27T12:00:00Z");
+  const rows = (...dates) => dates.map((datum) => ({ institut: "Institut", datum, fdp: 5.0 }));
+
+  it("returns all rows unfiltered when maxAgeDays is null", () => {
+    const input = rows("2020-01-01", "2026-08-20");
+    expect(filterByAge(input, null, NOW)).toEqual(input);
+  });
+
+  it("drops rows older than maxAgeDays", () => {
+    const out = filterByAge(rows("2026-08-20", "2025-01-01"), 60, NOW);
+    expect(out.map((r) => r.datum)).toEqual(["2026-08-20"]);
+  });
+
+  it("keeps a row exactly at the cutoff", () => {
+    const out = filterByAge(rows("2026-06-28"), 60, NOW); // exactly 60 days before NOW
+    expect(out).toHaveLength(1);
+  });
+
+  it("drops rows with a missing or unparseable date", () => {
+    const out = filterByAge([{ institut: "x", datum: null, fdp: 1 }, { institut: "y", datum: "not-a-date", fdp: 1 }, ...rows("2026-08-20")], 60, NOW);
+    expect(out.map((r) => r.datum)).toEqual(["2026-08-20"]);
+  });
+
+  it("60 vs 180 day windows behave differently for the same row", () => {
+    const input = rows("2026-04-01"); // ~148 days before NOW
+    expect(filterByAge(input, 60, NOW)).toEqual([]);
+    expect(filterByAge(input, 180, NOW)).toHaveLength(1);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = rows("2020-01-01", "2026-08-20");
+    const copy = [...input];
+    filterByAge(input, 60, NOW);
     expect(input).toEqual(copy);
   });
 });

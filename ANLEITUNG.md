@@ -26,7 +26,8 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
   "css": "land",
   "parlament_regex": "sachsen.anhalt",
   "dawum_slug": "Sachsen-Anhalt",
-  "wahltermin": "2026-06-07",
+  "wahltermin": "2026-09-06",
+  "umfrage_max_alter_tage": 180,
   "wahlergebnis": null,
   "wahltrend": { "wert": null, "delta": null, "stand": null },
   "umfragen": { "stand": null, "rows": [] }
@@ -37,8 +38,10 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 - `parlament_regex`: matcht gegen `"<Shortcut> <Name>"` aus der dawum-API (Groß-/Kleinschreibung egal).
 - `dawum_slug`: Pfadsegment für den Live-Link auf dawum.de (z. B. `https://dawum.de/Sachsen-Anhalt/`).
 - `wahltermin`: Datum der nächsten Wahl (YYYY-MM-DD) – bestimmt die Sortierung auf der Seite. Bei der Bundestagswahl `null` lassen, sie steht immer zuerst.
-- `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen.
-- Neue Ebene hinzufügen: Objekt mit diesen Feldern anhängen; `update.py` befüllt `umfragen` beim nächsten Lauf automatisch.
+- `umfrage_max_alter_tage`: Einzelumfragen, deren `datum` älter ist, werden weder von `update.py` gespeichert noch auf der Seite angezeigt (Umfragen ohne Datum ebenfalls). `null`/Feld weglassen = kein Limit. Aktuell: Bund 60 Tage, alle Länder 180 Tage.
+- `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen (der Altersfilter gilt nur für Einzelumfragen, nicht für `wahlergebnis`).
+- **Neue Ebene hinzufügen:** einen bestehenden Landtag-Block kopieren und `id`, `name`, `kurz`, `parlament_regex`, `dawum_slug`, `wahltermin` anpassen (`wahlergebnis`/`wahltrend`/`umfragen` auf die leeren Startwerte wie oben zurücksetzen). Danach greifen Routine und `update.py` automatisch mit – keine Codeänderung nötig.
+- **Ebene entfernen:** den ganzen Block aus `data.json["ebenen"]` löschen. Auch dafür ist keine Codeänderung nötig, da weder `update.py` noch die Seite eine feste Liste von Ebenen-IDs kennen (einzige Ausnahme: `"bund"` steht in `sortEbenen()` immer an erster Stelle).
 
 **Wichtig zu den aktuell hinterlegten Wahlterminen (Sachsen-Anhalt, Mecklenburg-Vorpommern, Berlin, NRW):** Diese wurden ohne Zugriff auf die dawum-API/offizielle Quellen eingetragen und sollten vor Veröffentlichung gegen die Landeswahlleiter-Webseiten geprüft werden.
 
@@ -110,3 +113,4 @@ Sobald eine Wahl stattgefunden hat: in `data.json` bei der betroffenen Ebene `wa
 
 - Der dawum-Wahltrend steht nicht in der API, sondern nur auf der dawum-Website. Er wird deshalb von der Routine (oder von dir per `--trend <id> <wert>`) in `data.json` geschrieben; die Seite zeigt zusätzlich den einfachen Ø der neuesten Umfrage je Institut, damit ein Live-Wert auch ohne Routine sichtbar ist.
 - Amtliche Wahlergebnisse liefert dawum nicht automatisch – `wahlergebnis` muss redaktionell eingetragen werden (siehe oben).
+- Der Altersfilter (`umfrage_max_alter_tage`) wirkt sowohl beim Live-Abruf im Browser (`monitor-utils.js`) als auch beim Fallback-Speichern in `update.py` – bereits in `data.json` gespeicherte ältere Umfragen bleiben als Rohdaten stehen, werden aber erst beim nächsten `update.py`-Lauf herausgefiltert bzw. sofort beim Anzeigen ausgeblendet.

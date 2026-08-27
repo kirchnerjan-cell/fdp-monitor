@@ -31,6 +31,20 @@
     return out;
   }
 
+  function filterByAge(rows, maxAgeDays, now) {
+    if (maxAgeDays == null) return rows;
+    now = now || new Date();
+    // Vergleich auf Tagesebene (UTC-Mitternacht), damit "genau N Tage alt" wie in
+    // update.py's filter_by_age() (das mit date-Objekten ohne Uhrzeit rechnet) zählt.
+    const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    cutoff.setUTCDate(cutoff.getUTCDate() - maxAgeDays);
+    return rows.filter((r) => {
+      if (!r.datum) return false;
+      const d = new Date(r.datum);
+      return !isNaN(d) && d >= cutoff;
+    });
+  }
+
   function sortEbenen(ebenen) {
     const bund = ebenen.filter((e) => e.id === "bund");
     const rest = ebenen.filter((e) => e.id !== "bund").slice();
@@ -43,7 +57,7 @@
     return [...bund, ...rest];
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen };
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

@@ -9,6 +9,7 @@
       "parlament_regex": "bundestag",
       "dawum_slug": "Bundestag",
       "wahltermin": null,
+      "umfrage_max_alter_tage": 60,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 5.1,
@@ -41,7 +42,8 @@
       "css": "land",
       "parlament_regex": "sachsen.anhalt",
       "dawum_slug": "Sachsen-Anhalt",
-      "wahltermin": "2026-06-07",
+      "wahltermin": "2026-09-06",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": { "stand": null, "rows": [] }
@@ -53,7 +55,8 @@
       "css": "land",
       "parlament_regex": "mecklenburg",
       "dawum_slug": "Mecklenburg-Vorpommern",
-      "wahltermin": "2026-09-06",
+      "wahltermin": "2026-09-20",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": { "stand": null, "rows": [] }
@@ -65,7 +68,8 @@
       "css": "land",
       "parlament_regex": "berlin",
       "dawum_slug": "Berlin",
-      "wahltermin": "2026-09-13",
+      "wahltermin": "2026-09-20",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": { "stand": null, "rows": [] }
@@ -77,7 +81,8 @@
       "css": "land",
       "parlament_regex": "nordrhein",
       "dawum_slug": "Nordrhein-Westfalen",
-      "wahltermin": "2027-05-09",
+      "wahltermin": "2027-04-25",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 6.2,

@@ -59,6 +59,23 @@ class TestUpdatePolls:
         update.update_polls(d)
         assert d["ebenen"][0]["umfragen"]["rows"] == []
 
+    def test_applies_ebenes_own_umfrage_max_alter_tage(self, monkeypatch):
+        db = self._fake_db()
+        db["Database"]["Last_Update"] = "2026-08-27"
+        db["Surveys"]["100"]["Date"] = "2026-01-01"  # far older than 60 days before 2026-08-27
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: json.dumps(db).encode("utf-8"))
+        d = {"ebenen": [{"id": "bund", "name": "Bundestagswahl", "parlament_regex": "bundestag", "umfrage_max_alter_tage": 60}]}
+        update.update_polls(d)
+        assert d["ebenen"][0]["umfragen"]["rows"] == []
+
+    def test_ebene_without_max_alter_tage_keeps_all_rows(self, monkeypatch):
+        db = self._fake_db()
+        db["Surveys"]["100"]["Date"] = "2019-01-01"
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: json.dumps(db).encode("utf-8"))
+        d = {"ebenen": [{"id": "bund", "name": "Bundestagswahl", "parlament_regex": "bundestag"}]}
+        update.update_polls(d)
+        assert len(d["ebenen"][0]["umfragen"]["rows"]) == 1
+
     def test_network_failure_preserves_old_umfragen(self, monkeypatch, capsys):
         def failing_get(url, timeout=20):
             raise TimeoutError("dawum unreachable")

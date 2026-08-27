@@ -6,7 +6,8 @@ Aufruf:  python3 update.py
 Ergebnis:
   1. Die neuesten FDP-Umfragen für jede Ebene aus data.json["ebenen"] werden von
      api.dawum.de gespeichert – als Fallback, falls der Browser die API nicht direkt
-     erreichen kann.
+     erreichen kann. Umfragen älter als data.json["ebenen"][*]["umfrage_max_alter_tage"]
+     Tage (Standard: kein Limit) werden dabei aussortiert.
   2. Optional: dawum-Wahltrend je Ebene setzen (gewichteter Durchschnitt, steht nicht in
      der API):
        python3 update.py --trend bund 4.4 --trend nrw 5.6
@@ -54,6 +55,22 @@ def fdp_rows(db, parl_regex):
                      "datum": s.get("Date"), "fdp": float(v)})
     return sorted(rows, key=lambda r: r["datum"] or "", reverse=True)
 
+def filter_by_age(rows, max_age_days, today=None):
+    """Umfragen ohne verwertbares Datum oder älter als max_age_days aussortieren."""
+    if max_age_days is None:
+        return rows
+    today = today or datetime.now(TZ).date()
+    cutoff = today - timedelta(days=max_age_days)
+    out = []
+    for r in rows:
+        try:
+            d = datetime.strptime(r.get("datum") or "", "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if d >= cutoff:
+            out.append(r)
+    return out
+
 def update_polls(d):
     try:
         db = json.loads(get(DAWUM, timeout=30))
@@ -63,6 +80,7 @@ def update_polls(d):
     stand = db.get("Database", {}).get("Last_Update")
     for ebene in d.get("ebenen", []):
         rows = fdp_rows(db, ebene["parlament_regex"])
+        rows = filter_by_age(rows, ebene.get("umfrage_max_alter_tage"))
         ebene["umfragen"] = {"stand": stand, "rows": rows}
         print(f"Umfragen gespeichert: {ebene['name']}: {len(rows)} Einzelumfrage(n).")
 
