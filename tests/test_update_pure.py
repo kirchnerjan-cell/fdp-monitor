@@ -6,88 +6,6 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import update
 
 
-class TestNormUrl:
-    def test_post(self):
-        assert update.norm_url("https://www.instagram.com/p/ABC123/") == "https://www.instagram.com/p/ABC123/"
-
-    def test_reel_stays_reel(self):
-        assert update.norm_url("https://www.instagram.com/reel/XYZ_9-8/") == "https://www.instagram.com/reel/XYZ_9-8/"
-
-    def test_reels_normalized_to_reel(self):
-        assert update.norm_url("https://www.instagram.com/reels/XYZ789/") == "https://www.instagram.com/reel/XYZ789/"
-
-    def test_tv(self):
-        assert update.norm_url("https://www.instagram.com/tv/DEF456/") == "https://www.instagram.com/tv/DEF456/"
-
-    def test_strips_query_string(self):
-        assert update.norm_url("https://www.instagram.com/p/ABC123/?igsh=xyz") == "https://www.instagram.com/p/ABC123/"
-
-    def test_strips_utm_and_other_params(self):
-        assert update.norm_url("https://www.instagram.com/reel/ABC123/?utm_source=ig_web_copy_link") == "https://www.instagram.com/reel/ABC123/"
-
-    def test_no_trailing_slash_still_matches(self):
-        assert update.norm_url("https://www.instagram.com/p/ABC123") == "https://www.instagram.com/p/ABC123/"
-
-    def test_non_instagram_url_returns_none(self):
-        assert update.norm_url("https://example.com/p/ABC123/") is None
-
-    def test_instagram_profile_url_returns_none(self):
-        assert update.norm_url("https://www.instagram.com/fdp/") is None
-
-    def test_empty_string_returns_none(self):
-        assert update.norm_url("") is None
-
-
-class TestPostId:
-    def test_extracts_id_from_post(self):
-        assert update.post_id("https://www.instagram.com/p/ABC123/") == "ABC123"
-
-    def test_extracts_id_from_reel(self):
-        assert update.post_id("https://www.instagram.com/reel/XYZ_9-8/") == "XYZ_9-8"
-
-    def test_extracts_id_from_tv(self):
-        assert update.post_id("https://www.instagram.com/tv/DEF456/") == "DEF456"
-
-
-class TestReadInbox:
-    def _write(self, tmp_path, content):
-        p = tmp_path / "posts.txt"
-        p.write_text(content, encoding="utf-8")
-        return p
-
-    def test_reads_valid_urls(self, tmp_path, monkeypatch):
-        p = self._write(tmp_path, "https://www.instagram.com/p/ABC123/\n")
-        monkeypatch.setattr(update, "INBOX", str(p))
-        assert update.read_inbox() == ["https://www.instagram.com/p/ABC123/"]
-
-    def test_skips_blank_lines_and_comments(self, tmp_path, monkeypatch):
-        p = self._write(
-            tmp_path,
-            "\n# a comment\nhttps://www.instagram.com/p/ABC123/\n   \n",
-        )
-        monkeypatch.setattr(update, "INBOX", str(p))
-        assert update.read_inbox() == ["https://www.instagram.com/p/ABC123/"]
-
-    def test_deduplicates_normalized_urls(self, tmp_path, monkeypatch):
-        p = self._write(
-            tmp_path,
-            "https://www.instagram.com/p/ABC123/\n"
-            "https://www.instagram.com/p/ABC123/?igsh=abc\n",
-        )
-        monkeypatch.setattr(update, "INBOX", str(p))
-        assert update.read_inbox() == ["https://www.instagram.com/p/ABC123/"]
-
-    def test_unrecognized_line_is_skipped_not_raised(self, tmp_path, monkeypatch, capsys):
-        p = self._write(tmp_path, "not a url\nhttps://www.instagram.com/p/ABC123/\n")
-        monkeypatch.setattr(update, "INBOX", str(p))
-        assert update.read_inbox() == ["https://www.instagram.com/p/ABC123/"]
-        assert "keine Post-URL erkannt" in capsys.readouterr().out
-
-    def test_missing_file_returns_empty_list(self, tmp_path, monkeypatch):
-        monkeypatch.setattr(update, "INBOX", str(tmp_path / "does-not-exist.txt"))
-        assert update.read_inbox() == []
-
-
 class TestFdpRows:
     def _db(self, results=None, parliament_name="Deutscher Bundestag", shortcut="BT"):
         return {
@@ -145,45 +63,70 @@ class TestFdpRows:
         rows = update.fdp_rows(db, r"nrw")
         assert len(rows) == 1
 
+    def test_matches_sachsen_anhalt_regardless_of_separator(self):
+        db = self._db(parliament_name="Landtag von Sachsen-Anhalt", shortcut="ST")
+        assert len(update.fdp_rows(db, r"sachsen.anhalt")) == 1
+
+    def test_matches_mecklenburg_vorpommern(self):
+        db = self._db(parliament_name="Landtag Mecklenburg-Vorpommern", shortcut="MV")
+        assert len(update.fdp_rows(db, r"mecklenburg")) == 1
+
+    def test_matches_berlin(self):
+        db = self._db(parliament_name="Abgeordnetenhaus von Berlin", shortcut="Berlin")
+        assert len(update.fdp_rows(db, r"berlin")) == 1
+
 
 class TestSetTrend:
+    def _d(self, ids=("bund",)):
+        return {"ebenen": [{"id": i, "name": i} for i in ids]}
+
     def test_first_value_has_no_delta(self):
-        d = {}
-        update.set_trend(d, "bundestag", 4.4, "2026-08-01")
-        assert d["wahltrend"]["bundestag"] == {"wert": 4.4, "delta": None, "stand": "2026-08-01"}
+        d = self._d()
+        update.set_trend(d, "bund", 4.4, "2026-08-01")
+        ebene = d["ebenen"][0]
+        assert ebene["wahltrend"] == {"wert": 4.4, "delta": None, "stand": "2026-08-01"}
 
     def test_second_call_different_stand_computes_delta(self):
-        d = {}
-        update.set_trend(d, "bundestag", 4.4, "2026-08-01")
-        update.set_trend(d, "bundestag", 4.7, "2026-08-08")
-        t = d["wahltrend"]["bundestag"]
+        d = self._d()
+        update.set_trend(d, "bund", 4.4, "2026-08-01")
+        update.set_trend(d, "bund", 4.7, "2026-08-08")
+        t = d["ebenen"][0]["wahltrend"]
         assert t["wert"] == 4.7
         assert t["delta"] == 0.3
         assert t["stand"] == "2026-08-08"
 
     def test_repeated_call_same_stand_keeps_old_delta(self):
-        d = {}
-        update.set_trend(d, "bundestag", 4.4, "2026-08-01")
-        update.set_trend(d, "bundestag", 4.7, "2026-08-08")
-        update.set_trend(d, "bundestag", 5.0, "2026-08-08")
-        t = d["wahltrend"]["bundestag"]
+        d = self._d()
+        update.set_trend(d, "bund", 4.4, "2026-08-01")
+        update.set_trend(d, "bund", 4.7, "2026-08-08")
+        update.set_trend(d, "bund", 5.0, "2026-08-08")
+        t = d["ebenen"][0]["wahltrend"]
         # same "stand" as previous call: delta must not be recomputed from 4.7->5.0
         assert t["delta"] == 0.3
         assert t["wert"] == 5.0
 
     def test_negative_delta(self):
-        d = {}
-        update.set_trend(d, "nrw", 5.6, "2026-08-01")
-        update.set_trend(d, "nrw", 5.1, "2026-08-08")
-        assert d["wahltrend"]["nrw"]["delta"] == -0.5
+        d = self._d()
+        update.set_trend(d, "bund", 5.6, "2026-08-01")
+        update.set_trend(d, "bund", 5.1, "2026-08-08")
+        assert d["ebenen"][0]["wahltrend"]["delta"] == -0.5
 
     def test_value_rounded_to_one_decimal(self):
-        d = {}
-        update.set_trend(d, "bundestag", 4.449, "2026-08-01")
-        assert d["wahltrend"]["bundestag"]["wert"] == 4.4
+        d = self._d()
+        update.set_trend(d, "bund", 4.449, "2026-08-01")
+        assert d["ebenen"][0]["wahltrend"]["wert"] == 4.4
 
-    def test_keys_are_independent(self):
-        d = {}
-        update.set_trend(d, "bundestag", 4.4, "2026-08-01")
+    def test_regions_are_independent(self):
+        d = self._d(ids=("bund", "nrw"))
+        update.set_trend(d, "bund", 4.4, "2026-08-01")
         update.set_trend(d, "nrw", 5.6, "2026-08-01")
-        assert "bundestag" in d["wahltrend"] and "nrw" in d["wahltrend"]
+        assert d["ebenen"][0]["wahltrend"]["wert"] == 4.4
+        assert d["ebenen"][1]["wahltrend"]["wert"] == 5.6
+
+    def test_unknown_ebene_id_raises(self):
+        d = self._d()
+        try:
+            update.set_trend(d, "does-not-exist", 4.4, "2026-08-01")
+            assert False, "expected SystemExit"
+        except SystemExit as e:
+            assert "does-not-exist" in str(e)

@@ -31,7 +31,19 @@
     return out;
   }
 
-  const api = { fmt, dfmt, esc, extractFdp };
+  function sortEbenen(ebenen) {
+    const bund = ebenen.filter((e) => e.id === "bund");
+    const rest = ebenen.filter((e) => e.id !== "bund").slice();
+    rest.sort((a, b) => {
+      if (a.wahltermin == null && b.wahltermin == null) return 0;
+      if (a.wahltermin == null) return 1;
+      if (b.wahltermin == null) return -1;
+      return a.wahltermin.localeCompare(b.wahltermin);
+    });
+    return [...bund, ...rest];
+  }
+
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

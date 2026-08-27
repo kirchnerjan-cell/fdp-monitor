@@ -1,5 +1,5 @@
 # fdp-monitor
-Overview of the polls and social media post of the FDP
+Overview of FDP polling results (Bundestag + Landtagswahlen), sorted by election date.
 
 ## Tests
 

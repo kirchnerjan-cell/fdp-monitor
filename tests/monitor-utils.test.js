@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, dfmt, esc, extractFdp } from "../monitor-utils.js";
+import { fmt, dfmt, esc, extractFdp, sortEbenen } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -110,5 +110,35 @@ describe("extractFdp", () => {
     const rows = extractFdp(db, (t) => /bundestag/i.test(t));
     expect(rows[0].fdp).toBe(4.5);
     expect(typeof rows[0].fdp).toBe("number");
+  });
+});
+
+describe("sortEbenen", () => {
+  const bund = { id: "bund", wahltermin: null };
+  const nrw = { id: "nrw", wahltermin: "2027-05-09" };
+  const berlin = { id: "berlin", wahltermin: "2026-09-13" };
+  const sachsenAnhalt = { id: "sachsen-anhalt", wahltermin: "2026-06-07" };
+
+  it("always puts Bund first regardless of input order", () => {
+    const sorted = sortEbenen([nrw, bund, berlin]);
+    expect(sorted[0].id).toBe("bund");
+  });
+
+  it("orders the remaining Länder by ascending Wahltermin", () => {
+    const sorted = sortEbenen([nrw, bund, berlin, sachsenAnhalt]);
+    expect(sorted.map((e) => e.id)).toEqual(["bund", "sachsen-anhalt", "berlin", "nrw"]);
+  });
+
+  it("puts entries with no Wahltermin after dated ones", () => {
+    const noDate = { id: "unbekannt", wahltermin: null };
+    const sorted = sortEbenen([noDate, sachsenAnhalt]);
+    expect(sorted.map((e) => e.id)).toEqual(["sachsen-anhalt", "unbekannt"]);
+  });
+
+  it("does not mutate the input array", () => {
+    const input = [nrw, bund, sachsenAnhalt];
+    const copy = [...input];
+    sortEbenen(input);
+    expect(input).toEqual(copy);
   });
 });
