@@ -8,7 +8,8 @@
       "css": "land",
       "parlament_regex": "nordrhein",
       "dawum_slug": "Nordrhein-Westfalen",
-      "wahltermin": "2027-05-09",
+      "wahltermin": "2027-04-25",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": { "wert": 6.2, "delta": null, "stand": "2026-08-20" },
       "umfragen": { "stand": "2026-08-15", "rows": [{ "institut": "Forsa (gespeichert)", "datum": "2026-08-10", "fdp": 5.3 }] }
@@ -21,9 +22,16 @@
       "parlament_regex": "bundestag",
       "dawum_slug": "Bundestag",
       "wahltermin": null,
+      "umfrage_max_alter_tage": 60,
       "wahlergebnis": null,
       "wahltrend": { "wert": 4.4, "delta": 0.2, "stand": "2026-08-20" },
-      "umfragen": { "stand": "2026-08-15", "rows": [{ "institut": "Forsa (gespeichert)", "datum": "2026-08-10", "fdp": 4.2 }] }
+      "umfragen": {
+        "stand": "2026-08-15",
+        "rows": [
+          { "institut": "Forsa (gespeichert)", "datum": "2026-08-10", "fdp": 4.2 },
+          { "institut": "Alt (gespeichert)", "datum": "2026-01-01", "fdp": 9.0 }
+        ]
+      }
     },
     {
       "id": "berlin",
@@ -32,7 +40,8 @@
       "css": "land",
       "parlament_regex": "berlin",
       "dawum_slug": "Berlin",
-      "wahltermin": "2026-09-13",
+      "wahltermin": "2026-09-20",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": { "stand": null, "rows": [] }
@@ -44,10 +53,17 @@
       "css": "land",
       "parlament_regex": "sachsen.anhalt",
       "dawum_slug": "Sachsen-Anhalt",
-      "wahltermin": "2026-06-07",
+      "wahltermin": "2026-09-06",
+      "umfrage_max_alter_tage": 180,
       "wahlergebnis": { "fdp": 3.8, "datum": "2026-06-07" },
       "wahltrend": { "wert": null, "delta": null, "stand": null },
-      "umfragen": { "stand": "2026-08-15", "rows": [{ "institut": "Forsa (gespeichert)", "datum": "2026-05-01", "fdp": 4.0 }] }
+      "umfragen": {
+        "stand": "2026-08-15",
+        "rows": [
+          { "institut": "Forsa (gespeichert)", "datum": "2026-05-01", "fdp": 4.0 },
+          { "institut": "Alt (gespeichert)", "datum": "2025-01-01", "fdp": 9.0 }
+        ]
+      }
     }
   ]
 }

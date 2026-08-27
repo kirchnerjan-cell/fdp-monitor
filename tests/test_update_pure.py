@@ -1,6 +1,7 @@
 """Tests for update.py's pure, side-effect-free functions."""
 import sys
 import os
+from datetime import date
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import update
@@ -130,3 +131,34 @@ class TestSetTrend:
             assert False, "expected SystemExit"
         except SystemExit as e:
             assert "does-not-exist" in str(e)
+
+
+class TestFilterByAge:
+    TODAY = date(2026, 8, 27)
+
+    def _rows(self, *dates):
+        return [{"institut": "Institut", "datum": d, "fdp": 5.0} for d in dates]
+
+    def test_none_max_age_returns_all_rows_unfiltered(self):
+        rows = self._rows("2020-01-01", None)
+        assert update.filter_by_age(rows, None, today=self.TODAY) == rows
+
+    def test_drops_rows_older_than_max_age(self):
+        rows = self._rows("2026-08-20", "2025-01-01")
+        out = update.filter_by_age(rows, 60, today=self.TODAY)
+        assert [r["datum"] for r in out] == ["2026-08-20"]
+
+    def test_keeps_row_exactly_at_cutoff(self):
+        rows = self._rows("2026-06-28")  # exactly 60 days before TODAY
+        out = update.filter_by_age(rows, 60, today=self.TODAY)
+        assert len(out) == 1
+
+    def test_drops_rows_with_missing_or_unparseable_date(self):
+        rows = self._rows(None, "not-a-date", "2026-08-20")
+        out = update.filter_by_age(rows, 60, today=self.TODAY)
+        assert [r["datum"] for r in out] == ["2026-08-20"]
+
+    def test_bund_60_days_vs_landtag_180_days(self):
+        rows = self._rows("2026-04-01")  # ~148 days before TODAY
+        assert update.filter_by_age(rows, 60, today=self.TODAY) == []
+        assert len(update.filter_by_age(rows, 180, today=self.TODAY)) == 1

@@ -107,7 +107,7 @@
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
   const MAX_PCT = 10;                 // Skala der Balken (0–10 %)
-  const {fmt, dfmt, esc, extractFdp, sortEbenen} = MonitorUtils;
+  const {fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge} = MonitorUtils;
 
   // ---------- data.json ----------
   let data = {ebenen:[]};
@@ -187,11 +187,12 @@
     const fallback = ebene.umfragen || {};
     const fbNote = fallback.stand ? `Daten aus der letzten Aktualisierung (${dfmt(fallback.stand)}), Quelle <a href="https://dawum.de" rel="noopener">dawum.de</a>.` : 'Live-Abruf nicht möglich und keine gespeicherten Daten vorhanden.';
     if(db){
-      const rows = extractFdp(db, t => new RegExp(ebene.parlament_regex, 'i').test(t));
+      const rows = filterByAge(extractFdp(db, t => new RegExp(ebene.parlament_regex, 'i').test(t)), ebene.umfrage_max_alter_tage);
       const live = `Live von <a href="https://dawum.de/${esc(ebene.dawum_slug||'')}/" rel="noopener">dawum.de</a>, Datenbank-Stand ${dfmt(db.Database&&db.Database.Last_Update)}.`;
       renderPolls(panel, rows, ebene.css, live, ebene.wahltrend, ebene.wahlergebnis);
     } else {
-      renderPolls(panel, fallback.rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis);
+      const rows = filterByAge(fallback.rows || [], ebene.umfrage_max_alter_tage);
+      renderPolls(panel, rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis);
     }
   }
 })();

@@ -7,9 +7,10 @@
     "30": { "Shortcut": "Berlin", "Name": "Abgeordnetenhaus von Berlin" },
     "40": { "Shortcut": "ST", "Name": "Landtag von Sachsen-Anhalt" }
   },
-  "Institutes": { "5": { "Name": "Forsa (live)" } },
+  "Institutes": { "5": { "Name": "Forsa (live)" }, "6": { "Name": "Alt (live)" } },
   "Surveys": {
     "100": { "Parliament_ID": 10, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 4.9 } },
+    "101": { "Parliament_ID": 10, "Institute_ID": 6, "Date": "2026-01-01", "Results": { "1": 9.0 } },
     "200": { "Parliament_ID": 20, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 5.8 } },
     "300": { "Parliament_ID": 30, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 3.5 } }
   }
