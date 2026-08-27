@@ -1,4 +1,0 @@
-# Eine Instagram-Post-URL pro Zeile. Zeilen mit # werden ignoriert.
-# Beispiel:
-# https://www.instagram.com/p/ABC123xyz/
-https://www.instagram.com/p/DcgMJKhjea9/?utm_source=ig_web_copy_link&igsi=MzRlODBiNWFlZA== 

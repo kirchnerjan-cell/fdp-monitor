@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>FDP-Monitor · Umfragen, Instagram, Faktencheck</title>
-<meta name="description" content="Aktuelle FDP-Umfragewerte (Bund, NRW) und die neuesten Instagram-Posts von Bundespartei, Vorsitzenden und FDP NRW – jeweils mit Faktencheck.">
+<title>FDP-Monitor · Umfragewerte</title>
+<meta name="description" content="Aktuelle FDP-Umfragewerte: Bundestagswahl und Landtagswahlen, sortiert nach Wahltermin.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
 <style>
@@ -15,7 +15,7 @@
     --display:"Bricolage Grotesque",system-ui,sans-serif;
     --body:"IBM Plex Sans",system-ui,sans-serif;
     --mono:"IBM Plex Mono",ui-monospace,monospace;
-    --max:1040px; --r:10px;
+    --max:1200px; --r:10px;
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -30,9 +30,6 @@
   .brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:6px}
   .stand{font-family:var(--mono);font-size:12px;color:var(--mute)}
 
-  nav.jump{display:flex;gap:6px;padding:12px 18px;overflow-x:auto;max-width:var(--max);margin:0 auto}
-  nav.jump a{white-space:nowrap;text-decoration:none;font-size:13px;font-weight:500;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
-
   section{padding:28px 0 8px}
   h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
   .sub{color:var(--mute);font-size:14px;margin:0 0 18px}
@@ -40,12 +37,14 @@
   /* Umfragen */
   .polls{display:grid;gap:16px;grid-template-columns:1fr}
   @media(min-width:760px){.polls{grid-template-columns:1fr 1fr}}
+  @media(min-width:1080px){.polls{grid-template-columns:1fr 1fr 1fr}}
   .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 14px}
-  .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+  .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:2px}
   .panel-head h3{margin:0;font-size:15px;font-weight:600}
   .panel-head .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:4px}
   .tag.bund{background:var(--bund-soft);color:var(--bund)}
   .tag.land{background:var(--land-soft);color:#7A5F00}
+  .termin{font-size:12px;color:var(--mute);margin-bottom:8px}
   .avg{display:flex;align-items:baseline;gap:10px;margin:4px 0 14px}
   .avg .num{font-family:var(--mono);font-size:44px;font-weight:500;line-height:1;letter-spacing:-.02em;white-space:nowrap}
   .avg .lbl{font-size:13px;color:var(--mute);max-width:220px;line-height:1.3}
@@ -53,7 +52,6 @@
   .avg .delta{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--mute)}
   .avg .delta.up{color:var(--ok)} .avg .delta.down{color:var(--huerde)}
   .simple{font-size:12px;color:var(--mute);margin:-8px 0 12px}
-  .card a.cardlink{display:block;text-decoration:none;color:inherit}
 
   .bars{position:relative;margin-top:6px;padding-top:16px}
   .bars .huerde{position:absolute;top:10px;bottom:-4px;left:calc(var(--h) * 1%);border-left:2px dashed var(--huerde);z-index:2}
@@ -66,51 +64,13 @@
   .track{position:relative;height:18px;background:var(--bg);border-radius:3px;overflow:visible}
   .fill{height:100%;border-radius:3px;min-width:2px;transition:width .5s ease}
   .fill.bund{background:var(--bund)} .fill.land{background:var(--land)}
+  .fill.ergebnis{background:repeating-linear-gradient(45deg,var(--ink),var(--ink) 4px,transparent 4px,transparent 8px),var(--ink)}
+  .row.ergebnis .meta .inst{font-weight:700}
   .val{position:absolute;top:-1px;left:calc(var(--w) * 1% + 8px);font-family:var(--mono);font-size:13px;font-weight:500;line-height:20px}
   .note{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.4}
   .note a{color:var(--mute)}
   .panel.err .note{color:var(--bad)}
   @media(prefers-reduced-motion:reduce){.fill{transition:none}}
-
-  /* Posts */
-  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-  .chip{border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer}
-  .chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .chip:focus-visible,.card summary:focus-visible,a:focus-visible{outline:2px solid var(--bund);outline-offset:2px}
-
-  .grid{display:grid;gap:14px;grid-template-columns:1fr}
-  @media(min-width:600px){.grid{grid-template-columns:1fr 1fr}}
-  @media(min-width:900px){.grid{grid-template-columns:1fr 1fr 1fr}}
-  .card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-  .card summary{list-style:none;cursor:pointer}
-  .card summary::-webkit-details-marker{display:none}
-  .thumb{position:relative;aspect-ratio:1/1;background:var(--bg);display:block}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .thumb .noimg{position:absolute;inset:0;display:grid;place-items:center;color:var(--mute);font-size:13px}
-  .badge{position:absolute;left:10px;top:10px;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:4px;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.12)}
-  .badge.korrekt{color:var(--ok)} .badge.teils{color:var(--warn)} .badge.irref,.badge.falsch{color:var(--bad)} .badge.ungeprueft,.badge.meinung{color:var(--grey)}
-  .cbody{padding:12px 14px 14px}
-  .who{display:flex;justify-content:space-between;gap:8px;font-size:13px}
-  .who .acc{font-weight:600}
-  .who .lvl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mute)}
-  .cap{font-size:14px;color:var(--mute);margin:6px 0 0;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-  .when{font-family:var(--mono);font-size:12px;color:var(--mute);margin-top:8px}
-  .open-hint{font-size:12px;color:var(--bund);margin-top:8px}
-  .card[open] .open-hint{display:none}
-
-  .fc{border-top:1px solid var(--line);padding:14px}
-  .fc h4{margin:0 0 6px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
-  .fc p{margin:0 0 10px;font-size:15px;white-space:pre-line}
-  .fc ul{margin:0 0 12px;padding-left:18px;font-size:13px}
-  .fc .empty{color:var(--mute);font-style:italic}
-  .fc .checked{font-family:var(--mono);font-size:12px;color:var(--mute);margin-bottom:12px}
-  .btn{display:inline-block;text-decoration:none;font-size:13px;font-weight:600;padding:8px 12px;border-radius:6px;border:1px solid var(--ink);margin-right:6px;background:var(--paper)}
-  .btn.ghost{border-color:var(--line);font-weight:500}
-  .embed{margin-top:12px;min-height:40px}
-  .embed blockquote{margin:0!important}
-
-  .empty-state{background:var(--paper);border:1px dashed var(--line);border-radius:var(--r);padding:28px;text-align:center;color:var(--mute);font-size:14px}
-  .empty-state code{font-family:var(--mono);font-size:13px;background:var(--bg);padding:1px 5px;border-radius:3px}
 
   footer{margin-top:40px;border-top:1px solid var(--line);padding:22px 0 40px;font-size:12px;color:var(--mute);line-height:1.6}
   footer a{color:var(--mute)}
@@ -120,50 +80,17 @@
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">FDP-Monitor<small id="brand-sub">Umfragen · Instagram · Faktencheck</small></div>
+    <div class="brand">FDP-Monitor<small>Umfragewerte</small></div>
     <div class="stand" id="stand">Stand: wird geladen …</div>
   </div>
 </header>
-
-<nav class="jump" aria-label="Sprungmarken">
-  <a href="#umfragen">Umfragen</a>
-  <a href="#posts">Instagram-Posts</a>
-  <a href="#hinweise">Hinweise</a>
-</nav>
 
 <main class="wrap">
 
   <section id="umfragen">
     <h2>Umfragewerte</h2>
-    <p class="sub">Leitzahl: gewichteter dawum-Wahltrend. Balken: neueste Umfrage je Institut. Rote Linie: 5-%-Hürde.</p>
-    <div class="polls">
-      <div class="panel" id="panel-bund">
-        <div class="panel-head"><h3>Bundestagswahl</h3><span class="tag bund">Bund</span></div>
-        <div class="avg"><div class="num">–</div><div class="lbl">wird geladen …</div></div>
-        <div class="simple"></div>
-        <div class="bars" style="--h:50"><div class="huerde"><span>5 %</span></div></div>
-        <div class="note">wird geladen …</div>
-      </div>
-      <div class="panel" id="panel-nrw">
-        <div class="panel-head"><h3>Landtagswahl NRW</h3><span class="tag land">NRW</span></div>
-        <div class="avg"><div class="num">–</div><div class="lbl">wird geladen …</div></div>
-        <div class="simple"></div>
-        <div class="bars" style="--h:50"><div class="huerde"><span>5 %</span></div></div>
-        <div class="note">wird geladen …</div>
-      </div>
-    </div>
-  </section>
-
-  <section id="posts">
-    <h2>Instagram-Posts</h2>
-    <p class="sub" id="posts-sub">Neueste Posts der beobachteten Accounts.</p>
-    <div class="chips" id="chips" role="group" aria-label="Nach Account filtern"></div>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <section id="hinweise">
-    <h2>Hinweise</h2>
-    <p class="sub" id="hinweise-text">Die Faktenchecks sind eigene redaktionelle Einschätzungen und keine offiziellen Bewertungen. Bewertungsskala: korrekt · teils korrekt · irreführend · falsch · Meinung (nicht prüfbar) · ungeprüft.</p>
+    <p class="sub">Leitzahl: gewichteter dawum-Wahltrend. Balken: neueste Umfrage je Institut, gestrichelt schraffiert: amtliches Wahlergebnis. Rote Linie: 5-%-Hürde. Bundesebene zuerst, danach Landtagswahlen nach Wahltermin (nächster zuerst).</p>
+    <div class="polls" id="polls"></div>
   </section>
 
 </main>
@@ -171,38 +98,46 @@
 <footer>
   <div class="wrap">
     Umfragedaten: <a href="https://dawum.de" rel="noopener">dawum.de</a> (<a href="https://opendatacommons.org/licenses/odbl/1.0/" rel="noopener">Open Database License, ODbL</a>).
-    Instagram-Inhalte werden über die offizielle Einbettungsfunktion von Instagram angezeigt; Rechte liegen bei den jeweiligen Accounts.
-    Beim Öffnen eines eingebetteten Posts werden Daten an Meta übertragen.
   </div>
 </footer>
 
+<script src="monitor-utils.js"></script>
 <script>
 (async function(){
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
   const MAX_PCT = 10;                 // Skala der Balken (0–10 %)
-  const fmt = n => (Math.round(n*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
-  const dfmt = s => { if(!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
-  const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const {fmt, dfmt, esc, extractFdp, sortEbenen} = MonitorUtils;
 
   // ---------- data.json ----------
-  let data = {accounts:[],posts:[],umfragen:{}};
+  let data = {ebenen:[]};
   try{ data = await (await fetch(DATA_URL,{cache:'no-store'})).json(); }
   catch(e){ console.warn('data.json nicht ladbar',e); }
   document.getElementById('stand').textContent = 'Stand: ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
-  const FC = data.faktencheck_aktiv !== false;   // Faktencheck-Bereich per data.json ein-/ausschalten
-  if(data.hinweise){ document.getElementById('hinweise-text').textContent = data.hinweise; }
-  if(FC){ document.getElementById('posts-sub').textContent += ' Karte antippen öffnet den Faktencheck.'; }
-  else { document.getElementById('posts-sub').textContent += ' Karte antippen öffnet den Post auf Instagram.'; document.querySelector('nav.jump a[href="#hinweise"]').remove(); document.getElementById('brand-sub').textContent='Umfragen · Instagram'; document.getElementById('hinweise').remove(); }
 
-  // ---------- Umfragen ----------
-  function renderPolls(panelId, rows, cls, source, trend){
-    const p = document.getElementById(panelId);
-    const bars = p.querySelector('.bars');
-    const note = p.querySelector('.note');
-    const num = p.querySelector('.avg .num');
-    const lbl = p.querySelector('.avg .lbl');
-    const simple = p.querySelector('.simple');
+  const ebenen = sortEbenen(data.ebenen || []);
+  const pollsEl = document.getElementById('polls');
+
+  function panelSkeleton(ebene){
+    const p = document.createElement('div');
+    p.className = 'panel';
+    p.id = 'panel-' + ebene.id;
+    p.innerHTML = `
+      <div class="panel-head"><h3>${esc(ebene.name)}</h3><span class="tag ${esc(ebene.css||'land')}">${esc(ebene.kurz||'')}</span></div>
+      ${ebene.wahltermin ? `<div class="termin">Wahltermin: ${dfmt(ebene.wahltermin)}</div>` : ''}
+      <div class="avg"><div class="num">–</div><div class="lbl">wird geladen …</div></div>
+      <div class="simple"></div>
+      <div class="bars" style="--h:50"><div class="huerde"><span>5 %</span></div></div>
+      <div class="note">wird geladen …</div>`;
+    return p;
+  }
+
+  function renderPolls(panel, rows, cls, source, trend, wahlergebnis){
+    const bars = panel.querySelector('.bars');
+    const note = panel.querySelector('.note');
+    const num = panel.querySelector('.avg .num');
+    const lbl = panel.querySelector('.avg .lbl');
+    const simple = panel.querySelector('.simple');
     bars.querySelectorAll('.row').forEach(r=>r.remove());
     const avg = rows && rows.length ? rows.reduce((s,r)=>s+r.fdp,0)/rows.length : null;
     if(trend && trend.wert!=null){
@@ -219,10 +154,18 @@
       lbl.textContent = 'Ø der neuesten Umfragen je Institut (Wahltrend noch nicht hinterlegt)';
       simple.textContent = '';
     }
-    if(!rows || !rows.length){ p.classList.add('err'); note.textContent='Keine Einzelumfragen gefunden.'; return; }
-    rows.sort((a,b)=> (b.datum||'').localeCompare(a.datum||''));
+    const hasErgebnis = wahlergebnis && wahlergebnis.fdp!=null;
+    if(!rows?.length && !hasErgebnis){ panel.classList.add('err'); note.textContent='Keine Einzelumfragen gefunden.'; return; }
     bars.style.setProperty('--h', 5/MAX_PCT*100);
-    for(const r of rows){
+    if(hasErgebnis){
+      const w = Math.min(wahlergebnis.fdp, MAX_PCT)/MAX_PCT*100;
+      const el = document.createElement('div');
+      el.className='row ergebnis';
+      el.innerHTML = `<div class="meta"><span class="inst">Amtliches Ergebnis</span><span class="date">${dfmt(wahlergebnis.datum)}</span></div>
+        <div class="track" style="--w:${w}"><div class="fill ergebnis" style="width:${w}%"></div><span class="val">${fmt(wahlergebnis.fdp)} %</span></div>`;
+      bars.appendChild(el);
+    }
+    for(const r of (rows||[]).slice().sort((a,b)=> (b.datum||'').localeCompare(a.datum||''))){
       const w = Math.min(r.fdp, MAX_PCT)/MAX_PCT*100;
       const el = document.createElement('div');
       el.className='row';
@@ -230,113 +173,27 @@
         <div class="track" style="--w:${w}"><div class="fill ${cls}" style="width:${w}%"></div><span class="val">${fmt(r.fdp)} %</span></div>`;
       bars.appendChild(el);
     }
-    p.classList.remove('err');
+    panel.classList.remove('err');
     note.innerHTML = source;
   }
 
-  function extractFdp(db, parlMatch){
-    const parties = db.Parties||{}, parls = db.Parliaments||{}, insts = db.Institutes||{};
-    const fdpId = Object.keys(parties).find(k => (parties[k].Shortcut||'').toUpperCase()==='FDP');
-    const parlIds = Object.keys(parls).filter(k => parlMatch((parls[k].Shortcut||'')+' '+(parls[k].Name||'')));
-    const out=[];
-    for(const s of Object.values(db.Surveys||{})){
-      if(!parlIds.includes(String(s.Parliament_ID))) continue;
-      const v = s.Results && s.Results[fdpId];
-      if(v==null) continue;
-      out.push({institut:(insts[s.Institute_ID]||{}).Name||('Institut '+s.Institute_ID), datum:s.Date, fdp:Number(v)});
+  let db = null;
+  try{ db = await (await fetch(DAWUM_URL)).json(); }
+  catch(e){ console.warn('dawum live nicht erreichbar, nutze data.json',e); }
+
+  for(const ebene of ebenen){
+    const panel = panelSkeleton(ebene);
+    pollsEl.appendChild(panel);
+    const fallback = ebene.umfragen || {};
+    const fbNote = fallback.stand ? `Daten aus der letzten Aktualisierung (${dfmt(fallback.stand)}), Quelle <a href="https://dawum.de" rel="noopener">dawum.de</a>.` : 'Live-Abruf nicht möglich und keine gespeicherten Daten vorhanden.';
+    if(db){
+      const rows = extractFdp(db, t => new RegExp(ebene.parlament_regex, 'i').test(t));
+      const live = `Live von <a href="https://dawum.de/${esc(ebene.dawum_slug||'')}/" rel="noopener">dawum.de</a>, Datenbank-Stand ${dfmt(db.Database&&db.Database.Last_Update)}.`;
+      renderPolls(panel, rows, ebene.css, live, ebene.wahltrend, ebene.wahlergebnis);
+    } else {
+      renderPolls(panel, fallback.rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis);
     }
-    return out;
   }
-
-  const fallback = data.umfragen||{};
-  const trend = data.wahltrend||{};
-  const fbNote = fallback.stand ? `Daten aus der letzten Aktualisierung (${dfmt(fallback.stand)}), Quelle <a href="https://dawum.de" rel="noopener">dawum.de</a>.` : 'Live-Abruf nicht möglich und keine gespeicherten Daten vorhanden.';
-  try{
-    const db = await (await fetch(DAWUM_URL)).json();
-    const live = `Live von <a href="https://dawum.de/Bundestag/" rel="noopener">dawum.de</a>, Datenbank-Stand ${dfmt(db.Database&&db.Database.Last_Update)}.`;
-    renderPolls('panel-bund', extractFdp(db, t=>/bundestag/i.test(t)), 'bund', live, trend.bundestag);
-    renderPolls('panel-nrw',  extractFdp(db, t=>/nordrhein/i.test(t)),  'land', live.replace('/Bundestag/','/Nordrhein-Westfalen/'), trend.nrw);
-  }catch(e){
-    console.warn('dawum live nicht erreichbar, nutze data.json',e);
-    renderPolls('panel-bund', fallback.bundestag, 'bund', fbNote, trend.bundestag);
-    renderPolls('panel-nrw',  fallback.nrw,       'land', fbNote, trend.nrw);
-  }
-
-  // ---------- Posts ----------
-  const accounts = data.accounts||[];
-  const byHandle = Object.fromEntries(accounts.map(a=>[a.handle.toLowerCase(),a]));
-  const posts = (data.posts||[]).slice().sort((a,b)=> (b.datum||b.hinzugefuegt||'').localeCompare(a.datum||a.hinzugefuegt||''));
-  const chips = document.getElementById('chips'), grid = document.getElementById('grid');
-  const statusCls = s => ({'korrekt':'korrekt','teils korrekt':'teils','irreführend':'irref','falsch':'falsch','meinung':'meinung'}[(s||'').toLowerCase()]||'ungeprueft');
-  let embedLoaded=false;
-  function ensureEmbedScript(){
-    if(window.instgrm){ window.instgrm.Embeds.process(); return; }
-    if(embedLoaded) return; embedLoaded=true;
-    const s=document.createElement('script'); s.src='https://www.instagram.com/embed.js'; s.async=true; document.body.appendChild(s);
-  }
-
-  function card(p){
-    const acc = byHandle[(p.handle||'').toLowerCase()] || {label:p.handle||p.autor||'Unbekannt', ebene:''};
-    const fc = p.faktencheck||{};
-    const st = fc.status||'ungeprüft';
-    const img = p.thumbnail ? `<img src="${esc(p.thumbnail)}" alt="" loading="lazy">` : `<div class="noimg">Kein Vorschaubild</div>`;
-    const when = p.datum?dfmt(p.datum):(p.hinzugefuegt?'erfasst '+dfmt(p.hinzugefuegt):'');
-    if(!FC){
-      const a = document.createElement('div'); a.className='card'; a.dataset.handle=(p.handle||'').toLowerCase();
-      a.innerHTML = `<a class="cardlink" href="${esc(p.url)}" rel="noopener" target="_blank">
-        <div class="thumb">${img}</div>
-        <div class="cbody">
-          <div class="who"><span class="acc">${esc(acc.label)}</span><span class="lvl">${esc(acc.ebene||'')}</span></div>
-          ${p.caption?`<p class="cap">${esc(p.caption)}</p>`:''}
-          <div class="when">${when}</div>
-          <div class="open-hint">Auf Instagram öffnen ↗</div>
-        </div></a>`;
-      return a;
-    }
-    const el = document.createElement('details');
-    el.className='card'; el.dataset.handle=(p.handle||'').toLowerCase();
-    const quellen = (fc.quellen||[]).map(q=>`<li><a href="${esc(q.url||'#')}" rel="noopener">${esc(q.titel||q.url)}</a></li>`).join('');
-    el.innerHTML = `
-      <summary>
-        <div class="thumb">${img}<span class="badge ${statusCls(st)}">${esc(st)}</span></div>
-        <div class="cbody">
-          <div class="who"><span class="acc">${esc(acc.label)}</span><span class="lvl">${esc(acc.ebene||'')}</span></div>
-          ${p.caption?`<p class="cap">${esc(p.caption)}</p>`:''}
-          <div class="when">${when}</div>
-          <div class="open-hint">Faktencheck anzeigen ↓</div>
-        </div>
-      </summary>
-      <div class="fc">
-        <h4>Faktencheck · ${esc(st)}</h4>
-        ${fc.text ? `<p>${esc(fc.text)}</p>` : `<p class="empty">Noch kein Faktencheck hinterlegt.</p>`}
-        ${quellen ? `<ul>${quellen}</ul>` : ''}
-        ${fc.geprueft_am ? `<div class="checked">geprüft am ${dfmt(fc.geprueft_am)}</div>` : ''}
-        <a class="btn" href="${esc(p.url)}" rel="noopener" target="_blank">Auf Instagram öffnen</a>
-        ${p.embed_html ? `<button class="btn ghost" type="button" data-embed>Post hier einbetten</button><div class="embed"></div>` : ''}
-      </div>`;
-    const b = el.querySelector('[data-embed]');
-    if(b){ b.addEventListener('click',()=>{ el.querySelector('.embed').innerHTML = p.embed_html; b.remove(); ensureEmbedScript(); }); }
-    return el;
-  }
-
-  function renderGrid(filter){
-    grid.innerHTML='';
-    const list = filter==='alle' ? posts : posts.filter(p=>(p.handle||'').toLowerCase()===filter);
-    if(!list.length){
-      grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">Noch keine Posts. Post-URL in <code>posts.txt</code> eintragen und die Aktualisierung ausführen.</div>`;
-      return;
-    }
-    list.forEach(p=>grid.appendChild(card(p)));
-  }
-
-  const chipDefs = [{handle:'alle',label:'Alle'}, ...accounts];
-  chipDefs.forEach((a,i)=>{
-    const b=document.createElement('button'); b.type='button'; b.className='chip'; b.textContent=a.label; b.dataset.h=a.handle.toLowerCase();
-    b.setAttribute('aria-pressed', i===0?'true':'false');
-    b.addEventListener('click',()=>{ chips.querySelectorAll('.chip').forEach(c=>c.setAttribute('aria-pressed','false')); b.setAttribute('aria-pressed','true'); renderGrid(b.dataset.h); });
-    chips.appendChild(b);
-  });
-  renderGrid('alle');
 })();
 </script>
 </body>

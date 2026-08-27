@@ -1,0 +1,16 @@
+{
+  "Database": { "Last_Update": "2026-08-26" },
+  "Parties": { "1": { "Shortcut": "FDP" } },
+  "Parliaments": {
+    "10": { "Shortcut": "BT", "Name": "Deutscher Bundestag" },
+    "20": { "Shortcut": "NRW", "Name": "Landtag Nordrhein-Westfalen" },
+    "30": { "Shortcut": "Berlin", "Name": "Abgeordnetenhaus von Berlin" },
+    "40": { "Shortcut": "ST", "Name": "Landtag von Sachsen-Anhalt" }
+  },
+  "Institutes": { "5": { "Name": "Forsa (live)" } },
+  "Surveys": {
+    "100": { "Parliament_ID": 10, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 4.9 } },
+    "200": { "Parliament_ID": 20, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 5.8 } },
+    "300": { "Parliament_ID": 30, "Institute_ID": 5, "Date": "2026-08-25", "Results": { "1": 3.5 } }
+  }
+}
