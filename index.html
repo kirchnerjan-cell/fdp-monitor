@@ -176,14 +176,13 @@
   </div>
 </footer>
 
+<script src="monitor-utils.js"></script>
 <script>
 (async function(){
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
   const MAX_PCT = 10;                 // Skala der Balken (0–10 %)
-  const fmt = n => (Math.round(n*10)/10).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1});
-  const dfmt = s => { if(!s) return ''; const d = new Date(s); return isNaN(d) ? s : d.toLocaleDateString('de-DE',{day:'2-digit',month:'2-digit',year:'numeric'}); };
-  const esc = s => String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const {fmt, dfmt, esc, extractFdp} = MonitorUtils;
 
   // ---------- data.json ----------
   let data = {accounts:[],posts:[],umfragen:{}};
@@ -232,20 +231,6 @@
     }
     p.classList.remove('err');
     note.innerHTML = source;
-  }
-
-  function extractFdp(db, parlMatch){
-    const parties = db.Parties||{}, parls = db.Parliaments||{}, insts = db.Institutes||{};
-    const fdpId = Object.keys(parties).find(k => (parties[k].Shortcut||'').toUpperCase()==='FDP');
-    const parlIds = Object.keys(parls).filter(k => parlMatch((parls[k].Shortcut||'')+' '+(parls[k].Name||'')));
-    const out=[];
-    for(const s of Object.values(db.Surveys||{})){
-      if(!parlIds.includes(String(s.Parliament_ID))) continue;
-      const v = s.Results && s.Results[fdpId];
-      if(v==null) continue;
-      out.push({institut:(insts[s.Institute_ID]||{}).Name||('Institut '+s.Institute_ID), datum:s.Date, fdp:Number(v)});
-    }
-    return out;
   }
 
   const fallback = data.umfragen||{};
