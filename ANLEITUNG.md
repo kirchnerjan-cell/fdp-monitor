@@ -34,7 +34,8 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 }
 ```
 
-- `id`: eindeutiger Schlüssel, wird auch als `--trend <id> <wert>`-Argument benutzt.
+- `id`: eindeutiger Schlüssel, wird auch als `--trend <id> <wert>`-Argument benutzt. Bleibt stabil, auch wenn sich `kurz` ändert (z. B. Ebene `nrw` mit Kürzel `NW`).
+- `kurz`: Kürzel auf dem Badge oben rechts im Panel. Konvention: das **ISO-3166-2-Kürzel** des Bundeslands ohne `DE-`-Präfix, also `BW BY BE BB HB HH HE MV NI NW RP SL SN ST SH TH`. Ausnahme: die Bundesebene trägt `Bund`, da ISO 3166-2 dafür kein Kürzel vorsieht.
 - `parlament_regex`: matcht gegen `"<Shortcut> <Name>"` aus der dawum-API (Groß-/Kleinschreibung egal).
 - `dawum_slug`: Pfadsegment für den Live-Link auf dawum.de (z. B. `https://dawum.de/Sachsen-Anhalt/`).
 - `wahltermin`: Datum der nächsten Wahl (YYYY-MM-DD) – bestimmt die Sortierung auf der Seite. Bei der Bundestagswahl `null` lassen, sie steht immer zuerst.
