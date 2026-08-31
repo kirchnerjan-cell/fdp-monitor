@@ -76,7 +76,7 @@
     },
     {
       "id": "nrw",
-      "name": "Landtagswahl NRW",
+      "name": "Landtagswahl Nordrhein-Westfalen",
       "kurz": "NW",
       "css": "land",
       "parlament_regex": "nordrhein",
