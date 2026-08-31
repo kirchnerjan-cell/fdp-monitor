@@ -3,8 +3,8 @@
   "ebenen": [
     {
       "id": "nrw",
-      "name": "Landtagswahl NRW",
-      "kurz": "NRW",
+      "name": "Landtagswahl Nordrhein-Westfalen",
+      "kurz": "NW",
       "css": "land",
       "parlament_regex": "nordrhein",
       "dawum_slug": "Nordrhein-Westfalen",
@@ -36,7 +36,7 @@
     {
       "id": "berlin",
       "name": "Abgeordnetenhauswahl Berlin",
-      "kurz": "Berlin",
+      "kurz": "BE",
       "css": "land",
       "parlament_regex": "berlin",
       "dawum_slug": "Berlin",
