@@ -48,7 +48,9 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 
 ## Reihenfolge auf der Seite
 
-Bundesebene steht immer zuerst. Die Länder folgen danach, sortiert nach `wahltermin` (nächster Termin zuerst). Das übernimmt `sortEbenen()` in `monitor-utils.js`.
+Bundesebene steht immer zuerst. Danach kommen die **anstehenden** Wahlen, nächster Termin zuerst. Dahinter die bereits **gelaufenen** Wahlen, zuletzt gewählte zuerst — so rutschen abgeschlossene Wahlen nach unten, statt die anstehenden zu verdrängen. Ganz am Ende stünden Ebenen ohne `wahltermin`. Der Wahltag selbst zählt noch als anstehend. Das übernimmt `sortEbenen()` in `monitor-utils.js`.
+
+Eine gelaufene Wahl bleibt also sichtbar — mit ihrem `wahlergebnis` als schraffiertem Balken. Wenn sie ganz verschwinden soll, den Block aus `data.json["ebenen"]` löschen (siehe oben).
 
 ---
 

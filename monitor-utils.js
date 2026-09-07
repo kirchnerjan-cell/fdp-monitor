@@ -45,16 +45,24 @@
     });
   }
 
-  function sortEbenen(ebenen) {
+  /* Reihenfolge der Panels: Bundesebene immer zuerst, dann die anstehenden Wahlen
+     (nächster Termin zuerst), danach die bereits gelaufenen (zuletzt gewählte zuerst),
+     ganz am Ende Ebenen ohne Wahltermin. Der Wahltag selbst zählt noch als anstehend. */
+  function sortEbenen(ebenen, now) {
+    now = now || new Date();
+    const heute = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+      .toISOString()
+      .slice(0, 10);
     const bund = ebenen.filter((e) => e.id === "bund");
-    const rest = ebenen.filter((e) => e.id !== "bund").slice();
-    rest.sort((a, b) => {
-      if (a.wahltermin == null && b.wahltermin == null) return 0;
-      if (a.wahltermin == null) return 1;
-      if (b.wahltermin == null) return -1;
-      return a.wahltermin.localeCompare(b.wahltermin);
-    });
-    return [...bund, ...rest];
+    const rest = ebenen.filter((e) => e.id !== "bund");
+    const anstehend = rest
+      .filter((e) => e.wahltermin != null && e.wahltermin >= heute)
+      .sort((a, b) => a.wahltermin.localeCompare(b.wahltermin));
+    const gelaufen = rest
+      .filter((e) => e.wahltermin != null && e.wahltermin < heute)
+      .sort((a, b) => b.wahltermin.localeCompare(a.wahltermin));
+    const ohneTermin = rest.filter((e) => e.wahltermin == null);
+    return [...bund, ...anstehend, ...gelaufen, ...ohneTermin];
   }
 
   const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge };

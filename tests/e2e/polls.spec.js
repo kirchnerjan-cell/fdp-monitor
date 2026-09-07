@@ -3,8 +3,46 @@ import fs from "node:fs";
 import path from "node:path";
 
 const fixturesDir = path.join(import.meta.dirname, "fixtures");
-const dataFixture = fs.readFileSync(path.join(fixturesDir, "data.json"), "utf-8");
-const dawumLive = fs.readFileSync(path.join(fixturesDir, "dawum-live.json"), "utf-8");
+
+const TAG = 86_400_000;
+const tag = (offset) => new Date(Date.now() + offset * TAG).toISOString().slice(0, 10);
+const deutsch = (isoTag) => isoTag.split("-").reverse().join(".");
+
+// Wahltermine und Umfrage-Daten werden relativ zu heute gesetzt. Fest eingetragene
+// Daten würden sonst mit der Zeit ihre Bedeutung ändern: eine "anstehende" Wahl wird
+// irgendwann zur gelaufenen, und eine "frische" Umfrage fällt aus dem Altersfenster.
+const TERMIN = { sachsenAnhalt: tag(-1), berlin: tag(13), nrw: tag(230) };
+
+function buildDataFixture() {
+  const d = JSON.parse(fs.readFileSync(path.join(fixturesDir, "data.json"), "utf-8"));
+  const e = Object.fromEntries(d.ebenen.map((x) => [x.id, x]));
+
+  e["sachsen-anhalt"].wahltermin = TERMIN.sachsenAnhalt;      // gestern -> gelaufen
+  e["sachsen-anhalt"].wahlergebnis.datum = TERMIN.sachsenAnhalt;
+  e["sachsen-anhalt"].umfragen.rows[0].datum = tag(-120);     // innerhalb der 180 Tage
+  e["sachsen-anhalt"].umfragen.rows[1].datum = tag(-600);     // ausserhalb der 180 Tage
+  e["berlin"].wahltermin = TERMIN.berlin;                     // anstehend, bald
+  e["nrw"].wahltermin = TERMIN.nrw;                           // anstehend, spaeter
+  e["nrw"].umfragen.rows[0].datum = tag(-28);
+  e["bund"].umfragen.rows[0].datum = tag(-17);                // innerhalb der 60 Tage
+  e["bund"].umfragen.rows[1].datum = tag(-250);               // ausserhalb der 60 Tage
+
+  return JSON.stringify(d);
+}
+const dataFixture = buildDataFixture();
+
+const DAWUM_STAND = tag(-1);
+
+function buildDawumFixture() {
+  const db = JSON.parse(fs.readFileSync(path.join(fixturesDir, "dawum-live.json"), "utf-8"));
+  db.Database.Last_Update = DAWUM_STAND;
+  db.Surveys["100"].Date = tag(-13);   // Bund, innerhalb der 60 Tage
+  db.Surveys["101"].Date = tag(-250);  // Bund, ausserhalb der 60 Tage
+  db.Surveys["200"].Date = tag(-13);   // NRW
+  db.Surveys["300"].Date = tag(-13);   // Berlin
+  return JSON.stringify(db);
+}
+const dawumLive = buildDawumFixture();
 
 async function mockDataJson(page) {
   await page.route("**/data.json*", (route) =>
@@ -19,17 +57,17 @@ test.describe("Reihenfolge der Ebenen", () => {
     await page.goto("/index.html");
   });
 
-  test("Bundesebene steht immer zuerst, danach Länder nach Wahltermin aufsteigend", async ({ page }) => {
-    // Fixture order is nrw, bund, berlin, sachsen-anhalt (deliberately scrambled);
-    // expected render order: bund, sachsen-anhalt (06.09.2026), berlin (20.09.2026), nrw (25.04.2027).
-    await expect(page.locator(".panel")).toHaveCount(4); // panels render asynchronously; wait before reading order
+  test("Bund zuerst, dann anstehende Wahlen nach Termin, gelaufene ganz am Ende", async ({ page }) => {
+    // Fixture-Reihenfolge ist nrw, bund, berlin, sachsen-anhalt (bewusst durcheinander).
+    // Erwartet: bund, berlin (in 13 Tagen), nrw (in 230 Tagen), sachsen-anhalt (gestern gewählt).
+    await expect(page.locator(".panel")).toHaveCount(4); // Panels rendern asynchron
     const ids = await page.locator(".panel").evaluateAll((els) => els.map((e) => e.id));
-    expect(ids).toEqual(["panel-bund", "panel-sachsen-anhalt", "panel-berlin", "panel-nrw"]);
+    expect(ids).toEqual(["panel-bund", "panel-berlin", "panel-nrw", "panel-sachsen-anhalt"]);
   });
 
   test("shows the Wahltermin under each Land panel but not under Bund", async ({ page }) => {
     await expect(page.locator("#panel-bund .termin")).toHaveCount(0);
-    await expect(page.locator("#panel-nrw .termin")).toContainText("25.04.2027");
+    await expect(page.locator("#panel-nrw .termin")).toContainText(deutsch(TERMIN.nrw));
   });
 });
 
@@ -70,7 +108,7 @@ test.describe("Umfragen: live dawum erreichbar", () => {
   test("shows the live source note with the live database date", async ({ page }) => {
     const note = page.locator("#panel-bund .note");
     await expect(note).toContainText("Live von");
-    await expect(note).toContainText("26.08.2026");
+    await expect(note).toContainText(deutsch(DAWUM_STAND));
   });
 
   test("renders a bar row using the live survey value, not the stored fallback", async ({ page }) => {
@@ -119,8 +157,8 @@ test.describe("Altersfilter für Einzelumfragen", () => {
     await mockDataJson(page);
     await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
     await page.goto("/index.html");
-    // bund fixture has an "Alt (gespeichert)" row from 2026-01-01 (>60 days old) alongside
-    // a fresh one from 2026-08-10 — only the fresh one should render.
+    // bund hat eine 250 Tage alte Zeile (>60 Tage) neben einer 17 Tage alten —
+    // nur die frische darf gerendert werden.
     await expect(page.locator("#panel-bund .row")).toHaveCount(1);
     await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (gespeichert)");
     // sachsen-anhalt fixture has an "Alt (gespeichert)" row from 2025-01-01 (>180 days old,
@@ -135,7 +173,7 @@ test.describe("Altersfilter für Einzelumfragen", () => {
       route.fulfill({ contentType: "application/json", body: dawumLive })
     );
     await page.goto("/index.html");
-    // dawum-live fixture has an extra "Alt (live)" Bundestag survey from 2026-01-01.
+    // dawum-live enthaelt eine zusaetzliche, 250 Tage alte "Alt (live)"-Bundesumfrage.
     await expect(page.locator("#panel-bund .row")).toHaveCount(1);
     await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (live)");
   });
