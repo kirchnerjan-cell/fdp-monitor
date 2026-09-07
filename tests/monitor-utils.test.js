@@ -114,31 +114,54 @@ describe("extractFdp", () => {
 });
 
 describe("sortEbenen", () => {
+  const NOW = new Date("2026-09-07T12:00:00Z");
   const bund = { id: "bund", wahltermin: null };
-  const nrw = { id: "nrw", wahltermin: "2027-05-09" };
-  const berlin = { id: "berlin", wahltermin: "2026-09-13" };
-  const sachsenAnhalt = { id: "sachsen-anhalt", wahltermin: "2026-06-07" };
+  const nrw = { id: "nrw", wahltermin: "2027-04-25" };       // anstehend, spät
+  const berlin = { id: "berlin", wahltermin: "2026-09-20" }; // anstehend, bald
+  const sachsenAnhalt = { id: "sachsen-anhalt", wahltermin: "2026-09-06" }; // gelaufen (gestern)
 
   it("always puts Bund first regardless of input order", () => {
-    const sorted = sortEbenen([nrw, bund, berlin]);
-    expect(sorted[0].id).toBe("bund");
+    expect(sortEbenen([nrw, bund, berlin], NOW)[0].id).toBe("bund");
   });
 
-  it("orders the remaining Länder by ascending Wahltermin", () => {
-    const sorted = sortEbenen([nrw, bund, berlin, sachsenAnhalt]);
-    expect(sorted.map((e) => e.id)).toEqual(["bund", "sachsen-anhalt", "berlin", "nrw"]);
+  it("orders upcoming elections by ascending Wahltermin", () => {
+    const sorted = sortEbenen([nrw, bund, berlin], NOW);
+    expect(sorted.map((e) => e.id)).toEqual(["bund", "berlin", "nrw"]);
   });
 
-  it("puts entries with no Wahltermin after dated ones", () => {
+  it("puts completed elections after all upcoming ones", () => {
+    const sorted = sortEbenen([sachsenAnhalt, nrw, bund, berlin], NOW);
+    expect(sorted.map((e) => e.id)).toEqual(["bund", "berlin", "nrw", "sachsen-anhalt"]);
+  });
+
+  it("orders completed elections most-recent-first", () => {
+    const alt = { id: "alt", wahltermin: "2021-09-26" };
+    const sorted = sortEbenen([alt, sachsenAnhalt, berlin], NOW);
+    expect(sorted.map((e) => e.id)).toEqual(["berlin", "sachsen-anhalt", "alt"]);
+  });
+
+  it("counts election day itself as upcoming, not completed", () => {
+    const heute = { id: "heute", wahltermin: "2026-09-07" };
+    const sorted = sortEbenen([sachsenAnhalt, heute], NOW);
+    expect(sorted.map((e) => e.id)).toEqual(["heute", "sachsen-anhalt"]);
+  });
+
+  it("puts entries with no Wahltermin last, even after completed ones", () => {
     const noDate = { id: "unbekannt", wahltermin: null };
-    const sorted = sortEbenen([noDate, sachsenAnhalt]);
-    expect(sorted.map((e) => e.id)).toEqual(["sachsen-anhalt", "unbekannt"]);
+    const sorted = sortEbenen([noDate, sachsenAnhalt, berlin], NOW);
+    expect(sorted.map((e) => e.id)).toEqual(["berlin", "sachsen-anhalt", "unbekannt"]);
+  });
+
+  it("keeps data.json order for two elections on the same day", () => {
+    const mv = { id: "mv", wahltermin: "2026-09-20" };
+    expect(sortEbenen([mv, berlin], NOW).map((e) => e.id)).toEqual(["mv", "berlin"]);
+    expect(sortEbenen([berlin, mv], NOW).map((e) => e.id)).toEqual(["berlin", "mv"]);
   });
 
   it("does not mutate the input array", () => {
     const input = [nrw, bund, sachsenAnhalt];
     const copy = [...input];
-    sortEbenen(input);
+    sortEbenen(input, NOW);
     expect(input).toEqual(copy);
   });
 });
