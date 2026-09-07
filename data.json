@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-08-31T10:48+02:00",
+  "erstellt": "2026-09-07T09:10+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -12,26 +12,36 @@
       "umfrage_max_alter_tage": 60,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": 4.4,
-        "delta": -0.7,
-        "stand": "2026-08-31"
+        "wert": 4.3,
+        "delta": -0.1,
+        "stand": "2026-09-07"
       },
       "umfragen": {
-        "stand": "2026-08-30T00:51:55+02:00",
+        "stand": "2026-09-06T10:56:05+02:00",
         "rows": [
           {
             "institut": "INSA",
-            "datum": "2026-08-29",
+            "datum": "2026-09-05",
+            "fdp": 4.0
+          },
+          {
+            "institut": "Infratest dimap",
+            "datum": "2026-09-03",
+            "fdp": 4.0
+          },
+          {
+            "institut": "Ipsos",
+            "datum": "2026-09-02",
+            "fdp": 5.0
+          },
+          {
+            "institut": "Forsa",
+            "datum": "2026-09-01",
             "fdp": 4.0
           },
           {
             "institut": "Verian (Emnid)",
             "datum": "2026-08-28",
-            "fdp": 4.0
-          },
-          {
-            "institut": "Forsa",
-            "datum": "2026-08-25",
             "fdp": 4.0
           },
           {
@@ -55,16 +65,6 @@
             "fdp": 5.0
           },
           {
-            "institut": "Infratest dimap",
-            "datum": "2026-08-06",
-            "fdp": 4.0
-          },
-          {
-            "institut": "Ipsos",
-            "datum": "2026-08-06",
-            "fdp": 5.0
-          },
-          {
             "institut": "GMS",
             "datum": "2026-07-20",
             "fdp": 5.0
@@ -81,18 +81,31 @@
       "dawum_slug": "Sachsen-Anhalt",
       "wahltermin": "2026-09-06",
       "umfrage_max_alter_tage": 180,
-      "wahlergebnis": null,
+      "wahlergebnis": {
+        "fdp": 2.6,
+        "datum": "2026-09-06"
+      },
       "wahltrend": {
-        "wert": 3.1,
-        "delta": null,
-        "stand": "2026-08-31"
+        "wert": 2.7,
+        "delta": -0.4,
+        "stand": "2026-09-07"
       },
       "umfragen": {
-        "stand": "2026-08-30T00:51:55+02:00",
+        "stand": "2026-09-06T10:56:05+02:00",
         "rows": [
           {
+            "institut": "Civey",
+            "datum": "2026-09-03",
+            "fdp": 2.0
+          },
+          {
             "institut": "Forschungsgruppe Wahlen",
-            "datum": "2026-08-28",
+            "datum": "2026-09-03",
+            "fdp": 3.0
+          },
+          {
+            "institut": "INSA",
+            "datum": "2026-09-02",
             "fdp": 3.0
           },
           {
@@ -101,19 +114,9 @@
             "fdp": 3.0
           },
           {
-            "institut": "Civey",
-            "datum": "2026-08-25",
-            "fdp": 4.0
-          },
-          {
             "institut": "pollytix",
             "datum": "2026-08-12",
             "fdp": 2.0
-          },
-          {
-            "institut": "INSA",
-            "datum": "2026-08-10",
-            "fdp": 4.0
           }
         ]
       }
@@ -129,12 +132,12 @@
       "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": null,
+        "wert": 3.0,
         "delta": null,
-        "stand": null
+        "stand": "2026-09-07"
       },
       "umfragen": {
-        "stand": "2026-08-30T00:51:55+02:00",
+        "stand": "2026-09-06T10:56:05+02:00",
         "rows": [
           {
             "institut": "INSA",
@@ -155,31 +158,26 @@
       "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": 3.0,
-        "delta": null,
-        "stand": "2026-08-31"
+        "wert": 3.2,
+        "delta": 0.2,
+        "stand": "2026-09-07"
       },
       "umfragen": {
-        "stand": "2026-08-30T00:51:55+02:00",
+        "stand": "2026-09-06T10:56:05+02:00",
         "rows": [
           {
-            "institut": "Forsa",
-            "datum": "2026-08-22",
-            "fdp": 3.0
-          },
-          {
             "institut": "INSA",
-            "datum": "2026-08-14",
+            "datum": "2026-09-04",
             "fdp": 3.0
           },
           {
             "institut": "Civey",
-            "datum": "2026-08-05",
-            "fdp": 3.0
+            "datum": "2026-08-31",
+            "fdp": 4.0
           },
           {
-            "institut": "Infratest dimap",
-            "datum": "2026-07-16",
+            "institut": "Forsa",
+            "datum": "2026-08-22",
             "fdp": 3.0
           }
         ]
@@ -201,7 +199,7 @@
         "stand": "2026-08-26"
       },
       "umfragen": {
-        "stand": "2026-08-30T00:51:55+02:00",
+        "stand": "2026-09-06T10:56:05+02:00",
         "rows": [
           {
             "institut": "Infratest dimap",
