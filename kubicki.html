@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kubicki-Monitor · Beiträge &amp; Interviews</title>
+<meta name="description" content="Wolfgang Kubicki: Cicero-Beiträge und Interviews pro Woche.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5F6672; --line:#DCDFD8;
+    --bund:#1E4FD8; --grey:#8A9099;
+    /* Sender-Kategorien: fixe Reihenfolge (nie zyklisch neu vergeben), CVD-geprüft. */
+    --s-welt:#2a78d6; --s-ard:#eb6834; --s-zdf:#1baf7a; --s-phoenix:#eda100; --s-dlf:#e87ba4; --s-sonst:var(--grey);
+    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --body:"IBM Plex Sans",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --max:1200px; --r:10px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
+  a{color:inherit}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 18px}
+
+  header.top{border-bottom:1px solid var(--line);background:var(--paper)}
+  header.top .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:14px;flex-wrap:wrap}
+  .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;line-height:1}
+  .brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:6px}
+  .stand{font-family:var(--mono);font-size:12px;color:var(--mute)}
+  nav.crumb{font-size:12px;color:var(--mute)}
+  nav.crumb a{text-decoration:underline}
+
+  section{padding:28px 0 8px}
+  h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--mute);font-size:14px;margin:0 0 18px}
+
+  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 14px;margin-bottom:16px}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--mute);margin:0 0 14px}
+  .legend .item{display:flex;align-items:center;gap:6px}
+  .legend .dot{width:9px;height:9px;border-radius:2px;flex:none}
+
+  .weeks{display:flex;flex-direction:column}
+  .wrow{padding:9px 0;border-top:1px solid var(--line)}
+  .wrow:first-of-type{border-top:0}
+  .wrow .meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
+  .wrow .meta .kw{font-weight:500}
+  .wrow .meta .range{font-family:var(--mono);font-size:11px;color:var(--mute)}
+  .wrow .track{position:relative;height:16px;background:var(--bg);border-radius:3px;display:flex;gap:2px;overflow:visible}
+  .wrow .seg{height:100%;border-radius:2px;min-width:3px}
+  .wrow .total{font-family:var(--mono);font-size:12px;margin-left:8px;white-space:nowrap}
+  .wrow .brk{font-size:11px;color:var(--mute);margin-top:4px}
+  .wrow.empty .track{background:transparent}
+
+  .vorschlaege{list-style:none;margin:0;padding:0}
+  .vorschlaege li{padding:10px 0;border-top:1px solid var(--line);font-size:13px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vorschlaege li:first-of-type{border-top:0}
+  .vorschlaege .titel{font-weight:500}
+  .vorschlaege .titel a{text-decoration:none;border-bottom:1px solid var(--line)}
+  .vorschlaege .info{font-family:var(--mono);font-size:11px;color:var(--mute);white-space:nowrap}
+  .empty-note{font-size:13px;color:var(--mute)}
+  .hint{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.4}
+
+  footer{margin-top:40px;border-top:1px solid var(--line);padding:22px 0 40px;font-size:12px;color:var(--mute);line-height:1.6}
+  footer a{color:var(--mute)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand">Kubicki-Monitor<small>Beiträge &amp; Interviews</small></div>
+    <div>
+      <div class="stand" id="stand">Stand: wird geladen …</div>
+      <nav class="crumb"><a href="index.html">← FDP-Monitor</a></nav>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section id="beitraege">
+    <h2>Cicero-Beiträge pro Woche</h2>
+    <p class="sub">Alle Texte von Wolfgang Kubicki auf cicero.de, gezählt je ISO-Kalenderwoche.</p>
+    <div class="panel"><div class="weeks" id="beitraege-weeks"></div></div>
+  </section>
+
+  <section id="interviews">
+    <h2>Interviews pro Woche</h2>
+    <p class="sub">Bestätigte Interview-Auftritte je Sender und Woche.</p>
+    <div class="panel">
+      <div class="legend" id="legend"></div>
+      <div class="weeks" id="interviews-weeks"></div>
+    </div>
+  </section>
+
+  <section id="vorschlaege">
+    <h2>Unbestätigte Vorschläge</h2>
+    <p class="sub">Von der Routine per Websuche gefundene, aber noch nicht geprüfte Interview-Kandidaten. Nach Prüfung in <code>kubicki-data.json</code> den Status von "vorschlag" auf "bestaetigt" setzen.</p>
+    <div class="panel">
+      <ul class="vorschlaege" id="vorschlaege-liste"></ul>
+      <p class="empty-note" id="vorschlaege-leer" hidden>Keine offenen Vorschläge.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    Quellen: <a href="https://www.cicero.de/themen/wolfgang-kubicki" rel="noopener">cicero.de</a> (Beiträge, automatisch per Websuche erfasst), Sender-Websites/Mediatheken (Interviews, Vorschläge zur manuellen Bestätigung).
+  </div>
+</footer>
+
+<script src="monitor-utils.js"></script>
+<script src="kubicki-utils.js"></script>
+<script>
+(async function(){
+  const DATA_URL = 'kubicki-data.json?t=' + Date.now();
+  const WEEKS_SHOWN = 12;
+  const {dfmt, esc} = MonitorUtils;
+  const {isoWeekInfo, groupByWeek, lastNWeeks, countBy} = KubickiUtils;
+
+  const SENDER_COLOR = {
+    'WELT TV': 'var(--s-welt)', 'ARD': 'var(--s-ard)', 'ZDF': 'var(--s-zdf)',
+    'Phoenix': 'var(--s-phoenix)', 'Deutschlandfunk': 'var(--s-dlf)'
+  };
+  const senderColor = (s) => SENDER_COLOR[s] || 'var(--s-sonst)';
+
+  let data = {beitraege: [], interviews: [], quellen: {}};
+  try{ data = await (await fetch(DATA_URL,{cache:'no-store'})).json(); }
+  catch(e){ console.warn('kubicki-data.json nicht ladbar', e); }
+  document.getElementById('stand').textContent = 'Stand: ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
+
+  const senderReihenfolge = (data.quellen && data.quellen.sender) || Object.keys(SENDER_COLOR);
+  const legend = document.getElementById('legend');
+  legend.innerHTML = senderReihenfolge.map(s =>
+    `<span class="item"><span class="dot" style="background:${senderColor(s)}"></span>${esc(s)}</span>`
+  ).join('');
+
+  const weeks = lastNWeeks(WEEKS_SHOWN);
+
+  function weekLabel(w){
+    return `KW ${String(w.week).padStart(2,'0')}`;
+  }
+  function rangeLabel(w){
+    return dfmt(w.start) + '–' + dfmt(w.end);
+  }
+
+  // ---------- Beiträge pro Woche ----------
+  const beitraegeByWeek = new Map(groupByWeek(data.beitraege || []).map(g => [g.key, g]));
+  const beitraegeMax = Math.max(1, ...weeks.map(w => (beitraegeByWeek.get(w.key)?.items.length) || 0));
+  const bEl = document.getElementById('beitraege-weeks');
+  bEl.innerHTML = weeks.map(w => {
+    const g = beitraegeByWeek.get(w.key);
+    const n = g ? g.items.length : 0;
+    const pct = n ? Math.max(4, n / beitraegeMax * 100) : 0;
+    const titel = g ? g.items.map(r => esc(r.titel)).join(' · ') : '';
+    return `<div class="wrow${n?'':' empty'}" title="${titel}">
+      <div class="meta"><span class="kw">${weekLabel(w)}</span><span class="range">${rangeLabel(w)}</span></div>
+      <div class="track">${n ? `<div class="seg" style="width:${pct}%;background:var(--bund)"></div>` : ''}</div>
+      ${n ? `<div class="brk">${n} ${n===1?'Beitrag':'Beiträge'}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // ---------- Interviews pro Woche (nur bestätigte) ----------
+  const bestaetigt = (data.interviews || []).filter(i => (i.status || 'bestaetigt') === 'bestaetigt');
+  const interviewsByWeek = new Map(groupByWeek(bestaetigt).map(g => [g.key, g]));
+  const interviewsMax = Math.max(1, ...weeks.map(w => (interviewsByWeek.get(w.key)?.items.length) || 0));
+  const iEl = document.getElementById('interviews-weeks');
+  iEl.innerHTML = weeks.map(w => {
+    const g = interviewsByWeek.get(w.key);
+    const items = g ? g.items : [];
+    const n = items.length;
+    const bySender = countBy(items, 'sender');
+    const segs = Object.entries(bySender).map(([sender, count]) =>
+      `<div class="seg" style="flex:${count};background:${senderColor(sender)}" title="${esc(sender)}: ${count}"></div>`
+    ).join('');
+    const brk = Object.entries(bySender).map(([sender, count]) => `${esc(sender)}: ${count}`).join(' · ');
+    const widthPct = n ? Math.max(8, n / interviewsMax * 100) : 0;
+    return `<div class="wrow${n?'':' empty'}">
+      <div class="meta"><span class="kw">${weekLabel(w)}</span><span class="range">${rangeLabel(w)}</span></div>
+      <div class="track" style="width:${widthPct}%">${segs}</div>
+      ${n ? `<div class="brk">${brk}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // ---------- Vorschläge ----------
+  const vorschlaege = (data.interviews || []).filter(i => i.status === 'vorschlag')
+    .slice().sort((a,b) => (b.datum||'').localeCompare(a.datum||''));
+  const vEl = document.getElementById('vorschlaege-liste');
+  document.getElementById('vorschlaege-leer').hidden = vorschlaege.length > 0;
+  vEl.innerHTML = vorschlaege.map(v => `<li>
+    <span class="titel"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${senderColor(v.sender)};margin-right:6px"></span>${v.url ? `<a href="${esc(v.url)}" rel="noopener">${esc(v.titel||v.sender)}</a>` : esc(v.titel||v.sender)}</span>
+    <span class="info">${esc(v.sender)} · ${dfmt(v.datum)}</span>
+  </li>`).join('');
+})();
+</script>
+</body>
+</html>
