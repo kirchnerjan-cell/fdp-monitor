@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-09-07T10:13+02:00",
+  "erstellt": "2026-09-14T09:08+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -13,15 +13,25 @@
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 4.3,
-        "delta": -0.1,
-        "stand": "2026-09-07"
+        "delta": 0.0,
+        "stand": "2026-09-14"
       },
       "umfragen": {
-        "stand": "2026-09-06T10:56:05+02:00",
+        "stand": "2026-09-12T21:16:40+02:00",
         "rows": [
           {
             "institut": "INSA",
-            "datum": "2026-09-05",
+            "datum": "2026-09-12",
+            "fdp": 4.0
+          },
+          {
+            "institut": "pollytix",
+            "datum": "2026-09-08",
+            "fdp": 5.0
+          },
+          {
+            "institut": "Forsa",
+            "datum": "2026-09-08",
             "fdp": 4.0
           },
           {
@@ -35,19 +45,9 @@
             "fdp": 5.0
           },
           {
-            "institut": "Forsa",
-            "datum": "2026-09-01",
-            "fdp": 4.0
-          },
-          {
             "institut": "Verian (Emnid)",
             "datum": "2026-08-28",
             "fdp": 4.0
-          },
-          {
-            "institut": "pollytix",
-            "datum": "2026-08-21",
-            "fdp": 5.0
           },
           {
             "institut": "Allensbach",
@@ -87,11 +87,11 @@
       },
       "wahltrend": {
         "wert": 2.7,
-        "delta": -0.4,
-        "stand": "2026-09-07"
+        "delta": 0.0,
+        "stand": "2026-09-14"
       },
       "umfragen": {
-        "stand": "2026-09-06T10:56:05+02:00",
+        "stand": "2026-09-12T21:16:40+02:00",
         "rows": [
           {
             "institut": "Civey",
@@ -132,17 +132,17 @@
       "umfrage_max_alter_tage": 180,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": 3.0,
-        "delta": null,
-        "stand": "2026-09-07"
+        "wert": 1.6,
+        "delta": -1.4,
+        "stand": "2026-09-14"
       },
       "umfragen": {
-        "stand": "2026-09-06T10:56:05+02:00",
+        "stand": "2026-09-12T21:16:40+02:00",
         "rows": [
           {
-            "institut": "INSA",
-            "datum": "2026-08-13",
-            "fdp": 3.0
+            "institut": "pollytix",
+            "datum": "2026-09-10",
+            "fdp": 2.0
           }
         ]
       }
@@ -159,11 +159,11 @@
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 3.2,
-        "delta": 0.2,
-        "stand": "2026-09-07"
+        "delta": 0.0,
+        "stand": "2026-09-14"
       },
       "umfragen": {
-        "stand": "2026-09-06T10:56:05+02:00",
+        "stand": "2026-09-12T21:16:40+02:00",
         "rows": [
           {
             "institut": "INSA",
@@ -199,7 +199,7 @@
         "stand": "2026-08-26"
       },
       "umfragen": {
-        "stand": "2026-09-06T10:56:05+02:00",
+        "stand": "2026-09-12T21:16:40+02:00",
         "rows": [
           {
             "institut": "Infratest dimap",
