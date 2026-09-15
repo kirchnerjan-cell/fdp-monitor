@@ -184,6 +184,46 @@
       }
     },
     {
+      "id": "saarland",
+      "name": "Landtagswahl Saarland",
+      "kurz": "SL",
+      "css": "land",
+      "parlament_regex": "saarland",
+      "dawum_slug": "Saarland",
+      "wahltermin": "2027-04-18",
+      "umfrage_max_alter_tage": 180,
+      "wahlergebnis": null,
+      "wahltrend": {
+        "wert": null,
+        "delta": null,
+        "stand": null
+      },
+      "umfragen": {
+        "stand": null,
+        "rows": []
+      }
+    },
+    {
+      "id": "schleswig-holstein",
+      "name": "Landtagswahl Schleswig-Holstein",
+      "kurz": "SH",
+      "css": "land",
+      "parlament_regex": "schleswig",
+      "dawum_slug": "Schleswig-Holstein",
+      "wahltermin": "2027-04-18",
+      "umfrage_max_alter_tage": 180,
+      "wahlergebnis": null,
+      "wahltrend": {
+        "wert": null,
+        "delta": null,
+        "stand": null
+      },
+      "umfragen": {
+        "stand": null,
+        "rows": []
+      }
+    },
+    {
       "id": "nrw",
       "name": "Landtagswahl Nordrhein-Westfalen",
       "kurz": "NW",
@@ -217,6 +257,26 @@
             "fdp": 3.0
           }
         ]
+      }
+    },
+    {
+      "id": "bremen",
+      "name": "Bürgerschaftswahl Bremen",
+      "kurz": "HB",
+      "css": "land",
+      "parlament_regex": "brem",
+      "dawum_slug": "Bremen",
+      "wahltermin": "2027-05-30",
+      "umfrage_max_alter_tage": 180,
+      "wahlergebnis": null,
+      "wahltrend": {
+        "wert": null,
+        "delta": null,
+        "stand": null
+      },
+      "umfragen": {
+        "stand": null,
+        "rows": []
       }
     }
   ]

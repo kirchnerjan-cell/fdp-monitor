@@ -14,7 +14,9 @@ Ergebnis:
      (Ebene-IDs stehen in data.json["ebenen"][*]["id"].) Δ zur Vorwoche wird aus dem
      bisher gespeicherten Wert berechnet; --stand YYYY-MM-DD überschreibt das
      Stand-Datum (Standard: heute).
-  3. "erstellt" wird auf jetzt gesetzt.
+  3. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
+     "erstellt" auf jetzt gesetzt und data.json geschrieben. Andernfalls bleibt die
+     Datei unangetastet, damit kein Commit entsteht, der nur den Zeitstempel enthält.
 """
 import argparse
 import json, re, os, urllib.request
@@ -95,6 +97,10 @@ def set_trend(d, ebene_id, value, stand):
     t["stand"] = stand
     print(f"Wahltrend {ebene_id}: {t['wert']} % (Δ {t['delta']}), Stand {stand}")
 
+def inhalt_signatur(d):
+    """Fingerabdruck der inhaltlichen Daten – ohne "erstellt", das sich bei jedem Lauf ändert."""
+    return json.dumps(d.get("ebenen", []), sort_keys=True, ensure_ascii=False)
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--trend", nargs=2, action="append", metavar=("EBENE", "WERT"),
@@ -104,11 +110,17 @@ def main():
     ap.add_argument("--nur-trend", action="store_true", help="nur Wahltrend setzen, keine Umfragen abrufen")
     a = ap.parse_args()
     d = load_data()
+    vorher = inhalt_signatur(d)
     stand = a.stand or datetime.now(TZ).date().isoformat()
     for ebene_id, value in (a.trend or []):
         set_trend(d, ebene_id, float(value), stand)
     if not a.nur_trend:
         update_polls(d)
+    if inhalt_signatur(d) == vorher:
+        # Nichts Inhaltliches geändert: data.json unangetastet lassen, damit kein Commit
+        # entsteht, der nur einen neuen Zeitstempel enthält.
+        print("Keine inhaltlichen Änderungen – data.json bleibt unverändert.")
+        return
     d["erstellt"] = datetime.now(TZ).isoformat(timespec="minutes")
     save_data(d)
     print("data.json geschrieben.")

@@ -76,6 +76,46 @@ class TestFdpRows:
         db = self._db(parliament_name="Abgeordnetenhaus von Berlin", shortcut="Berlin")
         assert len(update.fdp_rows(db, r"berlin")) == 1
 
+    def test_matches_saarland_also_in_its_genitive_form(self):
+        # dawum kann "Saarland" oder "Landtag des Saarlandes" schreiben.
+        for name in ("Saarland", "Landtag des Saarlandes"):
+            assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="SL"), r"saarland")) == 1
+
+    def test_matches_schleswig_holstein(self):
+        for name in ("Schleswig-Holstein", "Landtag von Schleswig-Holstein"):
+            assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="SH"), r"schleswig")) == 1
+
+    def test_matches_bremen_including_the_buergerschaft_spelling(self):
+        # "bremen" als Regex würde "Bremische Bürgerschaft" verfehlen – daher "brem".
+        for name in ("Bremen", "Bremische Bürgerschaft"):
+            assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="HB"), r"brem")) == 1
+
+    def test_bremen_regex_does_not_swallow_other_parliaments(self):
+        for name in ("Deutscher Bundestag", "Landtag von Schleswig-Holstein", "Abgeordnetenhaus von Berlin"):
+            assert update.fdp_rows(self._db(parliament_name=name, shortcut="XX"), r"brem") == []
+
+    def test_every_parlament_regex_in_data_json_matches_only_its_own_ebene(self):
+        """Die echten Regexe aus data.json gegeneinander prüfen: jeder darf genau
+        sein eigenes Parlament treffen und keines der anderen."""
+        import json, os, re
+        pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data.json")
+        ebenen = json.load(open(pfad, encoding="utf-8"))["ebenen"]
+        # So könnte dawum die Parlamente benennen ("<Shortcut> <Name>").
+        namen = {
+            "bund": "BT Deutscher Bundestag",
+            "sachsen-anhalt": "ST Landtag von Sachsen-Anhalt",
+            "mecklenburg-vorpommern": "MV Landtag Mecklenburg-Vorpommern",
+            "berlin": "BE Abgeordnetenhaus von Berlin",
+            "nrw": "NW Landtag Nordrhein-Westfalen",
+            "saarland": "SL Landtag des Saarlandes",
+            "schleswig-holstein": "SH Landtag von Schleswig-Holstein",
+            "bremen": "HB Bremische Bürgerschaft",
+        }
+        for e in ebenen:
+            assert e["id"] in namen, f"Testdaten kennen die Ebene '{e['id']}' nicht"
+            treffer = [i for i, n in namen.items() if re.search(e["parlament_regex"], n, re.I)]
+            assert treffer == [e["id"]], f"{e['id']}: Regex trifft {treffer}"
+
 
 class TestSetTrend:
     def _d(self, ids=("bund",)):

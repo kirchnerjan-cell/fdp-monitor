@@ -44,7 +44,19 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 - **Neue Ebene hinzufügen:** einen bestehenden Landtag-Block kopieren und `id`, `name`, `kurz`, `parlament_regex`, `dawum_slug`, `wahltermin` anpassen (`wahlergebnis`/`wahltrend`/`umfragen` auf die leeren Startwerte wie oben zurücksetzen). Danach greifen Routine und `update.py` automatisch mit – keine Codeänderung nötig.
 - **Ebene entfernen:** den ganzen Block aus `data.json["ebenen"]` löschen. Auch dafür ist keine Codeänderung nötig, da weder `update.py` noch die Seite eine feste Liste von Ebenen-IDs kennen (einzige Ausnahme: `"bund"` steht in `sortEbenen()` immer an erster Stelle).
 
-**Wichtig zu den aktuell hinterlegten Wahlterminen (Sachsen-Anhalt, Mecklenburg-Vorpommern, Berlin, NRW):** Diese wurden ohne Zugriff auf die dawum-API/offizielle Quellen eingetragen und sollten vor Veröffentlichung gegen die Landeswahlleiter-Webseiten geprüft werden.
+### Hinterlegte Wahltermine
+
+| Ebene | Wahltermin | Quelle |
+|---|---|---|
+| Sachsen-Anhalt | 06.09.2026 | gelaufen, amtliches Ergebnis eingetragen |
+| Mecklenburg-Vorpommern | 20.09.2026 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
+| Berlin | 20.09.2026 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
+| Saarland | 18.04.2027 | Ministerrat, Wahlankündigung des Landes |
+| Schleswig-Holstein | 18.04.2027 | Innenministerium Schleswig-Holstein |
+| NRW | 25.04.2027 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
+| Bremen | 30.05.2027 | Senatsbeschluss zur Bürgerschaftswahl |
+
+Saarland und Schleswig-Holstein wählen am selben Tag. Bei gleichem `wahltermin` entscheidet die Reihenfolge in `data.json` über die Anzeige – dort steht Saarland vor Schleswig-Holstein.
 
 ## Reihenfolge auf der Seite
 
