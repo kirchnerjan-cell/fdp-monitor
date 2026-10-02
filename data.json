@@ -161,7 +161,8 @@
       "umfrage_max_alter_tage": 180,
       "wahlergebnis": {
         "fdp": 2.5,
-        "datum": "2026-09-20"
+        "datum": "2026-09-20",
+        "vorlaeufig": true
       },
       "wahltrend": {
         "wert": 2.5,

@@ -14,7 +14,15 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
    ```
    Das Skript berechnet Δ zur Vorwoche selbst und speichert die Einzelumfragen aller Ebenen als Fallback. Gib die Ausgabe des Skripts wieder. Meldet es „Keine inhaltlichen Änderungen", lässt es `data.json` bewusst unangetastet – das ist kein Fehler.
 
-3. Für jede Ebene, deren `wahltermin` in der Vergangenheit liegt und deren `wahlergebnis` noch `null` ist: prüfe per Web-Suche (Landeswahlleiter/Bundeswahlleiter, dpa/Reuters als zweite Wahl), ob ein amtliches Endergebnis für die FDP vorliegt. Falls ja, trage `{"fdp": <Prozent>, "datum": "<Wahltermin>"}` ein. Falls unklar, `wahlergebnis` unverändert lassen und das in der Abschlussmeldung erwähnen.
+3. Amtliche Wahlergebnisse nachtragen. Betroffen sind zwei Fälle:
+
+   a) **Ebene ohne Ergebnis**: `wahltermin` liegt in der Vergangenheit und `wahlergebnis` ist noch `null`. Prüfe per Web-Suche (Landeswahlleiter/Bundeswahlleiter, dpa/Reuters als zweite Wahl), ob ein amtliches Ergebnis für die FDP vorliegt, und trage es ein:
+      - endgültiges amtliches Endergebnis (vom Landeswahlausschuss festgestellt): `{"fdp": <Prozent>, "datum": "<Wahltermin>"}`
+      - nur vorläufiges amtliches Endergebnis: zusätzlich `"vorlaeufig": true`, also `{"fdp": <Prozent>, "datum": "<Wahltermin>", "vorlaeufig": true}`
+
+   b) **Ebene mit vorläufigem Ergebnis**: `wahlergebnis.vorlaeufig` ist `true`. Prüfe erneut, ob inzwischen das endgültige Ergebnis feststeht. Falls ja, korrigiere `fdp` auf den endgültigen Wert und **entferne das Feld `vorlaeufig`** – damit ist die Ebene abgeschlossen und wird nicht mehr geprüft. Falls nein, alles unverändert lassen.
+
+   Achte auf die richtige Stimme: maßgeblich ist der **Zweitstimmen**-Anteil (Landesstimme), nicht der Erststimmen-Anteil. Bei unklarer Quellenlage `wahlergebnis` unverändert lassen und das in der Abschlussmeldung erwähnen.
 
 4. Prüfe, dass `data.json` gültiges JSON ist (`python3 -c "import json;json.load(open('data.json'))"`).
 
@@ -22,7 +30,7 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
    - Gibt das eine Zeile aus: `git add data.json && git commit -m "Monitor-Update KW <Kalenderwoche>" && git push`.
    - Ist die Ausgabe leer, hat sich nichts geändert. Dann **kein** Commit und **kein** Push – das ist der Normalfall bei einem Lauf ohne neue Umfragen und kein Fehler.
 
-6. Melde am Ende: Wahltrend-Werte mit Δ je Ebene, ob dawum live erreichbar war, ob ein neues Wahlergebnis eingetragen wurde, und ob committet wurde oder es nichts zu ändern gab.
+6. Melde am Ende: Wahltrend-Werte mit Δ je Ebene, ob dawum live erreichbar war, ob ein neues Wahlergebnis eingetragen oder ein vorläufiges durch das endgültige ersetzt wurde, und ob committet wurde oder es nichts zu ändern gab.
 
 ---
 
@@ -30,4 +38,3 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
 
 - Die Instagram-Anbindung (Posts, Faktencheck) wurde entfernt und kann bei Bedarf später wieder ergänzt werden – die Git-Historie enthält den vollständigen alten Code.
 - Neue Ebene (z. B. weiteres Bundesland) hinzufügen: Eintrag in `data.json["ebenen"]` ergänzen (siehe ANLEITUNG.md), danach greift diese Routine automatisch mit.
-- Die aktuell hinterlegten Wahltermine für Sachsen-Anhalt, Mecklenburg-Vorpommern und Berlin sind unverifizierte Platzhalter – bitte einmal gegen die offiziellen Landeswahlleiter-Seiten prüfen.

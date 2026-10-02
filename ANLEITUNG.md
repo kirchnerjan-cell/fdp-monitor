@@ -40,7 +40,8 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 - `dawum_slug`: Pfadsegment für den Live-Link auf dawum.de (z. B. `https://dawum.de/Sachsen-Anhalt/`).
 - `wahltermin`: Datum der nächsten Wahl (YYYY-MM-DD) – bestimmt die Sortierung auf der Seite. Bei der Bundestagswahl `null` lassen, sie steht immer zuerst.
 - `umfrage_max_alter_tage`: Einzelumfragen, deren `datum` älter ist, werden weder von `update.py` gespeichert noch auf der Seite angezeigt (Umfragen ohne Datum ebenfalls). `null`/Feld weglassen = kein Limit. Aktuell: Bund 60 Tage, alle Länder 180 Tage.
-- `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen (der Altersfilter gilt nur für Einzelumfragen, nicht für `wahlergebnis`).
+- `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – maßgeblich ist der **Zweitstimmen**-Anteil. Die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen (der Altersfilter gilt nur für Einzelumfragen, nicht für `wahlergebnis`).
+- `wahlergebnis.vorlaeufig`: optional, nur `true` setzen, solange erst das **vorläufige** amtliche Endergebnis vorliegt und der Landeswahlausschuss das endgültige noch nicht festgestellt hat. Die Routine prüft solche Ebenen weiter und entfernt das Feld, sobald sie den endgültigen Wert eingetragen hat. Fehlt das Feld, gilt das Ergebnis als endgültig und wird nicht mehr geprüft.
 - **Neue Ebene hinzufügen:** einen bestehenden Landtag-Block kopieren und `id`, `name`, `kurz`, `parlament_regex`, `dawum_slug`, `wahltermin` anpassen (`wahlergebnis`/`wahltrend`/`umfragen` auf die leeren Startwerte wie oben zurücksetzen). Danach greifen Routine und `update.py` automatisch mit – keine Codeänderung nötig.
 - **Ebene entfernen:** den ganzen Block aus `data.json["ebenen"]` löschen. Auch dafür ist keine Codeänderung nötig, da weder `update.py` noch die Seite eine feste Liste von Ebenen-IDs kennen (einzige Ausnahme: `"bund"` steht in `sortEbenen()` immer an erster Stelle).
 
@@ -48,9 +49,9 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 
 | Ebene | Wahltermin | Quelle |
 |---|---|---|
-| Sachsen-Anhalt | 06.09.2026 | gelaufen, amtliches Ergebnis eingetragen |
-| Mecklenburg-Vorpommern | 20.09.2026 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
-| Berlin | 20.09.2026 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
+| Sachsen-Anhalt | 06.09.2026 | gelaufen; endgültiges Ergebnis 22.09.2026 festgestellt, eingetragen (FDP 2,6 %) |
+| Mecklenburg-Vorpommern | 20.09.2026 | gelaufen; endgültiges Ergebnis 30.09.2026 festgestellt, eingetragen (FDP 1,0 %) |
+| Berlin | 20.09.2026 | gelaufen; vorläufiges Ergebnis eingetragen (FDP 2,5 %), endgültige Feststellung 12.10.2026 |
 | Saarland | 18.04.2027 | Ministerrat, Wahlankündigung des Landes |
 | Schleswig-Holstein | 18.04.2027 | Innenministerium Schleswig-Holstein |
 | NRW | 25.04.2027 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
