@@ -230,3 +230,67 @@ class TestVeralteteTrendsImLauf:
         update.main()
         assert f.read_text(encoding="utf-8") == vorher
         assert "Keine inhaltlichen Änderungen" in capsys.readouterr().out
+
+
+class TestAbgeschlosseneWahlenWerdenUebersprungen:
+    def _db(self):
+        return {
+            "Database": {"Last_Update": "2026-10-12"},
+            "Parties": {"1": {"Shortcut": "FDP"}},
+            "Parliaments": {"10": {"Shortcut": "BT", "Name": "Bundestag"},
+                            "20": {"Shortcut": "ST", "Name": "Landtag von Sachsen-Anhalt"}},
+            "Institutes": {"5": {"Name": "Forsa"}},
+            "Surveys": {
+                "100": {"Parliament_ID": 10, "Institute_ID": 5, "Date": "2026-10-10", "Results": {"1": 4.0}},
+                "200": {"Parliament_ID": 20, "Institute_ID": 5, "Date": "2026-10-10", "Results": {"1": 3.0}},
+            },
+        }
+
+    def _ebenen(self):
+        return [
+            {"id": "bund", "name": "Bundestagswahl", "parlament_regex": "bundestag"},
+            {"id": "sachsen-anhalt", "name": "Landtagswahl Sachsen-Anhalt",
+             "parlament_regex": "sachsen.anhalt",
+             "wahlergebnis": {"fdp": 2.6, "datum": "2026-09-06"},
+             "umfragen": {"stand": "2026-09-03", "rows": []}},
+        ]
+
+    def test_abgeschlossene_ebene_bekommt_keine_neuen_umfragen(self, monkeypatch, capsys):
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: json.dumps(self._db()).encode("utf-8"))
+        d = {"ebenen": self._ebenen()}
+        update.update_polls(d)
+        assert len(d["ebenen"][0]["umfragen"]["rows"]) == 1          # Bund: ganz normal
+        assert d["ebenen"][1]["umfragen"]["rows"] == []              # ST: trotz Treffer leer
+        assert "1 abgeschlossene Wahl(en) übersprungen" in capsys.readouterr().out
+
+    def test_sind_alle_wahlen_gelaufen_wird_dawum_nicht_abgefragt(self, monkeypatch, capsys):
+        def darf_nicht(url, timeout=20):
+            raise AssertionError("dawum wurde trotz abgeschlossener Wahlen abgefragt")
+
+        monkeypatch.setattr(update, "get", darf_nicht)
+        d = {"ebenen": [self._ebenen()[1]]}
+        update.update_polls(d)
+        assert "dawum wird nicht abgefragt" in capsys.readouterr().out
+
+    def test_ein_vorlaeufiges_ergebnis_wird_weiter_abgefragt(self, monkeypatch):
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: json.dumps(self._db()).encode("utf-8"))
+        ebenen = self._ebenen()
+        ebenen[1]["wahlergebnis"]["vorlaeufig"] = True
+        d = {"ebenen": ebenen}
+        update.update_polls(d)
+        assert len(d["ebenen"][1]["umfragen"]["rows"]) == 1
+
+    def test_main_ersetzt_umfragen_und_schreibt(self, tmp_path, monkeypatch):
+        f = tmp_path / "data.json"
+        monkeypatch.setattr(update, "DATA", str(f))
+        update.save_data({"erstellt": "alt", "ebenen": [
+            {"id": "st", "name": "Landtagswahl", "parlament_regex": "sachsen.anhalt",
+             "wahlergebnis": {"fdp": 2.6, "datum": "2026-09-06"},
+             "umfragen": {"stand": "2026-09-03",
+                          "rows": [{"institut": "INSA", "datum": "2026-09-02", "fdp": 3.0}]}}]})
+        monkeypatch.setattr(sys, "argv", ["update.py"])   # ohne --nur-trend, also mit Abruf
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: (_ for _ in ()).throw(
+            AssertionError("dawum darf hier nicht abgefragt werden")))
+        update.main()
+        neu = json.loads(f.read_text(encoding="utf-8"))
+        assert neu["ebenen"][0]["umfragen"] == {"stand": "2026-09-06", "rows": []}

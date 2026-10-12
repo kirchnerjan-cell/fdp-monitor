@@ -62,6 +62,15 @@
     return !isNaN(d) && d >= cutoff ? trend : null;
   }
 
+  /* Wahl gelaufen und amtlich endgültig festgestellt: dann ist das Ergebnis maßgeblich
+     und es braucht keine Umfragedaten mehr – weder gespeicherte noch frisch abgerufene.
+     Ein noch vorläufiges Ergebnis zählt nicht, dort läuft die Aktualisierung weiter.
+     Spiegelt abgeschlossen() in update.py. */
+  function wahlAbgeschlossen(ebene) {
+    const erg = (ebene && ebene.wahlergebnis) || {};
+    return erg.fdp != null && !erg.vorlaeufig;
+  }
+
   /* Nach einer gelaufenen Wahl zählen nur die Umfragen, die nach dem Wahltag erhoben
      wurden: die älteren betreffen eine entschiedene Frage. Beide in einen Mittelwert zu
      legen ergibt keine aussagekräftige Zahl. Der Wahltag selbst gehört zur alten Wahl. */
@@ -90,7 +99,53 @@
     return [...bund, ...anstehend, ...gelaufen, ...ohneTermin];
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl };
+  /* Tagesgenaues Heute als ISO-Datum (UTC-Mitternacht), wie filterByAge und sortEbenen
+     es benutzen – damit alle Datumsvergleiche dieselbe Grenze ziehen. */
+  function heuteIso(now) {
+    now = now || new Date();
+    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()))
+      .toISOString()
+      .slice(0, 10);
+  }
+
+  /* Die Ebenen in die vier Blöcke der Seite teilen. Maßgeblich für "gelaufen" ist ein
+     vorhandenes amtliches Ergebnis oder ein Wahltermin in der Vergangenheit – der
+     Wahltag selbst zählt noch als anstehend (wie in sortEbenen). */
+  function gruppiereEbenen(ebenen, now) {
+    const heute = heuteIso(now);
+    const sortiert = sortEbenen(ebenen || [], now);
+    const gelaufen = (e) =>
+      (e.wahlergebnis && e.wahlergebnis.fdp != null) || (e.wahltermin != null && e.wahltermin < heute);
+    return {
+      bund: sortiert.filter((e) => e.id === "bund"),
+      anstehend: sortiert.filter((e) => e.id !== "bund" && e.wahltermin != null && !gelaufen(e)),
+      gelaufen: sortiert.filter((e) => e.id !== "bund" && gelaufen(e)),
+      ohneTermin: sortiert.filter((e) => e.id !== "bund" && e.wahltermin == null && !gelaufen(e)),
+    };
+  }
+
+  /* Volle Tage von heute bis zum Wahltermin. 0 = heute, null wenn kein Termin. */
+  function tageBis(wahltermin, now) {
+    if (!wahltermin) return null;
+    const ziel = new Date(wahltermin + "T00:00:00Z");
+    if (isNaN(ziel)) return null;
+    return Math.round((ziel - new Date(heuteIso(now) + "T00:00:00Z")) / 86400000);
+  }
+
+  /* Lage zur 5-%-Hürde, als Kurzform für Kacheln und als Satz für die Leitzahl.
+     Toleranz 0,05, weil überall auf eine Dezimale gerundet angezeigt wird: ein Wert,
+     der als "5,0 %" erscheint, darf nicht "unter der Hürde" heißen. */
+  function huerdeText(wert) {
+    if (wert == null) return { status: "keine", kurz: "keine Daten", lang: "keine Umfragedaten" };
+    const diff = wert - 5;
+    if (Math.abs(diff) < 0.05) return { status: "auf", kurz: "auf der Hürde", lang: "genau auf der 5-%-Hürde" };
+    const punkte = fmt(Math.abs(diff)) + " Punkte";
+    return diff < 0
+      ? { status: "unter", kurz: "unter der Hürde", lang: punkte + " unter der 5-%-Hürde" }
+      : { status: "ueber", kurz: "über der Hürde", lang: punkte + " über der 5-%-Hürde" };
+  }
+
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl, gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
