@@ -12,6 +12,9 @@ const deutsch = (isoTag) => isoTag.split("-").reverse().join(".");
 // Daten würden sonst mit der Zeit ihre Bedeutung ändern: eine "anstehende" Wahl wird
 // irgendwann zur gelaufenen, und eine "frische" Umfrage fällt aus dem Altersfenster.
 const TERMIN = { sachsenAnhalt: tag(-1), berlin: tag(13), nrw: tag(230) };
+// NRW steht im Fixture fuer den Echtfall: dawum weist keinen Wahltrend mehr aus,
+// der gespeicherte Wert (6,2 %) ist eingefroren und darf nicht mehr Leitzahl sein.
+const TREND_STAND = { nrwVeraltet: tag(-47) };
 
 function buildDataFixture() {
   const d = JSON.parse(fs.readFileSync(path.join(fixturesDir, "data.json"), "utf-8"));
@@ -26,6 +29,8 @@ function buildDataFixture() {
   e["nrw"].umfragen.rows[0].datum = tag(-28);
   e["bund"].umfragen.rows[0].datum = tag(-17);                // innerhalb der 60 Tage
   e["bund"].umfragen.rows[1].datum = tag(-250);               // ausserhalb der 60 Tage
+  e["bund"].wahltrend.stand = tag(-2);                        // frisch -> taugt als Leitzahl
+  e["nrw"].wahltrend.stand = TREND_STAND.nrwVeraltet;         // zu alt -> Leitzahl faellt zurueck
 
   return JSON.stringify(d);
 }
@@ -176,5 +181,42 @@ test.describe("Altersfilter für Einzelumfragen", () => {
     // dawum-live enthaelt eine zusaetzliche, 250 Tage alte "Alt (live)"-Bundesumfrage.
     await expect(page.locator("#panel-bund .row")).toHaveCount(1);
     await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (live)");
+  });
+});
+
+test.describe("Veralteter Wahltrend taugt nicht als Leitzahl", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockDataJson(page);
+    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+    await page.goto("/index.html");
+  });
+
+  test("falls back to the poll average instead of showing the frozen trend", async ({ page }) => {
+    // NRW: gespeicherter Trend 6,2 % (47 Tage alt), Einzelumfrage 5,3 %.
+    // Die Leitzahl muss die Umfrage zeigen, nicht den eingefrorenen Trend.
+    const num = page.locator("#panel-nrw .avg .num");
+    await expect(num).toHaveText("5,3 %");
+    await expect(num).not.toContainText("6,2");
+  });
+
+  test("names the stale trend in the label so the fallback is visible", async ({ page }) => {
+    const lbl = page.locator("#panel-nrw .avg .lbl");
+    await expect(lbl).toContainText("Ø der neuesten Umfragen je Institut");
+    await expect(lbl).toContainText("dawum-Wahltrend veraltet");
+    await expect(lbl).toContainText(deutsch(TREND_STAND.nrwVeraltet));
+  });
+
+  test("a fresh trend is still used as the headline figure", async ({ page }) => {
+    await expect(page.locator("#panel-bund .avg .num")).toContainText("4,4 %");
+    await expect(page.locator("#panel-bund .avg .lbl")).toContainText("dawum-Wahltrend");
+    await expect(page.locator("#panel-bund .avg .lbl")).not.toContainText("veraltet");
+  });
+
+  test("an Ebene without any trend says so without claiming one went stale", async ({ page }) => {
+    // "noch nicht hinterlegt" waere hier falsch: eine Ebene kann ihren Trend auch
+    // verloren haben, weil update.py ihn als veraltet verworfen hat.
+    const lbl = page.locator("#panel-sachsen-anhalt .avg .lbl");
+    await expect(lbl).toContainText("kein aktueller dawum-Wahltrend");
+    await expect(lbl).not.toContainText("veraltet");
   });
 });

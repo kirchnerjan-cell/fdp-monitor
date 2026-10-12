@@ -6,13 +6,13 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
 
 ## Schritt: Website „FDP-Monitor" aktualisieren
 
-1. Lies `data.json["ebenen"]` und ermittle für jede Ebene mit einem `dawum_slug` den gewichteten dawum-Wahltrend der FDP von `https://dawum.de/<dawum_slug>/` (z. B. `https://dawum.de/Bundestag/`, `https://dawum.de/Sachsen-Anhalt/`). Überspringe eine Ebene, wenn dort kein Wahltrend ausgewiesen ist.
+1. Lies `data.json["ebenen"]` und ermittle für jede Ebene mit einem `dawum_slug` den gewichteten dawum-Wahltrend der FDP von `https://dawum.de/<dawum_slug>/` (z. B. `https://dawum.de/Bundestag/`, `https://dawum.de/Sachsen-Anhalt/`). Überspringe eine Ebene, wenn dort kein Wahltrend ausgewiesen ist – das ist normal: dawum weist für ein Bundesland keinen Trend aus, solange dort zu wenige aktuelle Umfragen vorliegen. Den eingefrorenen Altwert musst du nicht selbst entfernen, `update.py` verwirft ihn ab `wahltrend_max_alter_tage` Tagen automatisch (siehe Schritt 2).
 
 2. Führe im Repo-Root aus, mit einem `--trend <id> <Wert>` je Ebene, für die ein Wert vorliegt (Dezimalpunkt, z. B. `4.4`; `id` ist das Feld `"id"` der jeweiligen Ebene):
    ```
    python3 update.py --trend bund <Wert> --trend nrw <Wert> --trend sachsen-anhalt <Wert> --trend mecklenburg-vorpommern <Wert> --trend berlin <Wert>
    ```
-   Das Skript berechnet Δ zur Vorwoche selbst und speichert die Einzelumfragen aller Ebenen als Fallback. Gib die Ausgabe des Skripts wieder. Meldet es „Keine inhaltlichen Änderungen", lässt es `data.json` bewusst unangetastet – das ist kein Fehler.
+   Das Skript berechnet Δ zur Vorwoche selbst und speichert die Einzelumfragen aller Ebenen als Fallback. Außerdem verwirft es einen Wahltrend, dessen `stand` älter als `wahltrend_max_alter_tage` Tage ist – die Seite zeigt dann als Leitzahl den Ø der Einzelumfragen, der sich bei jedem Seitenaufruf aktualisiert. Meldet das Skript „Wahltrend <id> verworfen", ist das kein Fehler, sondern genau dieser Fall. Gib die Ausgabe des Skripts wieder. Meldet es „Keine inhaltlichen Änderungen", lässt es `data.json` bewusst unangetastet – das ist kein Fehler.
 
 3. Amtliche Wahlergebnisse nachtragen. Betroffen sind zwei Fälle:
 

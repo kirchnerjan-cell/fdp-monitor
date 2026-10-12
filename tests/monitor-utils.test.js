@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge } from "../monitor-utils.js";
+import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -201,5 +201,69 @@ describe("filterByAge", () => {
     const copy = [...input];
     filterByAge(input, 60, NOW);
     expect(input).toEqual(copy);
+  });
+});
+
+describe("filterTrend", () => {
+  const NOW = new Date("2026-10-12T12:00:00Z");
+  const trend = (stand, wert = 6.2) => ({ wert, delta: 0.3, stand });
+
+  it("keeps a fresh trend", () => {
+    const t = trend("2026-10-11");
+    expect(filterTrend(t, 35, NOW)).toBe(t);
+  });
+
+  it("discards a stale trend — the NRW case (26.08., 47 days old)", () => {
+    expect(filterTrend(trend("2026-08-26"), 35, NOW)).toBeNull();
+  });
+
+  it("keeps a trend exactly at the cutoff", () => {
+    const t = trend("2026-09-07"); // exactly 35 days before NOW
+    expect(filterTrend(t, 35, NOW)).toBe(t);
+  });
+
+  it("discards a trend one day past the cutoff", () => {
+    expect(filterTrend(trend("2026-09-06"), 35, NOW)).toBeNull();
+  });
+
+  it("agrees with update.py's filter_trend at the cutoff (same day granularity)", () => {
+    // NOW liegt mittags; ohne Kürzen auf UTC-Mitternacht wäre der Grenzfall oben
+    // in JS und Python unterschiedlich entschieden.
+    const spaet = new Date("2026-10-12T23:59:59Z");
+    expect(filterTrend(trend("2026-09-07"), 35, spaet)).not.toBeNull();
+    expect(filterTrend(trend("2026-09-06"), 35, spaet)).toBeNull();
+  });
+
+  it("returns null for an empty trend", () => {
+    expect(filterTrend({ wert: null, delta: null, stand: null }, 35, NOW)).toBeNull();
+    expect(filterTrend(null, 35, NOW)).toBeNull();
+    expect(filterTrend(undefined, 35, NOW)).toBeNull();
+  });
+
+  it("returns null when a value has no Stand date", () => {
+    expect(filterTrend({ wert: 6.2, delta: null, stand: null }, 35, NOW)).toBeNull();
+  });
+
+  it("returns null for an unparseable Stand date", () => {
+    expect(filterTrend(trend("irgendwann"), 35, NOW)).toBeNull();
+  });
+
+  it("keeps any trend when no max age is configured", () => {
+    const t = trend("2019-01-01");
+    expect(filterTrend(t, null, NOW)).toBe(t);
+    expect(filterTrend(t, undefined, NOW)).toBe(t);
+  });
+
+  it("Bund's 21 days is stricter than the Länder's 35", () => {
+    const t = trend("2026-09-15"); // 27 days old
+    expect(filterTrend(t, 21, NOW)).toBeNull();
+    expect(filterTrend(t, 35, NOW)).toBe(t);
+  });
+
+  it("does not mutate the trend it is given", () => {
+    const t = trend("2026-08-26");
+    const copy = { ...t };
+    filterTrend(t, 35, NOW);
+    expect(t).toEqual(copy);
   });
 });

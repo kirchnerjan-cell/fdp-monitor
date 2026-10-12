@@ -14,7 +14,11 @@ Ergebnis:
      (Ebene-IDs stehen in data.json["ebenen"][*]["id"].) Δ zur Vorwoche wird aus dem
      bisher gespeicherten Wert berechnet; --stand YYYY-MM-DD überschreibt das
      Stand-Datum (Standard: heute).
-  3. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
+  3. Ein gespeicherter Wahltrend, der älter als
+     data.json["ebenen"][*]["wahltrend_max_alter_tage"] Tage ist, wird verworfen. Sonst
+     bliebe ein Wert, den dawum nicht mehr ausweist, dauerhaft als Leitzahl stehen; die
+     Seite zeigt dann stattdessen den laufend aktualisierten Ø der Einzelumfragen.
+  4. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
      "erstellt" auf jetzt gesetzt und data.json geschrieben. Andernfalls bleibt die
      Datei unangetastet, damit kein Commit entsteht, der nur den Zeitstempel enthält.
 """
@@ -73,6 +77,35 @@ def filter_by_age(rows, max_age_days, today=None):
             out.append(r)
     return out
 
+TREND_LEER = {"wert": None, "delta": None, "stand": None}
+
+def filter_trend(trend, max_age_days, today=None):
+    """Einen zu alten Wahltrend verwerfen (zurückgeben: verwertbarer Trend oder TREND_LEER).
+
+    dawum weist den Wahltrend einer Ebene nicht mehr aus, sobald dort länger keine
+    Umfragen erscheinen. Die Routine findet dann keinen Wert mehr und überspringt die
+    Ebene – ohne diese Prüfung bliebe der zuletzt gespeicherte Wert dauerhaft als
+    Leitzahl stehen, auch wenn die Einzelumfragen längst woanders liegen.
+    """
+    if not trend or trend.get("wert") is None or max_age_days is None:
+        return trend
+    today = today or datetime.now(TZ).date()
+    try:
+        stand = datetime.strptime(trend.get("stand") or "", "%Y-%m-%d").date()
+    except ValueError:
+        return dict(TREND_LEER)  # ohne Stand nicht datierbar
+    return trend if stand >= today - timedelta(days=max_age_days) else dict(TREND_LEER)
+
+def drop_stale_trends(d, today=None):
+    """filter_trend() auf alle Ebenen anwenden und das Verworfene melden."""
+    for ebene in d.get("ebenen", []):
+        alt = ebene.get("wahltrend")
+        neu = filter_trend(alt, ebene.get("wahltrend_max_alter_tage"), today=today)
+        if neu is not alt:  # filter_trend() gibt bei "behalten" dasselbe Objekt zurück
+            ebene["wahltrend"] = neu
+            print(f"Wahltrend {ebene['id']} verworfen: Stand {(alt or {}).get('stand')} ist älter als "
+                  f"{ebene['wahltrend_max_alter_tage']} Tage – Leitzahl fällt auf den Ø der Umfragen zurück.")
+
 def update_polls(d):
     try:
         db = json.loads(get(DAWUM, timeout=30))
@@ -114,6 +147,7 @@ def main():
     stand = a.stand or datetime.now(TZ).date().isoformat()
     for ebene_id, value in (a.trend or []):
         set_trend(d, ebene_id, float(value), stand)
+    drop_stale_trends(d)
     if not a.nur_trend:
         update_polls(d)
     if inhalt_signatur(d) == vorher:
