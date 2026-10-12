@@ -217,10 +217,22 @@ test.describe("Gelaufene Wahlen", () => {
     expect(fill.width / bar.width).toBeCloseTo(3.8 / 8, 2);
   });
 
-  test("der Ø der Umfragen nach der Wahl bleibt als Titel erreichbar", async ({ page }) => {
-    // 3,0 % ist die Nachwahlumfrage allein; 4,0 % von vor der Wahl zählt nicht mit.
-    await expect(page.locator("#zeile-sachsen-anhalt td.abstand"))
-      .toHaveAttribute("title", "Ø der Umfragen nach der Wahl: 3,0 %");
+  test("eine abgeschlossene Wahl holt keine Umfragen mehr", async ({ page }) => {
+    // Das amtliche Ergebnis ersetzt sie: weder die gespeicherten noch die Nachwahl-
+    // umfrage aus dem Fixture dürfen noch ausgewertet werden.
+    await expect(page.locator("#zeile-sachsen-anhalt td.abstand")).toHaveAttribute("title", "");
+  });
+
+  test("fragt dawum gar nicht erst ab, wenn jede Wahl gelaufen ist", async ({ page }) => {
+    let abgefragt = false;
+    const nurGelaufene = JSON.parse(dataFixture);
+    nurGelaufene.ebenen = nurGelaufene.ebenen.filter((e) => e.id === "sachsen-anhalt");
+    await page.route("**/data.json*", (route) =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify(nurGelaufene) }));
+    await page.route("**://api.dawum.de/**", (route) => { abgefragt = true; route.abort("failed"); });
+    await page.goto("/index.html");
+    await expect(page.locator("#zeile-sachsen-anhalt")).toHaveCount(1);
+    expect(abgefragt).toBe(false);
   });
 
   test("ein vorläufiges Ergebnis wird mit Sternchen gekennzeichnet", async ({ page }) => {
@@ -232,6 +244,10 @@ test.describe("Gelaufene Wahlen", () => {
     await page.goto("/index.html");
     await expect(page.locator("#zeile-sachsen-anhalt td.erg")).toHaveText("3,8 % *");
     await expect(page.locator("#gelaufen-tabelle")).toContainText("vorläufiges amtliches Ergebnis");
+    // Solange nur vorläufig, läuft die Abfrage weiter – und dann zählt für den Ø nur
+    // die Umfrage nach dem Wahltag (3,0 %), nicht die 4,0 % von davor.
+    await expect(page.locator("#zeile-sachsen-anhalt td.abstand"))
+      .toHaveAttribute("title", "Ø der Umfragen nach der Wahl: 3,0 %");
   });
 });
 

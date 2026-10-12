@@ -299,3 +299,53 @@ class TestStandIstPflicht:
         update.save_data({"erstellt": "x", "ebenen": []})
         monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend"])
         update.main()  # darf nicht abbrechen
+
+
+class TestAbgeschlossen:
+    """Eine Wahl mit endgültigem amtlichem Ergebnis wird nicht weiter abgefragt."""
+
+    def test_endgueltiges_ergebnis_schliesst_ab(self):
+        assert update.abgeschlossen({"wahlergebnis": {"fdp": 2.6, "datum": "2026-09-06"}})
+
+    def test_vorlaeufiges_ergebnis_schliesst_nicht_ab(self):
+        # Bis der Landeswahlausschuss entschieden hat, läuft die Aktualisierung weiter.
+        assert not update.abgeschlossen(
+            {"wahlergebnis": {"fdp": 2.5, "datum": "2026-09-20", "vorlaeufig": True}})
+
+    def test_ohne_ergebnis_offen(self):
+        assert not update.abgeschlossen({"wahlergebnis": None})
+        assert not update.abgeschlossen({})
+
+    def test_ergebnis_ohne_wert_offen(self):
+        assert not update.abgeschlossen({"wahlergebnis": {"datum": "2026-09-06"}})
+
+
+class TestErgebnisErsetztUmfragen:
+    def _ebene(self, rows, erg):
+        return {"id": "x", "name": "Testwahl", "wahlergebnis": erg,
+                "umfragen": {"stand": "2026-09-03", "rows": rows}}
+
+    ROWS = [{"institut": "INSA", "datum": "2026-09-02", "fdp": 3.0}]
+
+    def test_verwirft_die_umfragen_und_setzt_den_stand_aufs_wahldatum(self, capsys):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.6, "datum": "2026-09-06"})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"] == {"stand": "2026-09-06", "rows": []}
+        assert "ersetzt" in capsys.readouterr().out
+
+    def test_laesst_eine_offene_wahl_unberuehrt(self):
+        d = {"ebenen": [self._ebene(self.ROWS, None)]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"]["rows"] == self.ROWS
+
+    def test_laesst_ein_vorlaeufiges_ergebnis_unberuehrt(self):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.5, "datum": "2026-09-20", "vorlaeufig": True})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"]["rows"] == self.ROWS
+
+    def test_ist_wiederholbar_ohne_erneute_meldung(self, capsys):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.6, "datum": "2026-09-06"})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        capsys.readouterr()
+        update.ergebnis_ersetzt_umfragen(d)          # zweiter Lauf: nichts mehr zu tun
+        assert capsys.readouterr().out == ""

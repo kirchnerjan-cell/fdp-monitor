@@ -62,6 +62,15 @@
     return !isNaN(d) && d >= cutoff ? trend : null;
   }
 
+  /* Wahl gelaufen und amtlich endgültig festgestellt: dann ist das Ergebnis maßgeblich
+     und es braucht keine Umfragedaten mehr – weder gespeicherte noch frisch abgerufene.
+     Ein noch vorläufiges Ergebnis zählt nicht, dort läuft die Aktualisierung weiter.
+     Spiegelt abgeschlossen() in update.py. */
+  function wahlAbgeschlossen(ebene) {
+    const erg = (ebene && ebene.wahlergebnis) || {};
+    return erg.fdp != null && !erg.vorlaeufig;
+  }
+
   /* Nach einer gelaufenen Wahl zählen nur die Umfragen, die nach dem Wahltag erhoben
      wurden: die älteren betreffen eine entschiedene Frage. Beide in einen Mittelwert zu
      legen ergibt keine aussagekräftige Zahl. Der Wahltag selbst gehört zur alten Wahl. */
@@ -136,7 +145,7 @@
       : { status: "ueber", kurz: "über der Hürde", lang: punkte + " über der 5-%-Hürde" };
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl, gruppiereEbenen, tageBis, huerdeText };
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl, gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

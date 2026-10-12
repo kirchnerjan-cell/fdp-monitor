@@ -14,12 +14,18 @@ Ergebnis:
      (Ebene-IDs stehen in data.json["ebenen"][*]["id"].) Δ zur Vorwoche wird aus dem
      bisher gespeicherten Wert berechnet. --stand YYYY-MM-DD ist dabei Pflicht und muss
      das Trend-Datum sein, das dawum selbst ausweist – nicht das Datum des Abrufs, sonst
-     wirkt der Wert aktueller als er ist und altert zu spät aus (siehe 3.).
-  3. Ein gespeicherter Wahltrend, der älter als
+     wirkt der Wert aktueller als er ist und altert zu spät aus (siehe 4.).
+  3. Steht für eine Ebene ein endgültiges amtliches Wahlergebnis, gilt die Wahl als
+     abgeschlossen: ihre gespeicherten Einzelumfragen werden einmalig verworfen (das
+     Ergebnis sagt dasselbe genauer) und sie wird fortan übersprungen – für eine
+     entschiedene Wahl braucht es keine Abfrage mehr. Sind alle Wahlen abgeschlossen,
+     unterbleibt der dawum-Abruf ganz. Wieder aufnehmen: neuen "wahltermin" setzen und
+     "wahlergebnis" auf null.
+  4. Ein gespeicherter Wahltrend, der älter als
      data.json["ebenen"][*]["wahltrend_max_alter_tage"] Tage ist, wird verworfen. Sonst
      bliebe ein Wert, den dawum nicht mehr ausweist, dauerhaft als Leitzahl stehen; die
      Seite zeigt dann stattdessen den laufend aktualisierten Ø der Einzelumfragen.
-  4. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
+  5. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
      "erstellt" auf jetzt gesetzt und data.json geschrieben. Andernfalls bleibt die
      Datei unangetastet, damit kein Commit entsteht, der nur den Zeitstempel enthält.
 """
@@ -107,14 +113,47 @@ def drop_stale_trends(d, today=None):
             print(f"Wahltrend {ebene['id']} verworfen: Stand {(alt or {}).get('stand')} ist älter als "
                   f"{ebene['wahltrend_max_alter_tage']} Tage – Leitzahl fällt auf den Ø der Umfragen zurück.")
 
+def abgeschlossen(ebene):
+    """Wahl gelaufen und amtlich endgültig festgestellt – hier ändert sich nichts mehr.
+
+    Ein noch vorläufiges Ergebnis zählt nicht: solange der Landeswahlausschuss nicht
+    entschieden hat, bleibt die Ebene in der normalen Aktualisierung.
+    """
+    erg = ebene.get("wahlergebnis") or {}
+    return erg.get("fdp") is not None and not erg.get("vorlaeufig")
+
+def ergebnis_ersetzt_umfragen(d):
+    """Bei abgeschlossenen Wahlen tritt das amtliche Ergebnis an die Stelle der Umfragen.
+
+    Die gespeicherten Einzelumfragen betreffen eine entschiedene Frage; das Ergebnis sagt
+    dasselbe genauer. Sie bleiben in der Git-Historie erhalten.
+    """
+    for ebene in d.get("ebenen", []):
+        if not abgeschlossen(ebene):
+            continue
+        alt = (ebene.get("umfragen") or {}).get("rows") or []
+        if alt:
+            ebene["umfragen"] = {"stand": (ebene.get("wahlergebnis") or {}).get("datum"), "rows": []}
+            print(f"{ebene['name']}: Wahl gelaufen – {len(alt)} Einzelumfrage(n) durch das "
+                  f"amtliche Ergebnis ersetzt.")
+
 def update_polls(d):
+    offen = [e for e in d.get("ebenen", []) if not abgeschlossen(e)]
+    uebersprungen = len(d.get("ebenen", [])) - len(offen)
+    if uebersprungen:
+        print(f"{uebersprungen} abgeschlossene Wahl(en) übersprungen – dort ist das amtliche "
+              f"Ergebnis maßgeblich.")
+    if not offen:
+        # Nichts mehr abzufragen: dann auch keine Anfrage an dawum stellen.
+        print("Keine offene Wahl – dawum wird nicht abgefragt.")
+        return
     try:
         db = json.loads(get(DAWUM, timeout=30))
     except Exception as e:
         print(f"! dawum nicht erreichbar ({e}); alte Umfragedaten bleiben stehen")
         return
     stand = db.get("Database", {}).get("Last_Update")
-    for ebene in d.get("ebenen", []):
+    for ebene in offen:
         rows = fdp_rows(db, ebene["parlament_regex"])
         rows = filter_by_age(rows, ebene.get("umfrage_max_alter_tage"))
         ebene["umfragen"] = {"stand": stand, "rows": rows}
@@ -157,6 +196,7 @@ def main():
     for ebene_id, value in (a.trend or []):
         set_trend(d, ebene_id, float(value), stand)
     drop_stale_trends(d)
+    ergebnis_ersetzt_umfragen(d)
     if not a.nur_trend:
         update_polls(d)
     if inhalt_signatur(d) == vorher:

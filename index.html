@@ -223,7 +223,7 @@
   const MAX_PCT = 8;                       // Skala aller Balken, einheitlich
   const HUERDE = 5;
   const {fmt, dfmt, esc, extractFdp, filterByAge, filterTrend, rowsNachWahl,
-         gruppiereEbenen, tageBis, huerdeText} = MonitorUtils;
+         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen} = MonitorUtils;
 
   const pz = (v) => fmt(v) + ' %';
   const breite = (v) => (v == null ? 0 : Math.min(Math.max(v, 0), MAX_PCT) / MAX_PCT * 100).toFixed(2) + '%';
@@ -245,11 +245,17 @@
     'Stand ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
 
   let db = null;
-  try { db = await (await fetch(DAWUM_URL)).json(); }
-  catch(e){ console.warn('dawum live nicht erreichbar, nutze data.json', e); }
+  if((data.ebenen || []).some((e) => !wahlAbgeschlossen(e))){
+    try { db = await (await fetch(DAWUM_URL)).json(); }
+    catch(e){ console.warn('dawum live nicht erreichbar, nutze data.json', e); }
+  } // sind alle Wahlen gelaufen, gibt es nichts abzufragen
 
   // Einzelumfragen je Ebene: live von dawum, sonst der gespeicherte Fallback.
   function umfragen(ebene){
+    // Ist die Wahl gelaufen und amtlich, ersetzt das Ergebnis die Umfragen: dann hier
+    // nichts mehr abfragen oder auswerten.
+    if(wahlAbgeschlossen(ebene))
+      return {rows: [], live: false, stand: (ebene.wahlergebnis || {}).datum, fertig: true};
     if(db){
       const rows = filterByAge(
         extractFdp(db, (t) => new RegExp(ebene.parlament_regex, 'i').test(t)),

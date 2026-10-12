@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl,
-         gruppiereEbenen, tageBis, huerdeText } from "../monitor-utils.js";
+         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -416,5 +416,38 @@ describe("huerdeText", () => {
   it("reports missing data instead of guessing", () => {
     expect(huerdeText(null).status).toBe("keine");
     expect(huerdeText(undefined).kurz).toBe("keine Daten");
+  });
+});
+
+describe("wahlAbgeschlossen", () => {
+  it("is true once a final official result stands", () => {
+    expect(wahlAbgeschlossen({ wahlergebnis: { fdp: 2.6, datum: "2026-09-06" } })).toBe(true);
+  });
+
+  it("is false while the result is only preliminary", () => {
+    // Bis zur Feststellung durch den Landeswahlausschuss läuft die Abfrage weiter.
+    expect(wahlAbgeschlossen({ wahlergebnis: { fdp: 2.5, datum: "2026-09-20", vorlaeufig: true } })).toBe(false);
+  });
+
+  it("is false without a result", () => {
+    expect(wahlAbgeschlossen({ wahlergebnis: null })).toBe(false);
+    expect(wahlAbgeschlossen({})).toBe(false);
+    expect(wahlAbgeschlossen(null)).toBe(false);
+  });
+
+  it("is false for a result that carries no value", () => {
+    expect(wahlAbgeschlossen({ wahlergebnis: { datum: "2026-09-06" } })).toBe(false);
+  });
+
+  it("agrees with update.py's abgeschlossen() on the same cases", () => {
+    // Beide Seiten müssen dieselbe Ebene gleich einstufen, sonst zeigt die Seite
+    // Umfragen, die das Skript längst verworfen hat (oder umgekehrt).
+    const faelle = [
+      [{ wahlergebnis: { fdp: 2.6, datum: "2026-09-06" } }, true],
+      [{ wahlergebnis: { fdp: 2.5, datum: "2026-09-20", vorlaeufig: true } }, false],
+      [{ wahlergebnis: null }, false],
+      [{}, false],
+    ];
+    for (const [ebene, erwartet] of faelle) expect(wahlAbgeschlossen(ebene)).toBe(erwartet);
   });
 });

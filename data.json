@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-10-12T20:04+02:00",
+  "erstellt": "2026-10-12T20:40+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -93,34 +93,8 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
-        "rows": [
-          {
-            "institut": "Civey",
-            "datum": "2026-09-03",
-            "fdp": 2.0
-          },
-          {
-            "institut": "Forschungsgruppe Wahlen",
-            "datum": "2026-09-03",
-            "fdp": 3.0
-          },
-          {
-            "institut": "INSA",
-            "datum": "2026-09-02",
-            "fdp": 3.0
-          },
-          {
-            "institut": "Infratest dimap",
-            "datum": "2026-08-26",
-            "fdp": 3.0
-          },
-          {
-            "institut": "pollytix",
-            "datum": "2026-08-12",
-            "fdp": 2.0
-          }
-        ]
+        "stand": "2026-09-06",
+        "rows": []
       }
     },
     {
@@ -143,14 +117,8 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
-        "rows": [
-          {
-            "institut": "pollytix",
-            "datum": "2026-09-10",
-            "fdp": 2.0
-          }
-        ]
+        "stand": "2026-09-20",
+        "rows": []
       }
     },
     {
@@ -173,24 +141,8 @@
         "stand": "2026-09-21"
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
-        "rows": [
-          {
-            "institut": "pollytix",
-            "datum": "2026-10-08",
-            "fdp": 3.0
-          },
-          {
-            "institut": "Civey",
-            "datum": "2026-09-17",
-            "fdp": 2.5
-          },
-          {
-            "institut": "Forsa",
-            "datum": "2026-08-22",
-            "fdp": 3.0
-          }
-        ]
+        "stand": "2026-09-20",
+        "rows": []
       }
     },
     {

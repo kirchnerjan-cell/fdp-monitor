@@ -21,7 +21,7 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
       - endgültiges amtliches Endergebnis (vom Landeswahlausschuss festgestellt): `{"fdp": <Prozent>, "datum": "<Wahltermin>"}`
       - nur vorläufiges amtliches Endergebnis: zusätzlich `"vorlaeufig": true`, also `{"fdp": <Prozent>, "datum": "<Wahltermin>", "vorlaeufig": true}`
 
-   Sobald ein `wahlergebnis` steht, ist es die Leitzahl des Panels – der Wahltrend wird dort nicht mehr angezeigt, und in den Ø gehen nur noch Umfragen nach dem Wahltag ein. Du musst dafür nichts weiter tun.
+   Sobald ein **endgültiges** `wahlergebnis` steht, ist die Ebene abgeschlossen: `update.py` verwirft ihre gespeicherten Einzelumfragen einmalig und überspringt sie danach, die Seite fragt für sie nichts mehr ab. Meldungen wie „… Wahl gelaufen – 5 Einzelumfrage(n) durch das amtliche Ergebnis ersetzt" oder „Keine offene Wahl – dawum wird nicht abgefragt" sind deshalb erwartet und kein Fehler. Du musst dafür nichts weiter tun.
 
    b) **Ebene mit vorläufigem Ergebnis**: `wahlergebnis.vorlaeufig` ist `true`. Prüfe erneut, ob inzwischen das endgültige Ergebnis feststeht. Falls ja, korrigiere `fdp` auf den endgültigen Wert und **entferne das Feld `vorlaeufig`** – damit ist die Ebene abgeschlossen und wird nicht mehr geprüft. Falls nein, alles unverändert lassen.
 
