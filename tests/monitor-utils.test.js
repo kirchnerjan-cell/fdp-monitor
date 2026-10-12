@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl } from "../monitor-utils.js";
+import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl,
+         gruppiereEbenen, tageBis, huerdeText } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -306,5 +307,114 @@ describe("rowsNachWahl", () => {
     const copy = [...rows];
     rowsNachWahl(rows, "2026-09-20");
     expect(rows).toEqual(copy);
+  });
+});
+
+describe("gruppiereEbenen", () => {
+  const NOW = new Date("2026-10-12T12:00:00Z");
+  const e = (id, wahltermin, wahlergebnis) => ({ id, wahltermin, wahlergebnis });
+
+  it("splits into Bund, upcoming, past and undated", () => {
+    const g = gruppiereEbenen([
+      e("nrw", "2027-04-25"), e("bund", null),
+      e("berlin", "2026-09-20", { fdp: 2.5 }), e("irgendwo", null),
+    ], NOW);
+    expect(g.bund.map((x) => x.id)).toEqual(["bund"]);
+    expect(g.anstehend.map((x) => x.id)).toEqual(["nrw"]);
+    expect(g.gelaufen.map((x) => x.id)).toEqual(["berlin"]);
+    expect(g.ohneTermin.map((x) => x.id)).toEqual(["irgendwo"]);
+  });
+
+  it("sorts upcoming elections by date, soonest first", () => {
+    const g = gruppiereEbenen([e("spaet", "2027-05-30"), e("frueh", "2027-04-18")], NOW);
+    expect(g.anstehend.map((x) => x.id)).toEqual(["frueh", "spaet"]);
+  });
+
+  it("counts a past date as past even without a result", () => {
+    const g = gruppiereEbenen([e("alt", "2026-09-20")], NOW);
+    expect(g.gelaufen.map((x) => x.id)).toEqual(["alt"]);
+  });
+
+  it("counts a result as past even when the date is still ahead", () => {
+    // Kann vorkommen, wenn ein Wahltermin nachträglich korrigiert wird.
+    const g = gruppiereEbenen([e("x", "2027-01-01", { fdp: 3.0 })], NOW);
+    expect(g.gelaufen.map((x) => x.id)).toEqual(["x"]);
+    expect(g.anstehend).toEqual([]);
+  });
+
+  it("treats election day itself as upcoming", () => {
+    const g = gruppiereEbenen([e("heute", "2026-10-12")], NOW);
+    expect(g.anstehend.map((x) => x.id)).toEqual(["heute"]);
+  });
+
+  it("never puts an Ebene in two groups", () => {
+    const alle = [e("bund", null), e("a", "2027-01-01"), e("b", "2026-01-01"), e("c", null)];
+    const g = gruppiereEbenen(alle, NOW);
+    const ids = [...g.bund, ...g.anstehend, ...g.gelaufen, ...g.ohneTermin].map((x) => x.id);
+    expect(ids.sort()).toEqual(["a", "b", "bund", "c"]);
+  });
+
+  it("handles missing input", () => {
+    const g = gruppiereEbenen(null, NOW);
+    expect(g.bund).toEqual([]);
+    expect(g.anstehend).toEqual([]);
+  });
+});
+
+describe("tageBis", () => {
+  const NOW = new Date("2026-10-12T12:00:00Z");
+
+  it("counts whole days to the election", () => {
+    expect(tageBis("2027-04-18", NOW)).toBe(188);
+  });
+
+  it("returns 0 on election day", () => {
+    expect(tageBis("2026-10-12", NOW)).toBe(0);
+  });
+
+  it("is negative once the date has passed", () => {
+    expect(tageBis("2026-10-11", NOW)).toBe(-1);
+  });
+
+  it("ignores the time of day", () => {
+    // Kurz vor Mitternacht muss dasselbe herauskommen wie mittags.
+    expect(tageBis("2026-10-20", new Date("2026-10-12T23:59:00Z"))).toBe(8);
+    expect(tageBis("2026-10-20", new Date("2026-10-12T00:01:00Z"))).toBe(8);
+  });
+
+  it("returns null without a usable date", () => {
+    expect(tageBis(null, NOW)).toBeNull();
+    expect(tageBis("", NOW)).toBeNull();
+    expect(tageBis("irgendwann", NOW)).toBeNull();
+  });
+});
+
+describe("huerdeText", () => {
+  it("names the gap below the threshold", () => {
+    expect(huerdeText(3.8)).toEqual({
+      status: "unter", kurz: "unter der Hürde", lang: "1,2 Punkte unter der 5-%-Hürde" });
+  });
+
+  it("names the gap above the threshold", () => {
+    expect(huerdeText(6.2).status).toBe("ueber");
+    expect(huerdeText(6.2).lang).toBe("1,2 Punkte über der 5-%-Hürde");
+  });
+
+  it("calls exactly five percent 'auf der Hürde'", () => {
+    expect(huerdeText(5).status).toBe("auf");
+    expect(huerdeText(5).lang).toBe("genau auf der 5-%-Hürde");
+  });
+
+  it("does not call a value that displays as 5,0 % 'unter der Hürde'", () => {
+    // 4,98 wird als "5,0 %" angezeigt – dann wäre "unter der Hürde" ein Widerspruch.
+    expect(huerdeText(4.98).status).toBe("auf");
+    expect(huerdeText(5.02).status).toBe("auf");
+    expect(huerdeText(4.9).status).toBe("unter");
+    expect(huerdeText(5.1).status).toBe("ueber");
+  });
+
+  it("reports missing data instead of guessing", () => {
+    expect(huerdeText(null).status).toBe("keine");
+    expect(huerdeText(undefined).kurz).toBe("keine Daten");
   });
 });

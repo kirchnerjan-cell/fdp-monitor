@@ -63,6 +63,8 @@ Saarland und Schleswig-Holstein wählen am selben Tag. Bei gleichem `wahltermin`
 
 ## Reihenfolge auf der Seite
 
+Die Seite hat drei Blöcke: oben die **Bundesebene** als große Karte, darunter die **anstehenden** Wahlen als Kacheln, am Ende die **gelaufenen** Wahlen als Tabelle. `gruppiereEbenen()` in `monitor-utils.js` teilt die Ebenen danach auf; eine Ebene gilt als gelaufen, sobald sie ein `wahlergebnis` trägt oder ihr `wahltermin` vorbei ist.
+
 Bundesebene steht immer zuerst. Danach kommen die **anstehenden** Wahlen, nächster Termin zuerst. Dahinter die bereits **gelaufenen** Wahlen, zuletzt gewählte zuerst — so rutschen abgeschlossene Wahlen nach unten, statt die anstehenden zu verdrängen. Ganz am Ende stünden Ebenen ohne `wahltermin`. Der Wahltag selbst zählt noch als anstehend. Das übernimmt `sortEbenen()` in `monitor-utils.js`.
 
 Sobald eine Ebene ein `wahlergebnis` trägt, ist dieses die **Leitzahl** des Panels – nicht mehr der Wahltrend und nicht der Mittelwert der Umfragen. Die Wahl ist entschieden, das Ergebnis ist die Tatsache. In den Ø darunter gehen dann nur noch Umfragen ein, die **nach** dem Wahltag erhoben wurden (sie betreffen die nächste Wahl); Umfragen vom Wahltag selbst oder davor bleiben als Balken sichtbar, zählen aber nicht mehr mit. Ein noch vorläufiges Ergebnis wird in der Leitzahl als „(vorläufig)" gekennzeichnet.
@@ -130,6 +132,21 @@ Sobald eine Wahl stattgefunden hat: in `data.json` bei der betroffenen Ebene `wa
 
 1. Routine läuft (Umfragen + Monitor-Update): setzt Wahltrend mit Δ für alle Ebenen, pusht.
 2. Website prüfen; Korrekturen direkt in `data.json` über GitHub im Browser.
+
+## App-Icon und Homescreen
+
+`index.html` verweist auf `icons/` und `manifest.webmanifest`; damit zeigt „Zum Home-Bildschirm" in Safari und Chrome das eigene Icon statt eines Screenshots. Motiv ist Variante A aus dem Design-Entwurf: drei dunkle Balken unter einer gestrichelten Hürdenlinie auf Gelb.
+
+| Datei | wofür |
+|---|---|
+| `icons/icon.svg` | Logo im Seitenkopf (40 px) |
+| `icons/favicon.svg` / `icons/favicon.ico` | Browser-Tab (SVG bevorzugt, ICO als Rückfall) |
+| `icons/apple-touch-icon.png` | iOS-Homescreen, 180 px, randlos (iOS rundet selbst ab) |
+| `icons/icon-192.png`, `icons/icon-512.png` | im Manifest, für Android und PWA-Installation |
+
+Soll das Icon geändert werden: `icons/icon.svg` anpassen, die gleiche Geometrie in `icons/make-icons.py` nachziehen und das Skript einmal laufen lassen (`pip install pillow` vorausgesetzt). Es erzeugt die Rasterdateien neu. Unter 32 px lässt es die Hürdenlinie weg und macht die Balken breiter, sonst verschwimmt beides.
+
+---
 
 ## Bekannte Grenzen
 

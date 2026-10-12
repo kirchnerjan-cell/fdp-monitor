@@ -14,7 +14,7 @@ const deutsch = (isoTag) => isoTag.split("-").reverse().join(".");
 const TERMIN = { sachsenAnhalt: tag(-1), berlin: tag(13), nrw: tag(230) };
 // NRW steht im Fixture fuer den Echtfall: dawum weist keinen Wahltrend mehr aus,
 // der gespeicherte Wert (6,2 %) ist eingefroren und darf nicht mehr Leitzahl sein.
-const TREND_STAND = { nrwVeraltet: tag(-47) };
+const TREND_STAND = { nrwVeraltet: tag(-47), bundFrisch: tag(-2) };
 
 function buildDataFixture() {
   const d = JSON.parse(fs.readFileSync(path.join(fixturesDir, "data.json"), "utf-8"));
@@ -32,7 +32,7 @@ function buildDataFixture() {
   e["nrw"].umfragen.rows[0].datum = tag(-28);
   e["bund"].umfragen.rows[0].datum = tag(-17);                // innerhalb der 60 Tage
   e["bund"].umfragen.rows[1].datum = tag(-250);               // ausserhalb der 60 Tage
-  e["bund"].wahltrend.stand = tag(-2);                        // frisch -> taugt als Leitzahl
+  e["bund"].wahltrend.stand = TREND_STAND.bundFrisch;         // frisch -> taugt als Leitzahl
   e["nrw"].wahltrend.stand = TREND_STAND.nrwVeraltet;         // zu alt -> Leitzahl faellt zurueck
 
   return JSON.stringify(d);
@@ -57,221 +57,205 @@ async function mockDataJson(page) {
     route.fulfill({ contentType: "application/json", body: dataFixture })
   );
 }
+/** Seite mit Fixture laden; dawum entweder live oder tot (Fallback auf data.json). */
+async function seite(page, { live = false } = {}) {
+  await mockDataJson(page);
+  await page.route("**://api.dawum.de/**", (route) =>
+    live ? route.fulfill({ contentType: "application/json", body: dawumLive }) : route.abort("failed")
+  );
+  await page.goto("/index.html");
+  await page.waitForSelector("#bund-hero .leitzahl .num");
+}
 
-test.describe("Reihenfolge der Ebenen", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
+test.describe("Kopf und App-Icon", () => {
+  test.beforeEach(({ page }) => seite(page));
+
+  test("verweist auf alle Icon-Dateien und das Manifest", async ({ page }) => {
+    // Ohne diese Zeilen zeigt "Zum Home-Bildschirm" kein eigenes Icon.
+    await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "manifest.webmanifest");
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "icons/apple-touch-icon.png");
+    await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute("href", "icons/favicon.svg");
+    await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#171A21");
+    await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute("content", "FDP-Monitor");
   });
 
-  test("Bund zuerst, dann anstehende Wahlen nach Termin, gelaufene ganz am Ende", async ({ page }) => {
-    // Fixture-Reihenfolge ist nrw, bund, berlin, sachsen-anhalt (bewusst durcheinander).
-    // Erwartet: bund, berlin (in 13 Tagen), nrw (in 230 Tagen), sachsen-anhalt (gestern gewählt).
-    await expect(page.locator(".panel")).toHaveCount(4); // Panels rendern asynchron
-    const ids = await page.locator(".panel").evaluateAll((els) => els.map((e) => e.id));
-    expect(ids).toEqual(["panel-bund", "panel-berlin", "panel-nrw", "panel-sachsen-anhalt"]);
+  test("die verlinkten Icon-Dateien sind auch wirklich abrufbar", async ({ page, request }) => {
+    for (const pfad of ["icons/favicon.ico", "icons/favicon.svg", "icons/icon.svg",
+                        "icons/apple-touch-icon.png", "manifest.webmanifest"]) {
+      const res = await request.get("/" + pfad);
+      expect(res.status(), pfad).toBe(200);
+    }
   });
 
-  test("shows the Wahltermin under each Land panel but not under Bund", async ({ page }) => {
-    await expect(page.locator("#panel-bund .termin")).toHaveCount(0);
-    await expect(page.locator("#panel-nrw .termin")).toContainText(deutsch(TERMIN.nrw));
-  });
-});
-
-test.describe("Amtliches Ergebnis als Extra-Balken", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
-  });
-
-  test("renders the official result as a distinct first bar when present", async ({ page }) => {
-    const row = page.locator("#panel-sachsen-anhalt .row").first();
-    await expect(row).toHaveClass(/ergebnis/);
-    await expect(row.locator(".inst")).toHaveText("Amtliches Ergebnis");
-    await expect(row.locator(".val")).toHaveText("3,8 %");
-  });
-
-  test("does not render an extra bar for a region with no Wahlergebnis", async ({ page }) => {
-    await expect(page.locator("#panel-nrw .row.ergebnis")).toHaveCount(0);
-  });
-
-  test("a region with a Wahlergebnis is never shown as errored, even with no poll rows", async ({ page }) => {
-    // sachsen-anhalt has a stored poll row too, but the guard is what matters:
-    // an ergebnis alone must suppress the "no data" error state.
-    await expect(page.locator("#panel-sachsen-anhalt")).not.toHaveClass(/err/);
+  test("zeigt das Stand-Datum aus data.json im Kopf", async ({ page }) => {
+    await expect(page.locator("#stand")).toContainText("Stand");
+    await expect(page.locator("header.top .marke img")).toHaveAttribute("src", "icons/icon.svg");
   });
 });
 
-test.describe("Umfragen: live dawum erreichbar", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) =>
-      route.fulfill({ contentType: "application/json", body: dawumLive })
-    );
-    await page.goto("/index.html");
+test.describe("Bund-Hero", () => {
+  test("nimmt den frischen Wahltrend als Leitzahl, mit Δ und Hürdenabstand", async ({ page }) => {
+    await seite(page);
+    await expect(page.locator("#bund-hero .leitzahl .num")).toContainText("4,4");
+    await expect(page.locator("#bund-hero .delta .wert")).toContainText("▲ 0,2");
+    // 4,4 % -> 0,6 Punkte unter 5 %; der Abstand wird gerechnet, nicht hinterlegt.
+    await expect(page.locator("#bund-hero .chip")).toHaveText(/0,6 Punkte unter der 5-%-Hürde/);
+    await expect(page.locator("#bund-hero .chip")).toHaveClass(/unter/);
   });
 
-  test("shows the live source note with the live database date", async ({ page }) => {
-    const note = page.locator("#panel-bund .note");
-    await expect(note).toContainText("Live von");
-    await expect(note).toContainText(deutsch(DAWUM_STAND));
+  test("zählt die Institute über der Hürde und den Ø", async ({ page }) => {
+    await seite(page);
+    const kz = page.locator("#bund-hero .kennzahlen dd");
+    await expect(kz.first()).toHaveText("4,2 %");   // nur die frische Zeile zählt
+    await expect(kz.last()).toHaveText("0 von 1");  // 4,2 % liegt unter 5 %
   });
 
-  test("renders a bar row using the live survey value, not the stored fallback", async ({ page }) => {
-    const row = page.locator("#panel-bund .row").first();
-    await expect(row.locator(".inst")).toHaveText("Forsa (live)");
-    await expect(row.locator(".val")).toHaveText("4,9 %");
+  test("setzt die Hürdenlinie bei 62,5 % – das ist 5 % auf der Skala 0–8 %", async ({ page }) => {
+    await seite(page);
+    const feld = await page.locator("#bund-hero .skala .feld").boundingBox();
+    const mark = await page.locator("#bund-hero .skala .bar .mark").boundingBox();
+    expect((mark.x - feld.x) / feld.width).toBeCloseTo(0.625, 2);
   });
 
-  test("still shows the stored dawum-Wahltrend as the headline figure", async ({ page }) => {
-    // wahltrend comes only from data.json, regardless of the live poll fetch
-    await expect(page.locator("#panel-bund .avg .num")).toContainText("4,4 %");
+  test("zeichnet den Balken auf derselben Skala 0–8 %", async ({ page }) => {
+    await seite(page);
+    const bar = await page.locator("#bund-hero .skala .bar").boundingBox();
+    const fill = await page.locator("#bund-hero .skala .bar .fill").boundingBox();
+    expect(fill.width / bar.width).toBeCloseTo(4.4 / 8, 2);
   });
 
-  test("a region with live db entries but no matching survey plus a Wahlergebnis still shows the extra bar", async ({ page }) => {
-    await expect(page.locator("#panel-sachsen-anhalt .row.ergebnis")).toHaveCount(1);
-  });
-});
-
-test.describe("Umfragen: live dawum nicht erreichbar (Fallback auf data.json)", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
+  test("setzt je einen Punkt pro Einzelumfrage", async ({ page }) => {
+    await seite(page);
+    await expect(page.locator("#bund-hero .skala .punkt")).toHaveCount(1);
   });
 
-  test("shows the fallback source note referencing the last stored update", async ({ page }) => {
-    const note = page.locator("#panel-bund .note");
-    await expect(note).toContainText("letzten Aktualisierung");
-    await expect(note).toContainText("15.08.2026");
+  test("nutzt live abgerufene Umfragen, wenn dawum erreichbar ist", async ({ page }) => {
+    await seite(page, { live: true });
+    await expect(page.locator("#bund-hero .inst-zeile .nam").first()).toHaveText("Forsa (live)");
+    await expect(page.locator("#bund-hero .liste")).toContainText("Live von");
+    // Der Wahltrend kommt weiterhin nur aus data.json.
+    await expect(page.locator("#bund-hero .leitzahl .num")).toContainText("4,4");
   });
 
-  test("renders a bar row using the stored fallback survey value", async ({ page }) => {
-    const row = page.locator("#panel-bund .row").last();
-    await expect(row.locator(".inst")).toHaveText("Forsa (gespeichert)");
-    await expect(row.locator(".val")).toHaveText("4,2 %");
+  test("fällt ohne dawum auf die gespeicherten Umfragen zurück", async ({ page }) => {
+    await seite(page);
+    await expect(page.locator("#bund-hero .inst-zeile .nam").first()).toHaveText("Forsa (gespeichert)");
+    await expect(page.locator("#bund-hero .liste")).toContainText("letzten Aktualisierung");
   });
 
-  test("a region with neither poll rows nor a Wahlergebnis is marked as errored", async ({ page }) => {
-    await expect(page.locator("#panel-berlin")).toHaveClass(/err/);
-    await expect(page.locator("#panel-berlin .note")).toContainText("Keine Einzelumfragen gefunden");
-  });
-});
-
-test.describe("Altersfilter für Einzelumfragen", () => {
-  test("fallback: a poll older than Bund's 60-day window is hidden, a Land's 180-day-old poll stays", async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
-    // bund hat eine 250 Tage alte Zeile (>60 Tage) neben einer 17 Tage alten —
-    // nur die frische darf gerendert werden.
-    await expect(page.locator("#panel-bund .row")).toHaveCount(1);
-    await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (gespeichert)");
-    // sachsen-anhalt fixture has an "Alt (gespeichert)" row from 2025-01-01 (>180 days old,
-    // filtered) plus its Wahlergebnis bar (never filtered) and one fresh poll row.
-    await expect(page.locator("#panel-sachsen-anhalt .row")).toHaveCount(3);
-    await expect(page.locator("#panel-sachsen-anhalt .row .inst")).toHaveText(
-      ["Amtliches Ergebnis", "Nachwahl (gespeichert)", "Forsa (gespeichert)"]);
-  });
-
-  test("live: a poll older than Bund's 60-day window is hidden even when dawum is reachable", async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) =>
-      route.fulfill({ contentType: "application/json", body: dawumLive })
-    );
-    await page.goto("/index.html");
-    // dawum-live enthaelt eine zusaetzliche, 250 Tage alte "Alt (live)"-Bundesumfrage.
-    await expect(page.locator("#panel-bund .row")).toHaveCount(1);
-    await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (live)");
+  test("blendet Umfragen ausserhalb des Altersfensters aus", async ({ page }) => {
+    await seite(page);
+    // Bund hat eine 250 Tage alte Zeile (>60 Tage) neben einer 17 Tage alten.
+    await expect(page.locator("#bund-hero .inst-zeile")).toHaveCount(1);
   });
 });
 
-test.describe("Veralteter Wahltrend taugt nicht als Leitzahl", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
+test.describe("Anstehende Wahlen", () => {
+  test.beforeEach(({ page }) => seite(page));
+
+  test("stehen als Kacheln nach Termin sortiert, Bund gehört nicht dazu", async ({ page }) => {
+    const ids = await page.locator(".kachel").evaluateAll((els) => els.map((e) => e.id));
+    expect(ids).toEqual(["kachel-berlin", "kachel-nrw"]);
   });
 
-  test("falls back to the poll average instead of showing the frozen trend", async ({ page }) => {
+  test("nennen Land, Wahltyp mit Datum und die Tage bis zur Wahl", async ({ page }) => {
+    const nrw = page.locator("#kachel-nrw");
+    await expect(nrw.locator("h3")).toHaveText("Nordrhein-Westfalen");
+    await expect(nrw.locator(".wann")).toContainText("Landtagswahl");
+    await expect(nrw.locator(".wann")).toContainText(deutsch(TERMIN.nrw));
+    await expect(nrw.locator(".tage")).toHaveText("in 230 T.");
+  });
+
+  test("ein veralteter Wahltrend wird nicht zur Leitzahl", async ({ page }) => {
     // NRW: gespeicherter Trend 6,2 % (47 Tage alt), Einzelumfrage 5,3 %.
-    // Die Leitzahl muss die Umfrage zeigen, nicht den eingefrorenen Trend.
-    const num = page.locator("#panel-nrw .avg .num");
+    const num = page.locator("#kachel-nrw .wert .num");
     await expect(num).toHaveText("5,3 %");
     await expect(num).not.toContainText("6,2");
+    await expect(page.locator("#kachel-nrw .hinweis"))
+      .toHaveText(`Wahltrend vom ${deutsch(TREND_STAND.nrwVeraltet)} – Aktualisierung prüfen`);
   });
 
-  test("names the stale trend in the label so the fallback is visible", async ({ page }) => {
-    const lbl = page.locator("#panel-nrw .avg .lbl");
-    await expect(lbl).toContainText("Ø der neuesten Umfragen je Institut");
-    await expect(lbl).toContainText("dawum-Wahltrend veraltet");
-    await expect(lbl).toContainText(deutsch(TREND_STAND.nrwVeraltet));
+  test("ohne Umfragen und ohne Trend bleibt eine kompakte Kachel", async ({ page }) => {
+    const be = page.locator("#kachel-berlin");
+    await expect(be).toHaveClass(/leer/);
+    await expect(be.locator(".wert .num")).toHaveText("–");
+    await expect(be.locator(".pill")).toHaveText("keine Daten");
+    await expect(be.locator(".bar")).toHaveCount(0);
+    await expect(be.locator(".hinweis")).toHaveText("Kein Wahltrend hinterlegt");
   });
 
-  test("a fresh trend is still used as the headline figure", async ({ page }) => {
-    await expect(page.locator("#panel-bund .avg .num")).toContainText("4,4 %");
-    await expect(page.locator("#panel-bund .avg .lbl")).toContainText("dawum-Wahltrend");
-    await expect(page.locator("#panel-bund .avg .lbl")).not.toContainText("veraltet");
+  test("der Status-Chip benennt die Lage zur Hürde", async ({ page }) => {
+    await expect(page.locator("#kachel-nrw .pill")).toHaveText("über der Hürde");
+    await expect(page.locator("#kachel-nrw .pill")).toHaveClass(/ueber/);
   });
 
-  test("an Ebene without any trend says so without claiming one went stale", async ({ page }) => {
-    // "noch nicht hinterlegt" waere hier falsch: eine Ebene kann ihren Trend auch
-    // verloren haben, weil update.py ihn als veraltet verworfen hat. Berlin hat im
-    // Fixture weder Trend noch amtliches Ergebnis.
-    const lbl = page.locator("#panel-berlin .avg .lbl");
-    await expect(lbl).toContainText("kein aktueller dawum-Wahltrend");
-    await expect(lbl).not.toContainText("veraltet");
+  test("Balken über der Hürde sind blau, darunter dunkel", async ({ page }) => {
+    const fill = page.locator("#kachel-nrw .bar .fill");
+    await expect(fill).toHaveCSS("background-color", "rgb(30, 79, 216)");  // 5,3 % >= 5 %
   });
 });
 
-test.describe("Gelaufene Wahl: amtliches Ergebnis ist die Leitzahl", () => {
-  test.beforeEach(async ({ page }) => {
-    await mockDataJson(page);
-    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-    await page.goto("/index.html");
+test.describe("Gelaufene Wahlen", () => {
+  test.beforeEach(({ page }) => seite(page));
+
+  test("stehen in der Tabelle, nicht bei den anstehenden", async ({ page }) => {
+    await expect(page.locator("#kachel-sachsen-anhalt")).toHaveCount(0);
+    await expect(page.locator("#zeile-sachsen-anhalt")).toHaveCount(1);
   });
 
-  test("shows the official result as the headline figure, not a poll average", async ({ page }) => {
+  test("zeigen das amtliche Ergebnis, nicht einen Umfragemittelwert", async ({ page }) => {
     // Fixture: Ergebnis 3,8 %, Vorwahlumfrage 4,0 %, Nachwahlumfrage 3,0 %.
-    // Der Mittelwert über alle wäre 3,5 % – die Leitzahl muss das Ergebnis sein.
-    const num = page.locator("#panel-sachsen-anhalt .avg .num");
-    await expect(num).toHaveText("3,8 %");
-    await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).toContainText("Amtliches Wahlergebnis vom");
+    const zellen = page.locator("#zeile-sachsen-anhalt td");
+    await expect(zellen.nth(0)).toHaveText("Sachsen-Anhalt");
+    await expect(zellen.nth(1)).toHaveText(deutsch(TERMIN.sachsenAnhalt));
+    await expect(zellen.nth(2)).toHaveText("3,8 %");
   });
 
-  test("averages only the polls taken after the election day", async ({ page }) => {
-    // 3,0 % ist die Nachwahlumfrage allein; 4,0 % (vor der Wahl) darf nicht eingehen.
-    const simple = page.locator("#panel-sachsen-anhalt .simple");
-    await expect(simple).toContainText("Ø der Umfragen nach der Wahl");
-    await expect(simple).toContainText("3,0 %");
+  test("der Balken folgt dem Ergebnis auf derselben Skala", async ({ page }) => {
+    const bar = await page.locator("#zeile-sachsen-anhalt .bar").boundingBox();
+    const fill = await page.locator("#zeile-sachsen-anhalt .bar .fill").boundingBox();
+    expect(fill.width / bar.width).toBeCloseTo(3.8 / 8, 2);
   });
 
-  test("still lists the pre-election polls as bars", async ({ page }) => {
-    // Aus dem Mittelwert heraus, aber als Verlauf weiter sichtbar.
-    await expect(page.locator("#panel-sachsen-anhalt .row .inst")).toContainText(["Forsa (gespeichert)"]);
+  test("der Ø der Umfragen nach der Wahl bleibt als Titel erreichbar", async ({ page }) => {
+    // 3,0 % ist die Nachwahlumfrage allein; 4,0 % von vor der Wahl zählt nicht mit.
+    await expect(page.locator("#zeile-sachsen-anhalt td.abstand"))
+      .toHaveAttribute("title", "Ø der Umfragen nach der Wahl: 3,0 %");
   });
 
-  test("does not call a final result preliminary", async ({ page }) => {
-    await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).not.toContainText("vorläufig");
-  });
-
-  test("an upcoming election is unaffected and still uses the trend", async ({ page }) => {
-    await expect(page.locator("#panel-bund .avg .lbl")).toContainText("dawum-Wahltrend");
+  test("ein vorläufiges Ergebnis wird mit Sternchen gekennzeichnet", async ({ page }) => {
+    const vorlaeufig = JSON.parse(dataFixture);
+    vorlaeufig.ebenen.find((e) => e.id === "sachsen-anhalt").wahlergebnis.vorlaeufig = true;
+    await page.route("**/data.json*", (route) =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify(vorlaeufig) })
+    );
+    await page.goto("/index.html");
+    await expect(page.locator("#zeile-sachsen-anhalt td.erg")).toHaveText("3,8 % *");
+    await expect(page.locator("#gelaufen-tabelle")).toContainText("vorläufiges amtliches Ergebnis");
   });
 });
 
-test("a preliminary result is named as such in the headline label", async ({ page }) => {
-  // Zwischen Wahltag und Feststellung durch den Landeswahlausschuss trägt das Ergebnis
-  // "vorlaeufig": true – die Leitzahl darf das nicht verschweigen.
-  const vorlaeufig = JSON.parse(dataFixture);
-  const st = vorlaeufig.ebenen.find((e) => e.id === "sachsen-anhalt");
-  st.wahlergebnis.vorlaeufig = true;
-  await page.route("**/data.json*", (route) =>
-    route.fulfill({ contentType: "application/json", body: JSON.stringify(vorlaeufig) })
-  );
-  await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
-  await page.goto("/index.html");
-  await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).toContainText("(vorläufig)");
+test.describe("Mobil", () => {
+  test.use({ viewport: { width: 390, height: 900 } });
+
+  test("klappt die Institutsliste hinter einen Button", async ({ page }) => {
+    await seite(page);
+    const details = page.locator("#insts");
+    await expect(details).toHaveJSProperty("open", false);
+    await expect(details.locator("summary")).toBeVisible();
+    await details.locator("summary").click();
+    await expect(details).toHaveJSProperty("open", true);
+  });
+
+  test("die Seite scrollt nicht quer", async ({ page }) => {
+    await seite(page);
+    const ueberlauf = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+    expect(ueberlauf).toBeLessThanOrEqual(1);
+  });
+});
+
+test("auf dem Desktop ist die Institutsliste offen", async ({ page }) => {
+  await seite(page);
+  await expect(page.locator("#insts")).toHaveJSProperty("open", true);
 });
