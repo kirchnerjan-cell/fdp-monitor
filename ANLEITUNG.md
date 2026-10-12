@@ -149,6 +149,20 @@ Soll das Icon geändert werden: `icons/icon.svg` anpassen, die gleiche Geometrie
 
 ---
 
+## Wenn die Seite leer bleibt
+
+`index.html` und `monitor-utils.js` gehören zusammen: die Seite ruft Funktionen auf, die in der Skriptdatei stehen. Liefert ein Browser- oder CDN-Cache nach einem Deploy noch die **alte** Skriptdatei zur neuen Seite, fehlen diese Funktionen — früher blieb die Seite dann vollständig leer, ohne jeden Hinweis.
+
+Dagegen sind drei Dinge eingebaut:
+
+1. Die Seite lädt `monitor-utils.js?v=<Nummer>`. **Diese Nummer bei jeder Änderung an `monitor-utils.js` hochzählen** — dann kann kein Cache die beiden Fassungen vermischen.
+2. Fehlt trotzdem eine Funktion, lädt die Seite die Skriptdatei einmal mit einem Zeitstempel frisch nach und arbeitet normal weiter.
+3. Hilft auch das nicht, erscheint eine Meldung mit der Bitte, neu zu laden — nie eine weiße Seite.
+
+Zeigt die Seite dennoch nichts: in der Browser-Konsole nachsehen und einmal hart neu laden (Mac: Cmd+Shift+R, iOS: Einstellungen → Safari → Verlauf und Websitedaten löschen).
+
+---
+
 ## Bekannte Grenzen
 
 - Der dawum-Wahltrend steht nicht in der API, sondern nur auf der dawum-Website. Er wird deshalb von der Routine (oder von dir per `--trend <id> <wert>`) in `data.json` geschrieben; die Seite zeigt zusätzlich den einfachen Ø der neuesten Umfrage je Institut, damit ein Live-Wert auch ohne Routine sichtbar ist.
