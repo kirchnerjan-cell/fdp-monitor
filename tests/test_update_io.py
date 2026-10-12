@@ -176,3 +176,57 @@ class TestUpdatePolls:
         d = {"ebenen": [{"id": "bund", "name": "Bundestagswahl", "parlament_regex": "bundestag", "umfragen": dict(old)}]}
         update.update_polls(d)
         assert d["ebenen"][0]["umfragen"] == old
+
+
+class TestVeralteteTrendsImLauf:
+    """Die Alterung des Wahltrends im Zusammenspiel mit main().
+
+    main() rechnet gegen das echte Heute, deshalb werden die Stand-Daten hier relativ
+    dazu gesetzt. Fest eingetragene Daten würden mit der Zeit ihre Bedeutung verlieren:
+    ein "frischer" Stand wäre irgendwann selbst veraltet und der Test schlüge grundlos fehl.
+    """
+
+    @staticmethod
+    def _tage_her(n):
+        from datetime import datetime, timedelta
+        return (datetime.now(update.TZ).date() - timedelta(days=n)).isoformat()
+
+    def _datei(self, tmp_path, monkeypatch, stand=None):
+        stand = stand or self._tage_her(47)  # deutlich über der 35-Tage-Grenze
+        f = tmp_path / "data.json"
+        monkeypatch.setattr(update, "DATA", str(f))
+        update.save_data({
+            "erstellt": "2026-10-12T09:20+02:00",
+            "ebenen": [{
+                "id": "nrw", "name": "Landtagswahl NRW", "parlament_regex": "nordrhein",
+                "wahltrend_max_alter_tage": 35,
+                "wahltrend": {"wert": 6.2, "delta": None, "stand": stand},
+                "umfragen": {"stand": "2026-09-23", "rows": []},
+            }],
+        })
+        return f
+
+    def test_veralteter_trend_wird_im_lauf_verworfen(self, tmp_path, monkeypatch):
+        f = self._datei(tmp_path, monkeypatch)
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend"])
+        update.main()
+        assert json.loads(f.read_text(encoding="utf-8"))["ebenen"][0]["wahltrend"] == update.TREND_LEER
+
+    def test_in_diesem_lauf_gesetzter_trend_ueberlebt(self, tmp_path, monkeypatch):
+        # Liefert dawum wieder einen Wert, darf die Alterung ihn nicht gleich wieder wegräumen.
+        f = self._datei(tmp_path, monkeypatch)
+        heute = self._tage_her(0)
+        monkeypatch.setattr(sys, "argv",
+                            ["update.py", "--nur-trend", "--stand", heute, "--trend", "nrw", "4.1"])
+        update.main()
+        t = json.loads(f.read_text(encoding="utf-8"))["ebenen"][0]["wahltrend"]
+        assert t["wert"] == 4.1 and t["stand"] == heute
+
+    def test_frischer_trend_loest_keinen_leerlauf_commit_aus(self, tmp_path, monkeypatch, capsys):
+        # Ist nichts zu verwerfen, muss der Lauf weiterhin als "keine Änderung" enden.
+        f = self._datei(tmp_path, monkeypatch, stand=self._tage_her(1))
+        vorher = f.read_text(encoding="utf-8")
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend"])
+        update.main()
+        assert f.read_text(encoding="utf-8") == vorher
+        assert "Keine inhaltlichen Änderungen" in capsys.readouterr().out

@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-10-12T09:20+02:00",
+  "erstellt": "2026-10-12T19:34+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -10,6 +10,7 @@
       "dawum_slug": "Bundestag",
       "wahltermin": null,
       "umfrage_max_alter_tage": 60,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 3.8,
@@ -81,6 +82,7 @@
       "dawum_slug": "Sachsen-Anhalt",
       "wahltermin": "2026-09-06",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": {
         "fdp": 2.6,
         "datum": "2026-09-06"
@@ -130,6 +132,7 @@
       "dawum_slug": "Mecklenburg-Vorpommern",
       "wahltermin": "2026-09-20",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": {
         "fdp": 1.0,
         "datum": "2026-09-20"
@@ -159,9 +162,11 @@
       "dawum_slug": "Berlin",
       "wahltermin": "2026-09-20",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": {
         "fdp": 2.5,
-        "datum": "2026-09-20"
+        "datum": "2026-09-20",
+        "vorlaeufig": true
       },
       "wahltrend": {
         "wert": 2.5,
@@ -198,6 +203,7 @@
       "dawum_slug": "Saarland",
       "wahltermin": "2027-04-18",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": null,
@@ -218,6 +224,7 @@
       "dawum_slug": "Schleswig-Holstein",
       "wahltermin": "2027-04-18",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": null,
@@ -249,11 +256,12 @@
       "dawum_slug": "Nordrhein-Westfalen",
       "wahltermin": "2027-04-25",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": 6.2,
+        "wert": null,
         "delta": null,
-        "stand": "2026-08-26"
+        "stand": null
       },
       "umfragen": {
         "stand": "2026-10-11T14:31:10+02:00",
@@ -285,6 +293,7 @@
       "dawum_slug": "Bremen",
       "wahltermin": "2027-05-30",
       "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
         "wert": null,

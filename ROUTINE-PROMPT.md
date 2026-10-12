@@ -6,15 +6,26 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
 
 ## Schritt: Website „FDP-Monitor" aktualisieren
 
-1. Lies `data.json["ebenen"]` und ermittle für jede Ebene mit einem `dawum_slug` den gewichteten dawum-Wahltrend der FDP von `https://dawum.de/<dawum_slug>/` (z. B. `https://dawum.de/Bundestag/`, `https://dawum.de/Sachsen-Anhalt/`). Überspringe eine Ebene, wenn dort kein Wahltrend ausgewiesen ist.
+1. Lies `data.json["ebenen"]` und ermittle für jede Ebene mit einem `dawum_slug` den gewichteten dawum-Wahltrend der FDP von `https://dawum.de/<dawum_slug>/` (z. B. `https://dawum.de/Bundestag/`, `https://dawum.de/Sachsen-Anhalt/`). **Notiere zu jedem Wert das Trend-Datum, das dawum selbst angibt** (steht auf der Seite am Wahltrend, z. B. „Wahltrend vom 11.10.2026") – nicht das heutige Datum. Überspringe eine Ebene, wenn dort kein Wahltrend ausgewiesen ist – das ist normal: dawum weist für ein Bundesland keinen Trend aus, solange dort zu wenige aktuelle Umfragen vorliegen. Den eingefrorenen Altwert musst du nicht selbst entfernen, `update.py` verwirft ihn ab `wahltrend_max_alter_tage` Tagen automatisch (siehe Schritt 2).
 
-2. Führe im Repo-Root aus, mit einem `--trend <id> <Wert>` je Ebene, für die ein Wert vorliegt (Dezimalpunkt, z. B. `4.4`; `id` ist das Feld `"id"` der jeweiligen Ebene):
+2. Führe im Repo-Root aus, mit einem `--trend <id> <Wert>` je Ebene, für die ein Wert vorliegt (Dezimalpunkt, z. B. `4.4`; `id` ist das Feld `"id"` der jeweiligen Ebene) und `--stand` mit dem Trend-Datum aus Schritt 1:
    ```
-   python3 update.py --trend bund <Wert> --trend nrw <Wert> --trend sachsen-anhalt <Wert> --trend mecklenburg-vorpommern <Wert> --trend berlin <Wert>
+   python3 update.py --stand <JJJJ-MM-TT> --trend bund <Wert> --trend nrw <Wert> --trend sachsen-anhalt <Wert>
    ```
-   Das Skript berechnet Δ zur Vorwoche selbst und speichert die Einzelumfragen aller Ebenen als Fallback. Gib die Ausgabe des Skripts wieder. Meldet es „Keine inhaltlichen Änderungen", lässt es `data.json` bewusst unangetastet – das ist kein Fehler.
+   `--stand` ist Pflicht, sobald `--trend` dabei ist – das Skript bricht sonst ab. Grund: die Seite zeigt „Stand" als Aktualität des Werts, und die Alterung (unten) rechnet daraus. Das Abrufdatum einzutragen ließe einen alten Trend zu jung wirken. Weisen mehrere Ebenen unterschiedliche Trend-Daten aus, rufe das Skript je Datum einmal auf.
+   Das Skript berechnet Δ zur Vorwoche selbst und speichert die Einzelumfragen aller Ebenen als Fallback. Außerdem verwirft es einen Wahltrend, dessen `stand` älter als `wahltrend_max_alter_tage` Tage ist (21, nach dawums eigenem 20-Tage-Fenster) – die Seite zeigt dann als Leitzahl den Ø der Einzelumfragen, der sich bei jedem Seitenaufruf aktualisiert. Meldet das Skript „Wahltrend <id> verworfen", ist das kein Fehler, sondern genau dieser Fall. Gib die Ausgabe des Skripts wieder. Meldet es „Keine inhaltlichen Änderungen", lässt es `data.json` bewusst unangetastet – das ist kein Fehler.
 
-3. Für jede Ebene, deren `wahltermin` in der Vergangenheit liegt und deren `wahlergebnis` noch `null` ist: prüfe per Web-Suche (Landeswahlleiter/Bundeswahlleiter, dpa/Reuters als zweite Wahl), ob ein amtliches Endergebnis für die FDP vorliegt. Falls ja, trage `{"fdp": <Prozent>, "datum": "<Wahltermin>"}` ein. Falls unklar, `wahlergebnis` unverändert lassen und das in der Abschlussmeldung erwähnen.
+3. Amtliche Wahlergebnisse nachtragen. Betroffen sind zwei Fälle:
+
+   a) **Ebene ohne Ergebnis**: `wahltermin` liegt in der Vergangenheit und `wahlergebnis` ist noch `null`. Prüfe per Web-Suche (Landeswahlleiter/Bundeswahlleiter, dpa/Reuters als zweite Wahl), ob ein amtliches Ergebnis für die FDP vorliegt, und trage es ein:
+      - endgültiges amtliches Endergebnis (vom Landeswahlausschuss festgestellt): `{"fdp": <Prozent>, "datum": "<Wahltermin>"}`
+      - nur vorläufiges amtliches Endergebnis: zusätzlich `"vorlaeufig": true`, also `{"fdp": <Prozent>, "datum": "<Wahltermin>", "vorlaeufig": true}`
+
+   Sobald ein `wahlergebnis` steht, ist es die Leitzahl des Panels – der Wahltrend wird dort nicht mehr angezeigt, und in den Ø gehen nur noch Umfragen nach dem Wahltag ein. Du musst dafür nichts weiter tun.
+
+   b) **Ebene mit vorläufigem Ergebnis**: `wahlergebnis.vorlaeufig` ist `true`. Prüfe erneut, ob inzwischen das endgültige Ergebnis feststeht. Falls ja, korrigiere `fdp` auf den endgültigen Wert und **entferne das Feld `vorlaeufig`** – damit ist die Ebene abgeschlossen und wird nicht mehr geprüft. Falls nein, alles unverändert lassen.
+
+   Achte auf die richtige Stimme: maßgeblich ist der **Zweitstimmen**-Anteil (Landesstimme), nicht der Erststimmen-Anteil. Bei unklarer Quellenlage `wahlergebnis` unverändert lassen und das in der Abschlussmeldung erwähnen.
 
 4. Prüfe, dass `data.json` gültiges JSON ist (`python3 -c "import json;json.load(open('data.json'))"`).
 
@@ -22,7 +33,7 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
    - Gibt das eine Zeile aus: `git add data.json && git commit -m "Monitor-Update KW <Kalenderwoche>" && git push`.
    - Ist die Ausgabe leer, hat sich nichts geändert. Dann **kein** Commit und **kein** Push – das ist der Normalfall bei einem Lauf ohne neue Umfragen und kein Fehler.
 
-6. Melde am Ende: Wahltrend-Werte mit Δ je Ebene, ob dawum live erreichbar war, ob ein neues Wahlergebnis eingetragen wurde, und ob committet wurde oder es nichts zu ändern gab.
+6. Melde am Ende: Wahltrend-Werte mit Δ je Ebene, ob dawum live erreichbar war, ob ein neues Wahlergebnis eingetragen oder ein vorläufiges durch das endgültige ersetzt wurde, und ob committet wurde oder es nichts zu ändern gab.
 
 ---
 
@@ -30,4 +41,3 @@ Diesen Text als Zusatzschritt an die bestehende wöchentliche Umfrage-Routine in
 
 - Die Instagram-Anbindung (Posts, Faktencheck) wurde entfernt und kann bei Bedarf später wieder ergänzt werden – die Git-Historie enthält den vollständigen alten Code.
 - Neue Ebene (z. B. weiteres Bundesland) hinzufügen: Eintrag in `data.json["ebenen"]` ergänzen (siehe ANLEITUNG.md), danach greift diese Routine automatisch mit.
-- Die aktuell hinterlegten Wahltermine für Sachsen-Anhalt, Mecklenburg-Vorpommern und Berlin sind unverifizierte Platzhalter – bitte einmal gegen die offiziellen Landeswahlleiter-Seiten prüfen.

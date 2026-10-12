@@ -89,7 +89,7 @@
 
   <section id="umfragen">
     <h2>Umfragewerte</h2>
-    <p class="sub">Leitzahl: gewichteter dawum-Wahltrend. Balken: neueste Umfrage je Institut, gestrichelt schraffiert: amtliches Wahlergebnis. Rote Linie: 5-%-Hürde. Bundesebene zuerst, danach die anstehenden Landtagswahlen (nächster Termin zuerst), am Ende die bereits gelaufenen.</p>
+    <p class="sub">Leitzahl: bei gelaufenen Wahlen das amtliche Ergebnis, sonst der gewichtete dawum-Wahltrend – fehlt er oder ist er veraltet, der Ø der neuesten Umfragen je Institut. Balken: neueste Umfrage je Institut, gestrichelt schraffiert: amtliches Wahlergebnis. Rote Linie: 5-%-Hürde. Bundesebene zuerst, danach die anstehenden Landtagswahlen (nächster Termin zuerst), am Ende die bereits gelaufenen.</p>
     <div class="polls" id="polls"></div>
   </section>
 
@@ -107,7 +107,7 @@
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
   const MAX_PCT = 10;                 // Skala der Balken (0–10 %)
-  const {fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge} = MonitorUtils;
+  const {fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl} = MonitorUtils;
 
   // ---------- data.json ----------
   let data = {ebenen:[]};
@@ -132,15 +132,31 @@
     return p;
   }
 
-  function renderPolls(panel, rows, cls, source, trend, wahlergebnis){
+  function renderPolls(panel, rows, cls, source, trend, wahlergebnis, trendMaxAlter){
     const bars = panel.querySelector('.bars');
     const note = panel.querySelector('.note');
     const num = panel.querySelector('.avg .num');
     const lbl = panel.querySelector('.avg .lbl');
     const simple = panel.querySelector('.simple');
     bars.querySelectorAll('.row').forEach(r=>r.remove());
-    const avg = rows && rows.length ? rows.reduce((s,r)=>s+r.fdp,0)/rows.length : null;
-    if(trend && trend.wert!=null){
+    const hasErgebnis = wahlergebnis && wahlergebnis.fdp!=null;
+    // Steht ein amtliches Ergebnis, ist die Wahl gelaufen: dann zählen für den Mittelwert
+    // nur noch die Umfragen nach dem Wahltag, die die nächste Wahl betreffen.
+    const mittelRows = hasErgebnis ? rowsNachWahl(rows, wahlergebnis.datum) : (rows || []);
+    const avg = mittelRows.length ? mittelRows.reduce((s,r)=>s+r.fdp,0)/mittelRows.length : null;
+    // Ein zu alter Wahltrend taugt nicht als Leitzahl: dawum weist ihn nicht mehr aus,
+    // sobald eine Ebene länger nicht umfragt wird, und der gespeicherte Wert würde sonst
+    // einfrieren. Dann lieber der Ø der Einzelumfragen, der sich laufend aktualisiert.
+    const aktuellerTrend = filterTrend(trend, trendMaxAlter);
+    if(hasErgebnis){
+      // Die Wahl ist entschieden – das amtliche Ergebnis ist die Tatsache, nicht ein
+      // Mittelwert aus Umfragen zu einer Frage, die niemand mehr stellt.
+      num.textContent = fmt(wahlergebnis.fdp) + ' %';
+      num.classList.toggle('under', wahlergebnis.fdp < 5);
+      lbl.textContent = 'Amtliches Wahlergebnis vom ' + dfmt(wahlergebnis.datum)
+        + (wahlergebnis.vorlaeufig ? ' (vorläufig)' : '');
+      simple.textContent = avg!=null ? 'Ø der Umfragen nach der Wahl: ' + fmt(avg) + ' %' : '';
+    } else if(aktuellerTrend){
       // dawum-Wahltrend (gewichtet) als Leitzahl; kommt aus data.json (Routine)
       const d = trend.delta;
       const dHtml = d!=null ? ` <span class="delta ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${fmt(d).replace('-','−')}</span>` : '';
@@ -151,10 +167,12 @@
     } else {
       num.textContent = avg!=null ? fmt(avg) + ' %' : '–';
       num.classList.toggle('under', avg!=null && avg < 5);
-      lbl.textContent = 'Ø der neuesten Umfragen je Institut (Wahltrend noch nicht hinterlegt)';
+      const veraltet = trend && trend.wert!=null; // es gab einen, er ist nur zu alt
+      lbl.textContent = 'Ø der neuesten Umfragen je Institut'
+        + (veraltet ? ' · dawum-Wahltrend veraltet (Stand ' + dfmt(trend.stand) + ')'
+                    : ' (kein aktueller dawum-Wahltrend)');
       simple.textContent = '';
     }
-    const hasErgebnis = wahlergebnis && wahlergebnis.fdp!=null;
     if(!rows?.length && !hasErgebnis){ panel.classList.add('err'); note.textContent='Keine Einzelumfragen gefunden.'; return; }
     bars.style.setProperty('--h', 5/MAX_PCT*100);
     if(hasErgebnis){
@@ -189,10 +207,10 @@
     if(db){
       const rows = filterByAge(extractFdp(db, t => new RegExp(ebene.parlament_regex, 'i').test(t)), ebene.umfrage_max_alter_tage);
       const live = `Live von <a href="https://dawum.de/${esc(ebene.dawum_slug||'')}/" rel="noopener">dawum.de</a>, Datenbank-Stand ${dfmt(db.Database&&db.Database.Last_Update)}.`;
-      renderPolls(panel, rows, ebene.css, live, ebene.wahltrend, ebene.wahlergebnis);
+      renderPolls(panel, rows, ebene.css, live, ebene.wahltrend, ebene.wahlergebnis, ebene.wahltrend_max_alter_tage);
     } else {
       const rows = filterByAge(fallback.rows || [], ebene.umfrage_max_alter_tage);
-      renderPolls(panel, rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis);
+      renderPolls(panel, rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis, ebene.wahltrend_max_alter_tage);
     }
   }
 })();

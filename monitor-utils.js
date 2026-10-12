@@ -45,6 +45,31 @@
     });
   }
 
+  /* Einen Wahltrend verwerfen, der zu alt ist, damit er nicht dauerhaft als Leitzahl
+     stehen bleibt. Nötig, weil dawum den Wahltrend einer Ebene nicht mehr ausweist,
+     sobald dort länger keine Umfragen erscheinen: die Routine findet dann keinen Wert
+     mehr, der zuletzt gespeicherte würde ohne diese Prüfung ewig weitergezeigt.
+     Gibt den Trend zurück, wenn er verwertbar ist, sonst null. */
+  function filterTrend(trend, maxAgeDays, now) {
+    if (!trend || trend.wert == null) return null;
+    if (maxAgeDays == null) return trend;
+    if (!trend.stand) return null; // ohne Stand nicht datierbar, also nicht als Leitzahl
+    now = now || new Date();
+    // Tagesebene (UTC-Mitternacht) wie in filterByAge, damit JS und update.py gleich rechnen.
+    const cutoff = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+    cutoff.setUTCDate(cutoff.getUTCDate() - maxAgeDays);
+    const d = new Date(trend.stand);
+    return !isNaN(d) && d >= cutoff ? trend : null;
+  }
+
+  /* Nach einer gelaufenen Wahl zählen nur die Umfragen, die nach dem Wahltag erhoben
+     wurden: die älteren betreffen eine entschiedene Frage. Beide in einen Mittelwert zu
+     legen ergibt keine aussagekräftige Zahl. Der Wahltag selbst gehört zur alten Wahl. */
+  function rowsNachWahl(rows, wahltag) {
+    if (!wahltag) return rows || [];
+    return (rows || []).filter((r) => r.datum && r.datum > wahltag);
+  }
+
   /* Reihenfolge der Panels: Bundesebene immer zuerst, dann die anstehenden Wahlen
      (nächster Termin zuerst), danach die bereits gelaufenen (zuletzt gewählte zuerst),
      ganz am Ende Ebenen ohne Wahltermin. Der Wahltag selbst zählt noch als anstehend. */
@@ -65,7 +90,7 @@
     return [...bund, ...anstehend, ...gelaufen, ...ohneTermin];
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge };
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

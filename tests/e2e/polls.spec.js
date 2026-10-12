@@ -12,6 +12,9 @@ const deutsch = (isoTag) => isoTag.split("-").reverse().join(".");
 // Daten würden sonst mit der Zeit ihre Bedeutung ändern: eine "anstehende" Wahl wird
 // irgendwann zur gelaufenen, und eine "frische" Umfrage fällt aus dem Altersfenster.
 const TERMIN = { sachsenAnhalt: tag(-1), berlin: tag(13), nrw: tag(230) };
+// NRW steht im Fixture fuer den Echtfall: dawum weist keinen Wahltrend mehr aus,
+// der gespeicherte Wert (6,2 %) ist eingefroren und darf nicht mehr Leitzahl sein.
+const TREND_STAND = { nrwVeraltet: tag(-47) };
 
 function buildDataFixture() {
   const d = JSON.parse(fs.readFileSync(path.join(fixturesDir, "data.json"), "utf-8"));
@@ -19,13 +22,18 @@ function buildDataFixture() {
 
   e["sachsen-anhalt"].wahltermin = TERMIN.sachsenAnhalt;      // gestern -> gelaufen
   e["sachsen-anhalt"].wahlergebnis.datum = TERMIN.sachsenAnhalt;
-  e["sachsen-anhalt"].umfragen.rows[0].datum = tag(-120);     // innerhalb der 180 Tage
+  e["sachsen-anhalt"].umfragen.rows[0].datum = tag(-120);     // vor der Wahl, in den 180 Tagen
   e["sachsen-anhalt"].umfragen.rows[1].datum = tag(-600);     // ausserhalb der 180 Tage
+  // Eine Umfrage nach dem Wahltag: nur sie darf in den Mittelwert eingehen (3,0 %),
+  // die 4,0 % von vor der Wahl gehören zur entschiedenen Wahl.
+  e["sachsen-anhalt"].umfragen.rows.push({ institut: "Nachwahl (gespeichert)", datum: tag(0), fdp: 3.0 });
   e["berlin"].wahltermin = TERMIN.berlin;                     // anstehend, bald
   e["nrw"].wahltermin = TERMIN.nrw;                           // anstehend, spaeter
   e["nrw"].umfragen.rows[0].datum = tag(-28);
   e["bund"].umfragen.rows[0].datum = tag(-17);                // innerhalb der 60 Tage
   e["bund"].umfragen.rows[1].datum = tag(-250);               // ausserhalb der 60 Tage
+  e["bund"].wahltrend.stand = tag(-2);                        // frisch -> taugt als Leitzahl
+  e["nrw"].wahltrend.stand = TREND_STAND.nrwVeraltet;         // zu alt -> Leitzahl faellt zurueck
 
   return JSON.stringify(d);
 }
@@ -163,8 +171,9 @@ test.describe("Altersfilter für Einzelumfragen", () => {
     await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (gespeichert)");
     // sachsen-anhalt fixture has an "Alt (gespeichert)" row from 2025-01-01 (>180 days old,
     // filtered) plus its Wahlergebnis bar (never filtered) and one fresh poll row.
-    await expect(page.locator("#panel-sachsen-anhalt .row")).toHaveCount(2);
-    await expect(page.locator("#panel-sachsen-anhalt .row .inst")).toHaveText(["Amtliches Ergebnis", "Forsa (gespeichert)"]);
+    await expect(page.locator("#panel-sachsen-anhalt .row")).toHaveCount(3);
+    await expect(page.locator("#panel-sachsen-anhalt .row .inst")).toHaveText(
+      ["Amtliches Ergebnis", "Nachwahl (gespeichert)", "Forsa (gespeichert)"]);
   });
 
   test("live: a poll older than Bund's 60-day window is hidden even when dawum is reachable", async ({ page }) => {
@@ -177,4 +186,92 @@ test.describe("Altersfilter für Einzelumfragen", () => {
     await expect(page.locator("#panel-bund .row")).toHaveCount(1);
     await expect(page.locator("#panel-bund .row .inst")).toHaveText("Forsa (live)");
   });
+});
+
+test.describe("Veralteter Wahltrend taugt nicht als Leitzahl", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockDataJson(page);
+    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+    await page.goto("/index.html");
+  });
+
+  test("falls back to the poll average instead of showing the frozen trend", async ({ page }) => {
+    // NRW: gespeicherter Trend 6,2 % (47 Tage alt), Einzelumfrage 5,3 %.
+    // Die Leitzahl muss die Umfrage zeigen, nicht den eingefrorenen Trend.
+    const num = page.locator("#panel-nrw .avg .num");
+    await expect(num).toHaveText("5,3 %");
+    await expect(num).not.toContainText("6,2");
+  });
+
+  test("names the stale trend in the label so the fallback is visible", async ({ page }) => {
+    const lbl = page.locator("#panel-nrw .avg .lbl");
+    await expect(lbl).toContainText("Ø der neuesten Umfragen je Institut");
+    await expect(lbl).toContainText("dawum-Wahltrend veraltet");
+    await expect(lbl).toContainText(deutsch(TREND_STAND.nrwVeraltet));
+  });
+
+  test("a fresh trend is still used as the headline figure", async ({ page }) => {
+    await expect(page.locator("#panel-bund .avg .num")).toContainText("4,4 %");
+    await expect(page.locator("#panel-bund .avg .lbl")).toContainText("dawum-Wahltrend");
+    await expect(page.locator("#panel-bund .avg .lbl")).not.toContainText("veraltet");
+  });
+
+  test("an Ebene without any trend says so without claiming one went stale", async ({ page }) => {
+    // "noch nicht hinterlegt" waere hier falsch: eine Ebene kann ihren Trend auch
+    // verloren haben, weil update.py ihn als veraltet verworfen hat. Berlin hat im
+    // Fixture weder Trend noch amtliches Ergebnis.
+    const lbl = page.locator("#panel-berlin .avg .lbl");
+    await expect(lbl).toContainText("kein aktueller dawum-Wahltrend");
+    await expect(lbl).not.toContainText("veraltet");
+  });
+});
+
+test.describe("Gelaufene Wahl: amtliches Ergebnis ist die Leitzahl", () => {
+  test.beforeEach(async ({ page }) => {
+    await mockDataJson(page);
+    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+    await page.goto("/index.html");
+  });
+
+  test("shows the official result as the headline figure, not a poll average", async ({ page }) => {
+    // Fixture: Ergebnis 3,8 %, Vorwahlumfrage 4,0 %, Nachwahlumfrage 3,0 %.
+    // Der Mittelwert über alle wäre 3,5 % – die Leitzahl muss das Ergebnis sein.
+    const num = page.locator("#panel-sachsen-anhalt .avg .num");
+    await expect(num).toHaveText("3,8 %");
+    await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).toContainText("Amtliches Wahlergebnis vom");
+  });
+
+  test("averages only the polls taken after the election day", async ({ page }) => {
+    // 3,0 % ist die Nachwahlumfrage allein; 4,0 % (vor der Wahl) darf nicht eingehen.
+    const simple = page.locator("#panel-sachsen-anhalt .simple");
+    await expect(simple).toContainText("Ø der Umfragen nach der Wahl");
+    await expect(simple).toContainText("3,0 %");
+  });
+
+  test("still lists the pre-election polls as bars", async ({ page }) => {
+    // Aus dem Mittelwert heraus, aber als Verlauf weiter sichtbar.
+    await expect(page.locator("#panel-sachsen-anhalt .row .inst")).toContainText(["Forsa (gespeichert)"]);
+  });
+
+  test("does not call a final result preliminary", async ({ page }) => {
+    await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).not.toContainText("vorläufig");
+  });
+
+  test("an upcoming election is unaffected and still uses the trend", async ({ page }) => {
+    await expect(page.locator("#panel-bund .avg .lbl")).toContainText("dawum-Wahltrend");
+  });
+});
+
+test("a preliminary result is named as such in the headline label", async ({ page }) => {
+  // Zwischen Wahltag und Feststellung durch den Landeswahlausschuss trägt das Ergebnis
+  // "vorlaeufig": true – die Leitzahl darf das nicht verschweigen.
+  const vorlaeufig = JSON.parse(dataFixture);
+  const st = vorlaeufig.ebenen.find((e) => e.id === "sachsen-anhalt");
+  st.wahlergebnis.vorlaeufig = true;
+  await page.route("**/data.json*", (route) =>
+    route.fulfill({ contentType: "application/json", body: JSON.stringify(vorlaeufig) })
+  );
+  await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+  await page.goto("/index.html");
+  await expect(page.locator("#panel-sachsen-anhalt .avg .lbl")).toContainText("(vorläufig)");
 });
