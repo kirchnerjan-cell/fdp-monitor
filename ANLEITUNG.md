@@ -40,7 +40,7 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 - `dawum_slug`: Pfadsegment für den Live-Link auf dawum.de (z. B. `https://dawum.de/Sachsen-Anhalt/`).
 - `wahltermin`: Datum der nächsten Wahl (YYYY-MM-DD) – bestimmt die Sortierung auf der Seite. Bei der Bundestagswahl `null` lassen, sie steht immer zuerst.
 - `umfrage_max_alter_tage`: Einzelumfragen, deren `datum` älter ist, werden weder von `update.py` gespeichert noch auf der Seite angezeigt (Umfragen ohne Datum ebenfalls). `null`/Feld weglassen = kein Limit. Aktuell: Bund 60 Tage, alle Länder 180 Tage.
-- `wahltrend_max_alter_tage`: Ab diesem Alter gilt der gespeicherte `wahltrend` als veraltet und wird nicht mehr als Leitzahl benutzt; `update.py` verwirft ihn dann. Die Seite zeigt stattdessen den Ø der neuesten Umfragen je Institut, der bei jedem Aufruf neu von dawum kommt. `null`/Feld weglassen = der Trend altert nie (nicht empfohlen). Aktuell: Bund 21 Tage, alle Länder 35 Tage – der Bund wird wöchentlich umfragt, die Länder deutlich seltener.
+- `wahltrend_max_alter_tage`: Ab diesem Alter gilt der gespeicherte `wahltrend` als veraltet und wird nicht mehr als Leitzahl benutzt; `update.py` verwirft ihn dann. Die Seite zeigt stattdessen den Ø der neuesten Umfragen je Institut, der bei jedem Aufruf neu von dawum kommt. `null`/Feld weglassen = der Trend altert nie (nicht empfohlen). Überall 21 Tage: dawum bildet seinen Wahltrend nur aus Umfragen, deren letzter Befragungstag höchstens 20 Tage vor der neuesten liegt – ein älterer Wert kann also auf keiner Ebene ein aktuell ausgewiesener sein. Gemessen wird gegen `wahltrend.stand`, und das muss dawums eigenes Trend-Datum sein (darum ist `--stand` bei `--trend` Pflicht), nicht das Abrufdatum.
   *Warum nötig:* dawum weist für eine Ebene keinen Wahltrend mehr aus, sobald dort länger keine Umfragen erscheinen. Die Routine findet dann keinen Wert und überspringt die Ebene – ohne Alterung bliebe der letzte Wert dauerhaft als große Zahl stehen. Genau das war bei NRW passiert: Leitzahl 6,2 % vom 26.08.2026, während die Einzelumfragen bei 4,0 % lagen.
 - `wahlergebnis`: `null`, solange die Wahl nicht stattgefunden hat. Sobald ein amtliches Ergebnis feststeht, `{"fdp": <Prozent>, "datum": "YYYY-MM-DD"}` eintragen – maßgeblich ist der **Zweitstimmen**-Anteil. Die Seite zeigt es dann als zusätzlichen, schraffierten Balken oberhalb der Umfragen (der Altersfilter gilt nur für Einzelumfragen, nicht für `wahlergebnis`).
 - `wahlergebnis.vorlaeufig`: optional, nur `true` setzen, solange erst das **vorläufige** amtliche Endergebnis vorliegt und der Landeswahlausschuss das endgültige noch nicht festgestellt hat. Die Routine prüft solche Ebenen weiter und entfernt das Feld, sobald sie den endgültigen Wert eingetragen hat. Fehlt das Feld, gilt das Ergebnis als endgültig und wird nicht mehr geprüft.
@@ -65,6 +65,8 @@ Saarland und Schleswig-Holstein wählen am selben Tag. Bei gleichem `wahltermin`
 
 Bundesebene steht immer zuerst. Danach kommen die **anstehenden** Wahlen, nächster Termin zuerst. Dahinter die bereits **gelaufenen** Wahlen, zuletzt gewählte zuerst — so rutschen abgeschlossene Wahlen nach unten, statt die anstehenden zu verdrängen. Ganz am Ende stünden Ebenen ohne `wahltermin`. Der Wahltag selbst zählt noch als anstehend. Das übernimmt `sortEbenen()` in `monitor-utils.js`.
 
+Sobald eine Ebene ein `wahlergebnis` trägt, ist dieses die **Leitzahl** des Panels – nicht mehr der Wahltrend und nicht der Mittelwert der Umfragen. Die Wahl ist entschieden, das Ergebnis ist die Tatsache. In den Ø darunter gehen dann nur noch Umfragen ein, die **nach** dem Wahltag erhoben wurden (sie betreffen die nächste Wahl); Umfragen vom Wahltag selbst oder davor bleiben als Balken sichtbar, zählen aber nicht mehr mit. Ein noch vorläufiges Ergebnis wird in der Leitzahl als „(vorläufig)" gekennzeichnet.
+
 Eine gelaufene Wahl bleibt also sichtbar — mit ihrem `wahlergebnis` als schraffiertem Balken. Wenn sie ganz verschwinden soll, den Block aus `data.json["ebenen"]` löschen (siehe oben).
 
 ---
@@ -85,11 +87,13 @@ Falls die Balken fehlen und „Keine Einzelumfragen gefunden" steht: dawum block
 
 ## Wahltrend aktualisieren
 
-Wert von der jeweiligen dawum.de-Seite ablesen (Dezimalpunkt) und für die betroffene Ebene setzen:
+Wert **und Trend-Datum** von der jeweiligen dawum.de-Seite ablesen (Dezimalpunkt) und für die betroffene Ebene setzen:
 
 ```
-python3 update.py --nur-trend --trend bund 4.4 --trend nrw 5.6 --trend sachsen-anhalt 3.9
+python3 update.py --nur-trend --stand 2026-10-11 --trend bund 4.4 --trend nrw 5.6
 ```
+
+`--stand` ist das Datum, das dawum am Wahltrend selbst ausweist, und ist zusammen mit `--trend` Pflicht – das Skript bricht sonst ab. Trägt man dort das Abrufdatum ein, wirkt ein alter Trend aktueller als er ist und altert zu spät aus. Weisen zwei Ebenen unterschiedliche Trend-Daten aus, das Skript je Datum einmal aufrufen.
 
 Beim ersten Mal je Ebene ohne Δ; ab dem zweiten Lauf mit anderem `--stand`-Datum berechnet das Skript Δ zur Vorwoche selbst. Ohne `--nur-trend` ruft `update.py` zusätzlich die aktuellen Einzelumfragen für alle Ebenen aus `data.json["ebenen"]` ab:
 

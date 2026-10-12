@@ -278,3 +278,24 @@ class TestDropStaleTrends:
         pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data.json")
         for e in json.load(open(pfad, encoding="utf-8"))["ebenen"]:
             assert isinstance(e.get("wahltrend_max_alter_tage"), int), e["id"]
+
+
+class TestStandIstPflicht:
+    """--trend ohne --stand hätte das Abrufdatum als Trend-Datum gespeichert. Dann wirkt
+    der Wert aktueller als er ist und filter_trend() altert ihn zu spät aus."""
+
+    def test_trend_ohne_stand_bricht_ab(self, monkeypatch):
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend", "--trend", "bund", "4.4"])
+        try:
+            update.main()
+            assert False, "erwartet: SystemExit"
+        except SystemExit as e:
+            assert "--stand" in str(e)
+
+    def test_ohne_trend_ist_stand_weiter_optional(self, tmp_path, monkeypatch):
+        # Ein Lauf, der nur Umfragen holt, braucht kein Trend-Datum.
+        f = tmp_path / "data.json"
+        monkeypatch.setattr(update, "DATA", str(f))
+        update.save_data({"erstellt": "x", "ebenen": []})
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend"])
+        update.main()  # darf nicht abbrechen

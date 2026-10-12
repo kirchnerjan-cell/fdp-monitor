@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend } from "../monitor-utils.js";
+import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -265,5 +265,46 @@ describe("filterTrend", () => {
     const copy = { ...t };
     filterTrend(t, 35, NOW);
     expect(t).toEqual(copy);
+  });
+});
+
+describe("rowsNachWahl", () => {
+  const rows = [
+    { institut: "pollytix", datum: "2026-10-08", fdp: 3.0 },  // nach der Wahl
+    { institut: "Civey", datum: "2026-09-17", fdp: 2.5 },     // davor
+    { institut: "Wahltag", datum: "2026-09-20", fdp: 2.0 },   // am Wahltag
+  ];
+
+  it("keeps only polls taken after the election day", () => {
+    expect(rowsNachWahl(rows, "2026-09-20").map((r) => r.datum)).toEqual(["2026-10-08"]);
+  });
+
+  it("counts a poll on the election day itself as belonging to the decided election", () => {
+    // Die letzte Umfrage vor einer Wahl erscheint oft am Wahltag selbst.
+    expect(rowsNachWahl(rows, "2026-09-20").some((r) => r.datum === "2026-09-20")).toBe(false);
+  });
+
+  it("returns every row when no election day is given", () => {
+    expect(rowsNachWahl(rows, null)).toHaveLength(3);
+    expect(rowsNachWahl(rows, undefined)).toHaveLength(3);
+  });
+
+  it("drops rows without a date", () => {
+    expect(rowsNachWahl([{ institut: "x", datum: null, fdp: 1 }], "2026-09-20")).toEqual([]);
+  });
+
+  it("returns an empty list when every poll predates the election", () => {
+    expect(rowsNachWahl(rows, "2026-12-31")).toEqual([]);
+  });
+
+  it("handles missing input without throwing", () => {
+    expect(rowsNachWahl(null, "2026-09-20")).toEqual([]);
+    expect(rowsNachWahl(undefined, null)).toEqual([]);
+  });
+
+  it("does not mutate the input array", () => {
+    const copy = [...rows];
+    rowsNachWahl(rows, "2026-09-20");
+    expect(rows).toEqual(copy);
   });
 });

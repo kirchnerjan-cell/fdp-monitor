@@ -10,10 +10,11 @@ Ergebnis:
      Tage (Standard: kein Limit) werden dabei aussortiert.
   2. Optional: dawum-Wahltrend je Ebene setzen (gewichteter Durchschnitt, steht nicht in
      der API):
-       python3 update.py --trend bund 4.4 --trend nrw 5.6
+       python3 update.py --stand 2026-10-11 --trend bund 4.4 --trend nrw 5.6
      (Ebene-IDs stehen in data.json["ebenen"][*]["id"].) Δ zur Vorwoche wird aus dem
-     bisher gespeicherten Wert berechnet; --stand YYYY-MM-DD überschreibt das
-     Stand-Datum (Standard: heute).
+     bisher gespeicherten Wert berechnet. --stand YYYY-MM-DD ist dabei Pflicht und muss
+     das Trend-Datum sein, das dawum selbst ausweist – nicht das Datum des Abrufs, sonst
+     wirkt der Wert aktueller als er ist und altert zu spät aus (siehe 3.).
   3. Ein gespeicherter Wahltrend, der älter als
      data.json["ebenen"][*]["wahltrend_max_alter_tage"] Tage ist, wird verworfen. Sonst
      bliebe ein Wert, den dawum nicht mehr ausweist, dauerhaft als Leitzahl stehen; die
@@ -139,12 +140,20 @@ def main():
     ap.add_argument("--trend", nargs=2, action="append", metavar=("EBENE", "WERT"),
                      help="dawum-Wahltrend für Ebene setzen, z.B. --trend bund 4.4 --trend nrw 5.6 "
                           "(Ebene-IDs stehen in data.json[\"ebenen\"][*][\"id\"])")
-    ap.add_argument("--stand", help="Stand des Wahltrends (YYYY-MM-DD), Standard heute")
+    ap.add_argument("--stand", help="Trend-Datum, das dawum selbst ausweist (YYYY-MM-DD). "
+                                    "Pflicht zusammen mit --trend")
     ap.add_argument("--nur-trend", action="store_true", help="nur Wahltrend setzen, keine Umfragen abrufen")
     a = ap.parse_args()
+    if a.trend and not a.stand:
+        # Ohne --stand hätte das Abrufdatum als Trend-Datum gegolten. Das misst das falsche:
+        # die Seite zeigt "Stand" als Aktualität des Werts an, und filter_trend() rechnet das
+        # Alter daraus. Ein am 21.09. abgerufener Trend, den dawum auf den 03.09. datiert, wäre
+        # 18 Tage zu jung gewirkt und nicht ausgealtert.
+        raise SystemExit("--trend benötigt --stand YYYY-MM-DD: das Trend-Datum, das dawum "
+                         "selbst angibt (nicht das Datum des Abrufs).")
     d = load_data()
     vorher = inhalt_signatur(d)
-    stand = a.stand or datetime.now(TZ).date().isoformat()
+    stand = a.stand  # bei --trend oben erzwungen, sonst unbenutzt
     for ebene_id, value in (a.trend or []):
         set_trend(d, ebene_id, float(value), stand)
     drop_stale_trends(d)

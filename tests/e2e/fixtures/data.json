@@ -10,7 +10,7 @@
       "dawum_slug": "Nordrhein-Westfalen",
       "wahltermin": "2027-04-25",
       "umfrage_max_alter_tage": 180,
-      "wahltrend_max_alter_tage": 35,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": { "wert": 6.2, "delta": null, "stand": "2026-08-20" },
       "umfragen": { "stand": "2026-08-15", "rows": [{ "institut": "Forsa (gespeichert)", "datum": "2026-08-10", "fdp": 5.3 }] }
@@ -44,7 +44,7 @@
       "dawum_slug": "Berlin",
       "wahltermin": "2026-09-20",
       "umfrage_max_alter_tage": 180,
-      "wahltrend_max_alter_tage": 35,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": { "stand": null, "rows": [] }
@@ -58,7 +58,7 @@
       "dawum_slug": "Sachsen-Anhalt",
       "wahltermin": "2026-09-06",
       "umfrage_max_alter_tage": 180,
-      "wahltrend_max_alter_tage": 35,
+      "wahltrend_max_alter_tage": 21,
       "wahlergebnis": { "fdp": 3.8, "datum": "2026-06-07" },
       "wahltrend": { "wert": null, "delta": null, "stand": null },
       "umfragen": {

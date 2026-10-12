@@ -62,6 +62,14 @@
     return !isNaN(d) && d >= cutoff ? trend : null;
   }
 
+  /* Nach einer gelaufenen Wahl zählen nur die Umfragen, die nach dem Wahltag erhoben
+     wurden: die älteren betreffen eine entschiedene Frage. Beide in einen Mittelwert zu
+     legen ergibt keine aussagekräftige Zahl. Der Wahltag selbst gehört zur alten Wahl. */
+  function rowsNachWahl(rows, wahltag) {
+    if (!wahltag) return rows || [];
+    return (rows || []).filter((r) => r.datum && r.datum > wahltag);
+  }
+
   /* Reihenfolge der Panels: Bundesebene immer zuerst, dann die anstehenden Wahlen
      (nächster Termin zuerst), danach die bereits gelaufenen (zuletzt gewählte zuerst),
      ganz am Ende Ebenen ohne Wahltermin. Der Wahltag selbst zählt noch als anstehend. */
@@ -82,7 +90,7 @@
     return [...bund, ...anstehend, ...gelaufen, ...ohneTermin];
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend };
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;
