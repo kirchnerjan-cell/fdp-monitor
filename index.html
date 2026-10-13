@@ -215,9 +215,40 @@
   </div>
 </footer>
 
-<script src="monitor-utils.js"></script>
+<!-- ?v= bei jeder Änderung an monitor-utils.js hochzählen: sonst kann ein Browser
+     die alte Fassung aus dem Cache zur neuen Seite laden (siehe Notbremse unten). -->
+<script src="monitor-utils.js?v=2"></script>
 <script>
 (async function(){
+  // Die Seite besteht aus einer HTML- und einer JS-Datei, die zusammengehören. Liefert ein
+  // Cache die alte monitor-utils.js zur neuen index.html, fehlen Funktionen und es käme
+  // eine komplett leere Seite heraus. Deshalb: prüfen, einmal frisch nachladen, und wenn
+  // auch das nicht hilft, den Fehler zeigen statt nichts.
+  const BENOETIGT = ['fmt','dfmt','esc','extractFdp','filterByAge','filterTrend','rowsNachWahl',
+                     'gruppiereEbenen','tageBis','huerdeText','wahlAbgeschlossen'];
+  const fehlende = () => BENOETIGT.filter((n) => typeof (window.MonitorUtils || {})[n] !== 'function');
+
+  function zeigeFehler(text){
+    const el = document.getElementById('bund-hero');
+    if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+      + text + '</div>';
+  }
+
+  if(fehlende().length){
+    console.warn('monitor-utils.js unvollständig (vermutlich aus dem Cache), lade neu:', fehlende());
+    await new Promise((fertig) => {
+      const s = document.createElement('script');
+      s.src = 'monitor-utils.js?frisch=' + Date.now();
+      s.onload = s.onerror = fertig;
+      document.head.appendChild(s);
+    });
+  }
+  if(fehlende().length){
+    zeigeFehler('Eine veraltete Fassung von <code>monitor-utils.js</code> steckt im Cache. '
+      + 'Bitte die Seite neu laden (am Handy: Browser-Cache leeren).');
+    return;
+  }
+
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
   const MAX_PCT = 8;                       // Skala aller Balken, einheitlich
@@ -416,7 +447,13 @@
       ${gelaufen.some((e) => (e.wahlergebnis || {}).vorlaeufig)
         ? '<p class="basis" style="padding:0 20px 14px">* vorläufiges amtliches Ergebnis</p>' : ''}`;
   }
-})();
+})().catch((e) => {
+  // Letzte Instanz: lieber eine erklärte Fehlermeldung als eine leere Seite.
+  console.error('FDP-Monitor:', e);
+  const el = document.getElementById('bund-hero');
+  if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+    + 'Technischer Hinweis: ' + (e && e.message ? e.message : e) + '</div>';
+});
 </script>
 </body>
 </html>

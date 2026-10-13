@@ -275,3 +275,46 @@ test("auf dem Desktop ist die Institutsliste offen", async ({ page }) => {
   await seite(page);
   await expect(page.locator("#insts")).toHaveJSProperty("open", true);
 });
+
+test.describe("Leere Seite verhindern", () => {
+  // index.html und monitor-utils.js gehören zusammen. Liefert ein Cache die alte
+  // Skriptdatei zur neuen Seite, fehlen Funktionen – ohne Absicherung bliebe die
+  // Seite vollständig leer, ohne jeden Hinweis.
+  const veraltet = (quelltext) =>
+    quelltext.replace(/, gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen };/, " };");
+
+  test("lädt eine veraltete Skriptdatei selbsttätig neu und rendert trotzdem", async ({ page }) => {
+    const fehler = [];
+    page.on("pageerror", (e) => fehler.push(e.message));
+    await mockDataJson(page);
+    await page.route("**://api.dawum.de/**", (r) => r.abort("failed"));
+    let ersterAbruf = true;
+    await page.route("**/monitor-utils.js*", async (route) => {
+      if (!ersterAbruf) return route.continue();   // der Nachlade-Versuch bekommt die echte Datei
+      ersterAbruf = false;
+      const res = await route.fetch();
+      return route.fulfill({ contentType: "text/javascript", body: veraltet(await res.text()) });
+    });
+    await page.goto("/index.html");
+    await expect(page.locator("#bund-hero .leitzahl .num")).toContainText("4,4");
+    await expect(page.locator(".kachel")).toHaveCount(2);
+    expect(fehler).toEqual([]);
+  });
+
+  test("zeigt eine Erklärung statt einer weissen Seite, wenn das Nachladen nicht hilft", async ({ page }) => {
+    await mockDataJson(page);
+    await page.route("**://api.dawum.de/**", (r) => r.abort("failed"));
+    await page.route("**/monitor-utils.js*", (r) =>
+      r.fulfill({ contentType: "text/javascript", body: "window.MonitorUtils={};" }));
+    await page.goto("/index.html");
+    await expect(page.locator("#bund-hero .fehler")).toContainText("konnte nicht geladen werden");
+    await expect(page.locator("#bund-hero .fehler")).toContainText("neu laden");
+  });
+
+  test("die Skriptdatei wird versioniert geladen", async ({ page }) => {
+    // Ohne ?v= kann eine neue Seite mit einer alten Skriptdatei gepaart werden.
+    await seite(page);
+    const src = await page.locator('script[src*="monitor-utils.js"]').first().getAttribute("src");
+    expect(src).toMatch(/monitor-utils\.js\?v=\d+/);
+  });
+});
