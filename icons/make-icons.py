@@ -58,9 +58,16 @@ def main():
     zeichne(32).save(os.path.join(HIER, "favicon.ico"), format="ICO",
                      sizes=[(32, 32), (16, 16)],
                      append_images=[zeichne(16, radius=24, mit_linie=False)])
-    zeichne(180, randlos=True).save(os.path.join(HIER, "apple-touch-icon.png"))
+    # Apple ignoriert den Alphakanal und stellt Transparenz je nach iOS-Version schwarz
+    # dar. Das Motiv ist ohnehin deckend, deshalb ohne Alphakanal speichern.
+    def ohne_alpha(bild):
+        flach = Image.new("RGB", bild.size, GELB)
+        flach.paste(bild, mask=bild.split()[3])
+        return flach
+
+    ohne_alpha(zeichne(180, randlos=True)).save(os.path.join(HIER, "apple-touch-icon.png"))
     for px in (192, 512):
-        zeichne(px, randlos=True).save(os.path.join(HIER, f"icon-{px}.png"))
+        ohne_alpha(zeichne(px, randlos=True)).save(os.path.join(HIER, f"icon-{px}.png"))
     print("favicon.ico, apple-touch-icon.png, icon-192.png, icon-512.png geschrieben")
 
 

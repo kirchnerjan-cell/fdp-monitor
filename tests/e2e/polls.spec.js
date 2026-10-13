@@ -73,7 +73,10 @@ test.describe("Kopf und App-Icon", () => {
   test("verweist auf alle Icon-Dateien und das Manifest", async ({ page }) => {
     // Ohne diese Zeilen zeigt "Zum Home-Bildschirm" kein eigenes Icon.
     await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "manifest.webmanifest");
+    // sizes ist wichtig: ohne Angabe wählt iOS unter mehreren Kandidaten unzuverlässig.
     await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("href", "icons/apple-touch-icon.png");
+    await expect(page.locator('link[rel="apple-touch-icon"]')).toHaveAttribute("sizes", "180x180");
+    await expect(page.locator('link[rel="apple-touch-icon-precomposed"]')).toHaveCount(1);
     await expect(page.locator('link[rel="icon"][type="image/svg+xml"]')).toHaveAttribute("href", "icons/favicon.svg");
     await expect(page.locator('meta[name="theme-color"]')).toHaveAttribute("content", "#171A21");
     await expect(page.locator('meta[name="apple-mobile-web-app-title"]')).toHaveAttribute("content", "FDP-Monitor");
@@ -81,11 +84,13 @@ test.describe("Kopf und App-Icon", () => {
 
   test("die verlinkten Icon-Dateien sind auch wirklich abrufbar", async ({ page, request }) => {
     for (const pfad of ["icons/favicon.ico", "icons/favicon.svg", "icons/icon.svg",
-                        "icons/apple-touch-icon.png", "manifest.webmanifest"]) {
+                        "icons/apple-touch-icon.png",
+                        "icons/icon-192.png", "icons/icon-512.png", "manifest.webmanifest"]) {
       const res = await request.get("/" + pfad);
       expect(res.status(), pfad).toBe(200);
     }
   });
+
 
   test("zeigt das Stand-Datum aus data.json im Kopf", async ({ page }) => {
     await expect(page.locator("#stand")).toContainText("Stand");
