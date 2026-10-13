@@ -90,6 +90,18 @@ class TestFdpRows:
         for name in ("Bremen", "Bremische Bürgerschaft"):
             assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="HB"), r"brem")) == 1
 
+    def test_matches_niedersachsen_in_both_spellings(self):
+        # "niedersachsen" als Regex würde "Niedersächsischer Landtag" verfehlen – daher "nieders".
+        for name in ("Niedersachsen", "Niedersächsischer Landtag", "Landtag Niedersachsen"):
+            assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="NI"), r"nieders")) == 1
+
+    def test_niedersachsen_regex_does_not_catch_sachsen_anhalt(self):
+        # Beide enthalten "sachsen" – die Regexe dürfen sich nicht überschneiden.
+        assert update.fdp_rows(self._db(parliament_name="Landtag von Sachsen-Anhalt", shortcut="ST"),
+                               r"nieders") == []
+        assert update.fdp_rows(self._db(parliament_name="Niedersächsischer Landtag", shortcut="NI"),
+                               r"sachsen.anhalt") == []
+
     def test_bremen_regex_does_not_swallow_other_parliaments(self):
         for name in ("Deutscher Bundestag", "Landtag von Schleswig-Holstein", "Abgeordnetenhaus von Berlin"):
             assert update.fdp_rows(self._db(parliament_name=name, shortcut="XX"), r"brem") == []
@@ -110,6 +122,7 @@ class TestFdpRows:
             "saarland": "SL Landtag des Saarlandes",
             "schleswig-holstein": "SH Landtag von Schleswig-Holstein",
             "bremen": "HB Bremische Bürgerschaft",
+            "niedersachsen": "NI Niedersächsischer Landtag",
         }
         for e in ebenen:
             assert e["id"] in namen, f"Testdaten kennen die Ebene '{e['id']}' nicht"

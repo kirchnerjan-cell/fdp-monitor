@@ -60,6 +60,7 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 | Schleswig-Holstein | 18.04.2027 | Innenministerium Schleswig-Holstein |
 | NRW | 25.04.2027 | ungeprüft – bitte gegen den Landeswahlleiter abgleichen |
 | Bremen | 30.05.2027 | Senatsbeschluss zur Bürgerschaftswahl |
+| Niedersachsen | 26.09.2027 | Kabinettsbeschluss, Pressemitteilung der Staatskanzlei |
 
 Saarland und Schleswig-Holstein wählen am selben Tag. Bei gleichem `wahltermin` entscheidet die Reihenfolge in `data.json` über die Anzeige – dort steht Saarland vor Schleswig-Holstein.
 

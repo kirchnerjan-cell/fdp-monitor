@@ -262,6 +262,27 @@
           }
         ]
       }
+    },
+    {
+      "id": "niedersachsen",
+      "name": "Landtagswahl Niedersachsen",
+      "kurz": "NI",
+      "css": "land",
+      "parlament_regex": "nieders",
+      "dawum_slug": "Niedersachsen",
+      "wahltermin": "2027-09-26",
+      "umfrage_max_alter_tage": 180,
+      "wahltrend_max_alter_tage": 21,
+      "wahlergebnis": null,
+      "wahltrend": {
+        "wert": null,
+        "delta": null,
+        "stand": null
+      },
+      "umfragen": {
+        "stand": null,
+        "rows": []
+      }
     }
   ]
 }
