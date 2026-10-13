@@ -116,6 +116,7 @@
   .pill.ueber,.pill.auf{background:var(--ok-bg);color:var(--ok-fg)}
   .pill.keine{background:var(--keine-bg);color:var(--keine-fg)}
   .kachel .basis{font-size:13px;color:var(--mute)}
+  .notiz{font-size:12px;line-height:1.4;color:var(--keine-fg);background:var(--keine-bg);border-radius:6px;padding:6px 8px}
   .hinweis{font-size:12px;color:var(--hinweis-fg);background:var(--hinweis-bg);border-radius:6px;padding:6px 8px}
   .kachel.leer{gap:10px}
   .kachel.leer .wert .num{font-size:28px;color:var(--mute)}
@@ -160,7 +161,7 @@
     .kachel .tage{justify-self:end;align-self:start}
     .kachel .wert{grid-column:1 / -1}
     .kachel .wert .num{font-size:26px}
-    .kachel .bar,.kachel .basis,.kachel .hinweis{grid-column:1 / -1}
+    .kachel .bar,.kachel .basis,.kachel .hinweis,.kachel .notiz{grid-column:1 / -1}
     .kachel .basis{display:none}
     th,td{padding:12px 14px}
   }
@@ -397,13 +398,19 @@
     const h = huerdeText(lz.wert);
     const {typ, land} = teileName(e.name);
     const tage = tageBis(e.wahltermin);
-    const hw = hinweis(e);
     const leer = !rows.length && lz.wert == null;
+    // Erklärt data.json, warum es hier keine Werte gibt (z. B. die FDP wird in diesem
+    // Land nicht separat ausgewiesen), dann sagt die Kachel das – statt "keine Daten"
+    // zu zeigen, was nach einer Lücke oder einem Fehler aussieht.
+    const datenhinweis = leer ? (e.datenhinweis || '') : '';
+    // Der Wahltrend-Hinweis wäre daneben nur Rauschen: ohne ausgewiesene Werte kann
+    // dawum gar keinen Trend bilden.
+    const hw = datenhinweis ? '' : hinweis(e);
     const basis = lz.art === 'trend'
       ? 'Wahltrend' + (lz.avg != null ? ' · Ø neueste Umfragen ' + pz(lz.avg) : '')
       : rows.length
         ? 'Ø aus ' + rows.length + (rows.length === 1 ? ' Umfrage' : ' Umfragen')
-        : 'Noch keine Umfragen bei dawum.';
+        : datenhinweis ? '' : 'Noch keine Umfragen bei dawum.';
     return `<article class="karte kachel${leer ? ' leer' : ''}" id="kachel-${esc(e.id)}">
       <div class="kkopf">
         <div>
@@ -414,10 +421,11 @@
       </div>
       <div class="wert">
         <span class="num">${lz.wert == null ? '–' : pz(lz.wert)}</span>
-        <span class="pill ${h.status}">${esc(h.kurz)}</span>
+        <span class="pill ${h.status}">${esc(datenhinweis ? 'nicht ausgewiesen' : h.kurz)}</span>
       </div>
       ${leer ? '' : balken(lz.wert)}
-      <div class="basis">${basis}</div>
+      ${basis ? `<div class="basis">${basis}</div>` : ''}
+      ${datenhinweis ? `<div class="notiz">${esc(datenhinweis)}</div>` : ''}
       ${hw ? `<div class="hinweis">${esc(hw)}</div>` : ''}
     </article>`;
   }).join('');

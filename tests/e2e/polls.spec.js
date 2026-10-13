@@ -200,6 +200,63 @@ test.describe("Anstehende Wahlen", () => {
   });
 });
 
+test.describe("Hinweis zur Datenlage", () => {
+  // Wird die FDP in einem Land nicht separat ausgewiesen (Saarland: sie läuft unter
+  // „Sonstige"), soll die Kachel das sagen. "keine Daten" allein sähe nach einer Lücke
+  // oder einem Fehler aus.
+  const TEXT = "Die Institute weisen die FDP hier nicht separat aus.";
+  async function mitHinweis(page, { breite } = {}) {
+    const d = JSON.parse(dataFixture);
+    d.ebenen.find((e) => e.id === "berlin").datenhinweis = TEXT;
+    await page.route("**/data.json*", (route) =>
+      route.fulfill({ contentType: "application/json", body: JSON.stringify(d) }));
+    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+    if (breite) await page.setViewportSize({ width: breite, height: 900 });
+    await page.goto("/index.html");
+    await page.waitForSelector("#kachel-berlin");
+  }
+
+  test("zeigt den Hinweis statt einer nichtssagenden Leermeldung", async ({ page }) => {
+    await mitHinweis(page);
+    const k = page.locator("#kachel-berlin");
+    await expect(k.locator(".notiz")).toHaveText(TEXT);
+    await expect(k.locator(".pill")).toHaveText("nicht ausgewiesen");
+    await expect(k).not.toContainText("Noch keine Umfragen");
+  });
+
+  test("lässt den Wahltrend-Hinweis weg, der hier nur Rauschen wäre", async ({ page }) => {
+    // Ohne ausgewiesene Werte kann dawum gar keinen Trend bilden – "Kein Wahltrend
+    // hinterlegt" würde fälschlich nach einem Versäumnis klingen.
+    await mitHinweis(page);
+    await expect(page.locator("#kachel-berlin .hinweis")).toHaveCount(0);
+  });
+
+  test("bleibt auch am Handy sichtbar", async ({ page }) => {
+    // Die Basis-Zeile wird mobil ausgeblendet; der Hinweis darf das nicht mitmachen.
+    await mitHinweis(page, { breite: 390 });
+    await expect(page.locator("#kachel-berlin .notiz")).toBeVisible();
+  });
+
+  test("eine Ebene mit Werten bekommt keinen Hinweis", async ({ page }) => {
+    await mitHinweis(page);
+    await expect(page.locator("#kachel-nrw .notiz")).toHaveCount(0);
+    await expect(page.locator("#kachel-nrw .pill")).not.toHaveText("nicht ausgewiesen");
+  });
+
+  test("ohne hinterlegten Hinweis bleibt es bei der bisherigen Darstellung", async ({ page }) => {
+    await seite(page);   // Fixture ohne datenhinweis
+    await expect(page.locator("#kachel-berlin .notiz")).toHaveCount(0);
+    await expect(page.locator("#kachel-berlin .pill")).toHaveText("keine Daten");
+    await expect(page.locator("#kachel-berlin .hinweis")).toHaveText("Kein Wahltrend hinterlegt");
+  });
+
+  test("data.json erklärt das Saarland, wo die FDP unter „Sonstige\" läuft", async ({ request }) => {
+    const d = await (await request.get("/data.json")).json();
+    const sl = d.ebenen.find((e) => e.id === "saarland");
+    expect(sl.datenhinweis).toContain("Sonstige");
+  });
+});
+
 test.describe("Gelaufene Wahlen", () => {
   test.beforeEach(({ page }) => seite(page));
 
