@@ -145,6 +145,10 @@ Sobald eine Wahl stattgefunden hat: in `data.json` bei der betroffenen Ebene `wa
 | `icons/apple-touch-icon.png` | iOS-Homescreen, 180 px, randlos (iOS rundet selbst ab) |
 | `icons/icon-192.png`, `icons/icon-512.png` | im Manifest, für Android und PWA-Installation |
 
+Die PNG-Dateien werden **ohne Alphakanal** geschrieben: Apple ignoriert Transparenz und stellt sie je nach iOS-Fassung schwarz dar. Das Motiv ist ohnehin deckend.
+
+**Icon erscheint nicht auf dem Homescreen?** Das ist fast immer der iOS-Cache, nicht die Seite — iOS merkt sich je Adresse sehr hartnäckig, dass es dort kein Icon gab. In dieser Reihenfolge löst es sich: das vorhandene Symbol vom Homescreen löschen, Einstellungen → Safari → Verlauf und Websitedaten löschen, Safari komplett schließen (App-Umschalter, hochwischen), Seite neu öffnen und erst dann wieder „Zum Home-Bildschirm" wählen. Genau so ist es beim ersten Mal auch aufgetreten und gelöst worden.
+
 Soll das Icon geändert werden: `icons/icon.svg` anpassen, die gleiche Geometrie in `icons/make-icons.py` nachziehen und das Skript einmal laufen lassen (`pip install pillow` vorausgesetzt). Es erzeugt die Rasterdateien neu. Unter 32 px lässt es die Hürdenlinie weg und macht die Balken breiter, sonst verschwimmt beides.
 
 ---
