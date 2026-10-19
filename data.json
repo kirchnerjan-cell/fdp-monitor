@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-10-13T12:19+02:00",
+  "erstellt": "2026-10-19T09:24+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -14,15 +14,20 @@
       "wahlergebnis": null,
       "wahltrend": {
         "wert": 3.8,
-        "delta": -0.3,
-        "stand": "2026-10-11"
+        "delta": 0.0,
+        "stand": "2026-10-17"
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
+        "stand": "2026-10-17T16:08:32+02:00",
         "rows": [
           {
             "institut": "INSA",
-            "datum": "2026-10-11",
+            "datum": "2026-10-17",
+            "fdp": 4.0
+          },
+          {
+            "institut": "Forsa",
+            "datum": "2026-10-13",
             "fdp": 4.0
           },
           {
@@ -34,11 +39,6 @@
             "institut": "Forschungsgruppe Wahlen",
             "datum": "2026-10-08",
             "fdp": 3.0
-          },
-          {
-            "institut": "Forsa",
-            "datum": "2026-10-06",
-            "fdp": 4.0
           },
           {
             "institut": "Infratest dimap",
@@ -163,7 +163,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
+        "stand": "2026-10-17T16:08:32+02:00",
         "rows": []
       }
     },
@@ -184,17 +184,12 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
+        "stand": "2026-10-17T16:08:32+02:00",
         "rows": [
           {
             "institut": "INSA",
             "datum": "2026-07-14",
             "fdp": 6.0
-          },
-          {
-            "institut": "Infratest dimap",
-            "datum": "2026-04-16",
-            "fdp": 4.0
           }
         ]
       }
@@ -216,8 +211,13 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
+        "stand": "2026-10-17T16:08:32+02:00",
         "rows": [
+          {
+            "institut": "INSA",
+            "datum": "2026-10-16",
+            "fdp": 4.0
+          },
           {
             "institut": "Forsa",
             "datum": "2026-09-23",
@@ -227,11 +227,6 @@
             "institut": "Infratest dimap",
             "datum": "2026-06-28",
             "fdp": 5.0
-          },
-          {
-            "institut": "INSA",
-            "datum": "2026-05-08",
-            "fdp": 4.0
           }
         ]
       }
@@ -253,7 +248,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-11T14:31:10+02:00",
+        "stand": "2026-10-17T16:08:32+02:00",
         "rows": [
           {
             "institut": "INSA",
@@ -280,8 +275,14 @@
         "stand": null
       },
       "umfragen": {
-        "stand": null,
-        "rows": []
+        "stand": "2026-10-17T16:08:32+02:00",
+        "rows": [
+          {
+            "institut": "INSA",
+            "datum": "2026-09-11",
+            "fdp": 5.0
+          }
+        ]
       }
     }
   ]
