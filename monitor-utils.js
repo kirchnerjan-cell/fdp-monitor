@@ -145,7 +145,48 @@
       : { status: "ueber", kurz: "über der Hürde", lang: punkte + " über der 5-%-Hürde" };
   }
 
-  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl, gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen };
+  /* Zeitreihe aufbereiten: auf das Fenster der letzten <tage> Tage beschränken, nach
+     Datum sortieren, unbrauchbare Zeilen verwerfen. Tagesgenau wie filterByAge. */
+  function verlaufPunkte(rows, tage, now) {
+    now = now || new Date();
+    const heute = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const ab = tage == null ? -Infinity : heute - tage * 86400000;
+    return (rows || [])
+      // Erst auf fehlende Werte prüfen: Number(null) ist 0, nicht NaN – eine Umfrage
+      // ohne FDP-Wert käme sonst als 0 % ins Diagramm und zöge das Mittel herunter.
+      .filter((r) => r && r.datum && r.fdp != null && r.fdp !== "")
+      .map((r) => ({ t: Date.parse(r.datum + "T00:00:00Z"), v: Number(r.fdp), institut: r.institut }))
+      .filter((p) => !isNaN(p.t) && !isNaN(p.v) && p.t >= ab && p.t <= heute)
+      .sort((a, b) => a.t - b.t || String(a.institut).localeCompare(String(b.institut)));
+  }
+
+  /* Gleitendes Mittel über <fensterTage> Tage, je einen Wert pro Tag mit Umfragen.
+     Ungewichtet: jede Umfrage im Fenster zählt gleich viel – darum weist die Quellenzeile
+     unter dem Diagramm das ausdrücklich aus. Ein Punkt genau am Fensterrand zählt noch mit
+     (wie überall sonst auf der Seite der Grenzfall "genau N Tage alt"). */
+  function gleitendesMittel(punkte, fensterTage) {
+    const fenster = fensterTage * 86400000;
+    const tage = [...new Set((punkte || []).map((p) => p.t))].sort((a, b) => a - b);
+    return tage.map((t) => {
+      const drin = punkte.filter((p) => p.t <= t && t - p.t <= fenster);
+      return { t, v: drin.reduce((s, p) => s + p.v, 0) / drin.length, n: drin.length };
+    });
+  }
+
+  /* Gespeicherte Zeitreihe und frisch von dawum geholte Zeilen zusammenlegen.
+     Zwischen zwei Routineläufen kennt die Seite neuere Umfragen als die Datei; die
+     dürfen aber nicht doppelt gezählt werden, sonst verzerren sie das Mittel.
+     Schlüssel ist Institut + Datum – genau eine Erhebung je Institut und Tag. */
+  function mergeVerlauf(gespeichert, live) {
+    const map = new Map();
+    for (const r of [...(gespeichert || []), ...(live || [])]) {
+      if (!r || !r.datum) continue;
+      map.set(r.institut + "|" + r.datum, r);   // Live gewinnt, da zuletzt gesetzt
+    }
+    return [...map.values()];
+  }
+
+  const api = { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl, gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen, verlaufPunkte, gleitendesMittel, mergeVerlauf };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge, filterTrend, rowsNachWahl,
-         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen } from "../monitor-utils.js";
+         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen,
+         verlaufPunkte, gleitendesMittel, mergeVerlauf } from "../monitor-utils.js";
 
 describe("fmt", () => {
   it("formats with one decimal, German locale (comma)", () => {
@@ -449,5 +450,128 @@ describe("wahlAbgeschlossen", () => {
       [{}, false],
     ];
     for (const [ebene, erwartet] of faelle) expect(wahlAbgeschlossen(ebene)).toBe(erwartet);
+  });
+});
+
+describe("verlaufPunkte", () => {
+  const NOW = new Date("2026-10-24T12:00:00Z");
+  const r = (datum, fdp, institut = "INSA") => ({ institut, datum, fdp });
+
+  it("keeps only the window and sorts oldest first", () => {
+    const p = verlaufPunkte([r("2026-10-20", 4), r("2026-01-01", 9.9), r("2026-09-01", 3)], 90, NOW);
+    expect(p.map((x) => x.v)).toEqual([3, 4]);
+  });
+
+  it("keeps a poll exactly at the window edge", () => {
+    expect(verlaufPunkte([r("2026-07-26", 4)], 90, NOW)).toHaveLength(1);   // genau 90 Tage
+    expect(verlaufPunkte([r("2026-07-25", 4)], 90, NOW)).toHaveLength(0);
+  });
+
+  it("ignores a poll dated in the future", () => {
+    // Ein Tippfehler im Datum darf die Zeitachse nicht nach rechts aufreissen.
+    expect(verlaufPunkte([r("2027-01-01", 4)], 90, NOW)).toEqual([]);
+  });
+
+  it("drops rows without a usable date or value", () => {
+    const p = verlaufPunkte([r(null, 4), r("keins", 4), r("2026-10-20", null), r("2026-10-20", 4)], 90, NOW);
+    expect(p).toHaveLength(1);
+  });
+
+  it("orders several polls of the same day by institute, stably", () => {
+    const p = verlaufPunkte([r("2026-10-20", 4, "Forsa"), r("2026-10-20", 5, "Allensbach")], 90, NOW);
+    expect(p.map((x) => x.institut)).toEqual(["Allensbach", "Forsa"]);
+  });
+
+  it("ignores the time of day", () => {
+    const spaet = verlaufPunkte([r("2026-07-26", 4)], 90, new Date("2026-10-24T23:59:00Z"));
+    const frueh = verlaufPunkte([r("2026-07-26", 4)], 90, new Date("2026-10-24T00:01:00Z"));
+    expect(spaet).toHaveLength(frueh.length);
+  });
+});
+
+describe("gleitendesMittel", () => {
+  const NOW = new Date("2026-10-24T12:00:00Z");
+  const p = (rows) => verlaufPunkte(rows, 90, NOW);
+
+  it("averages every poll inside the 14-day window", () => {
+    const l = gleitendesMittel(p([
+      { institut: "GMS", datum: "2026-10-10", fdp: 3 },
+      { institut: "INSA", datum: "2026-10-20", fdp: 4 },
+      { institut: "Forsa", datum: "2026-10-20", fdp: 5 },
+    ]), 14);
+    expect(l).toHaveLength(2);
+    expect(l[0].v).toBeCloseTo(3, 5);
+    expect(l[1].v).toBeCloseTo(4, 5);     // (3 + 4 + 5) / 3
+    expect(l[1].n).toBe(3);
+  });
+
+  it("drops a poll once it is older than the window", () => {
+    const l = gleitendesMittel(p([
+      { institut: "Alt", datum: "2026-10-01", fdp: 9 },
+      { institut: "Neu", datum: "2026-10-20", fdp: 4 },   // 19 Tage später
+    ]), 14);
+    expect(l[1].v).toBeCloseTo(4, 5);
+    expect(l[1].n).toBe(1);
+  });
+
+  it("still counts a poll exactly at the window edge", () => {
+    const l = gleitendesMittel(p([
+      { institut: "Rand", datum: "2026-10-06", fdp: 2 },
+      { institut: "Neu", datum: "2026-10-20", fdp: 4 },   // genau 14 Tage später
+    ]), 14);
+    expect(l[1].n).toBe(2);
+    expect(l[1].v).toBeCloseTo(3, 5);
+  });
+
+  it("gives one line point per day that has polls", () => {
+    const l = gleitendesMittel(p([
+      { institut: "A", datum: "2026-10-20", fdp: 4 },
+      { institut: "B", datum: "2026-10-20", fdp: 4 },
+    ]), 14);
+    expect(l).toHaveLength(1);
+  });
+
+  it("weights every poll the same — that is what the source line claims", () => {
+    // Zwei Umfragen eines Instituts am selben Tag zählen doppelt, nicht einmal.
+    const l = gleitendesMittel(p([
+      { institut: "A", datum: "2026-10-20", fdp: 2 },
+      { institut: "B", datum: "2026-10-20", fdp: 2 },
+      { institut: "C", datum: "2026-10-20", fdp: 8 },
+    ]), 14);
+    expect(l[0].v).toBeCloseTo(4, 5);
+  });
+});
+
+describe("mergeVerlauf", () => {
+  const g = [{ institut: "INSA", datum: "2026-10-13", fdp: 5 }];
+  const live = [{ institut: "INSA", datum: "2026-10-20", fdp: 4 }];
+
+  it("combines stored and live rows", () => {
+    expect(mergeVerlauf(g, live)).toHaveLength(2);
+  });
+
+  it("counts the same poll once — otherwise it would skew the average", () => {
+    const doppelt = [{ institut: "INSA", datum: "2026-10-13", fdp: 5 }];
+    expect(mergeVerlauf(g, doppelt)).toHaveLength(1);
+  });
+
+  it("lets the live value win for the same institute and day", () => {
+    // dawum korrigiert einen Wert gelegentlich nach – dann gilt der frische.
+    const korrigiert = [{ institut: "INSA", datum: "2026-10-13", fdp: 6 }];
+    expect(mergeVerlauf(g, korrigiert)[0].fdp).toBe(6);
+  });
+
+  it("keeps two institutes on the same day apart", () => {
+    expect(mergeVerlauf(g, [{ institut: "Forsa", datum: "2026-10-13", fdp: 3 }])).toHaveLength(2);
+  });
+
+  it("handles missing input", () => {
+    expect(mergeVerlauf(null, null)).toEqual([]);
+    expect(mergeVerlauf(g, null)).toHaveLength(1);
+    expect(mergeVerlauf(null, live)).toHaveLength(1);
+  });
+
+  it("skips rows without a date instead of keying them together", () => {
+    expect(mergeVerlauf([{ institut: "X", datum: null, fdp: 1 }], live)).toHaveLength(1);
   });
 });

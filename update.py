@@ -25,7 +25,12 @@ Ergebnis:
      data.json["ebenen"][*]["wahltrend_max_alter_tage"] Tage ist, wird verworfen. Sonst
      bliebe ein Wert, den dawum nicht mehr ausweist, dauerhaft als Leitzahl stehen; die
      Seite zeigt dann stattdessen den laufend aktualisierten Ø der Einzelumfragen.
-  5. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
+  5. Für Ebenen mit "verlauf_tage" wird zusätzlich die vollständige dawum-Datenbank
+     geladen und daraus die Zeitreihe der letzten N Tage nach "verlauf" geschrieben
+     (jede Einzelumfrage, nicht nur die neueste je Institut). Das passiert bewusst hier
+     und nicht im Browser: die Gesamtdatenbank reicht bis 2017 über alle Parlamente und
+     wäre bei jedem Seitenaufruf unverhältnismäßig.
+  6. Nur wenn sich inhaltlich etwas geändert hat (Wahltrend oder Umfragen), wird
      "erstellt" auf jetzt gesetzt und data.json geschrieben. Andernfalls bleibt die
      Datei unangetastet, damit kein Commit entsteht, der nur den Zeitstempel enthält.
 """
@@ -36,6 +41,10 @@ from datetime import datetime, timezone, timedelta
 HERE = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(HERE, "data.json")
 DAWUM = "https://api.dawum.de/newest_surveys.json"
+# Die vollständige Datenbank (alle Umfragen seit 2017, alle Parlamente). Nur für den
+# Zeitverlauf nötig und bewusst nur hier: der Browser soll das nicht bei jedem
+# Seitenaufruf laden, sondern die fertige Zeitreihe aus data.json lesen.
+DAWUM_VOLL = "https://api.dawum.de/"
 UA = "Mozilla/5.0 (fdp-monitor; github-pages)"
 TZ = timezone(timedelta(hours=2))  # Europa/Berlin (Sommerzeit); nur für "erstellt"
 
@@ -170,6 +179,43 @@ def set_trend(d, ebene_id, value, stand):
     t["stand"] = stand
     print(f"Wahltrend {ebene_id}: {t['wert']} % (Δ {t['delta']}), Stand {stand}")
 
+def verlauf_rows(db, parl_regex, tage, today=None):
+    """Alle Einzelumfragen der letzten <tage> Tage für ein Parlament, älteste zuerst.
+
+    Anders als fdp_rows() ist das nicht auf die neueste Umfrage je Institut beschränkt –
+    für eine Zeitreihe braucht es jede einzelne Erhebung.
+    """
+    today = today or datetime.now(TZ).date()
+    ab = today - timedelta(days=tage)
+    rows = []
+    for r in fdp_rows(db, parl_regex):
+        try:
+            d = datetime.strptime(r.get("datum") or "", "%Y-%m-%d").date()
+        except ValueError:
+            continue
+        if d >= ab:
+            rows.append(r)
+    return sorted(rows, key=lambda r: (r["datum"], r["institut"]))
+
+def update_verlauf(d):
+    """Zeitreihe für jede Ebene mit "verlauf_tage" aus der vollständigen dawum-DB holen."""
+    ebenen = [e for e in d.get("ebenen", [])
+              if e.get("verlauf_tage") and not abgeschlossen(e)]
+    if not ebenen:
+        return
+    try:
+        db = json.loads(get(DAWUM_VOLL, timeout=60))
+    except Exception as e:
+        print(f"! dawum-Gesamtdatenbank nicht erreichbar ({e}); alter Zeitverlauf bleibt stehen")
+        return
+    stand = db.get("Database", {}).get("Last_Update")
+    for ebene in ebenen:
+        tage = ebene["verlauf_tage"]
+        rows = verlauf_rows(db, ebene["parlament_regex"], tage)
+        ebene["verlauf"] = {"stand": stand, "tage": tage, "rows": rows}
+        print(f"Zeitverlauf gespeichert: {ebene['name']}: {len(rows)} Umfrage(n) "
+              f"der letzten {tage} Tage.")
+
 def inhalt_signatur(d):
     """Fingerabdruck der inhaltlichen Daten – ohne "erstellt", das sich bei jedem Lauf ändert."""
     return json.dumps(d.get("ebenen", []), sort_keys=True, ensure_ascii=False)
@@ -199,6 +245,7 @@ def main():
     ergebnis_ersetzt_umfragen(d)
     if not a.nur_trend:
         update_polls(d)
+        update_verlauf(d)
     if inhalt_signatur(d) == vorher:
         # Nichts Inhaltliches geändert: data.json unangetastet lassen, damit kein Commit
         # entsteht, der nur einen neuen Zeitstempel enthält.
