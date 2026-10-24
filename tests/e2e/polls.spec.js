@@ -400,6 +400,9 @@ test.describe("Zeitverlauf Bund", () => {
         ...(extra.rows || []),
       ],
     };
+    if (extra.nurJung)
+      bund.verlauf.rows = ["INSA", "Forsa", "Ipsos", "GMS"].map((institut, i) =>
+        ({ institut, datum: T(-2 - i * 3), fdp: 4.0 }));
     if (extra.leer) delete bund.verlauf;
     return JSON.stringify(d);
   }
@@ -481,8 +484,48 @@ test.describe("Zeitverlauf Bund", () => {
     await expect(page.locator('#fdp-verlauf-chart circle[fill-opacity="0.35"]')).toHaveCount(5);
   });
 
+  test("spannt die Achse über das ganze Fenster, nicht nur über die vorhandenen Daten", async ({ page }) => {
+    // Gemeldet: Die x-Achse zeigte nur "Okt". Ursache war, dass sie beim ersten
+    // vorhandenen Datenpunkt begann – lagen nur junge Umfragen vor, blieb eine
+    // einzige Monatsgrenze übrig und die Grafik war zeitlich nicht einzuordnen.
+    await mitVerlauf(page, { nurJung: true });
+    const monate = (await page.locator("#fdp-verlauf-chart text").allTextContents())
+      .filter((t) => /^(Jan|Feb|Mär|Apr|Mai|Jun|Jul|Aug|Sep|Okt|Nov|Dez)/.test(t));
+    expect(monate.length).toBeGreaterThanOrEqual(3);
+  });
+
+  test("zieht an jeder Monatsgrenze eine Hilfslinie", async ({ page }) => {
+    await mitVerlauf(page);
+    // Waagerechte Gitterlinien gibt es ohnehin; hier zählen die senkrechten.
+    const senkrecht = await page.locator("#fdp-verlauf-chart line").evaluateAll(
+      (ls) => ls.filter((l) => l.getAttribute("x1") === l.getAttribute("x2")
+        && l.getAttribute("visibility") !== "hidden").length);
+    expect(senkrecht).toBeGreaterThanOrEqual(3);
+  });
+
+  test("nennt den Zeitraum in der Unterzeile", async ({ page }) => {
+    await mitVerlauf(page);
+    await expect(page.locator("#verlauf-sub")).toContainText("Letzte 90 Tage");
+  });
+
   test.describe("mobil", () => {
     test.use({ viewport: { width: 390, height: 900 } });
+
+    test("die Achsenbeschriftungen überlappen einander nicht", async ({ page }) => {
+      // "26.07." und "Aug" standen am Fensteranfang übereinander und ergaben "2Aug7.".
+      await mitVerlauf(page);
+      const svg = await page.locator("#fdp-verlauf-chart svg").boundingBox();
+      const kaesten = (await page.locator("#fdp-verlauf-chart text").all());
+      const unten = [];
+      for (const t of kaesten) {
+        const b = await t.boundingBox();
+        if (b && b.y > svg.y + svg.height - 24) unten.push(b);   // nur die x-Achse
+      }
+      unten.sort((a, b) => a.x - b.x);
+      for (let i = 1; i < unten.length; i++)
+        expect(unten[i].x, `Beschriftung ${i} überlappt die vorige`)
+          .toBeGreaterThanOrEqual(unten[i - 1].x + unten[i - 1].width - 0.5);
+    });
 
     test("bleibt lesbar und sprengt die Seite nicht", async ({ page }) => {
       await mitVerlauf(page);
