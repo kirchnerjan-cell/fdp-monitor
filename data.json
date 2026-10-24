@@ -8,6 +8,7 @@
       "css": "bund",
       "parlament_regex": "bundestag",
       "dawum_slug": "Bundestag",
+      "verlauf_tage": 90,
       "wahltermin": null,
       "umfrage_max_alter_tage": 60,
       "wahltrend_max_alter_tage": 21,

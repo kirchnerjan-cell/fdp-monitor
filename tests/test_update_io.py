@@ -294,3 +294,76 @@ class TestAbgeschlosseneWahlenWerdenUebersprungen:
         update.main()
         neu = json.loads(f.read_text(encoding="utf-8"))
         assert neu["ebenen"][0]["umfragen"] == {"stand": "2026-09-06", "rows": []}
+
+
+class TestUpdateVerlauf:
+    """Die Zeitreihe kommt aus der vollständigen dawum-Datenbank – und nur dann, wenn
+    eine Ebene sie überhaupt anfordert."""
+
+    def _db(self):
+        return {
+            "Database": {"Last_Update": "2026-10-24"},
+            "Parties": {"1": {"Shortcut": "FDP"}},
+            "Parliaments": {"10": {"Shortcut": "BT", "Name": "Deutscher Bundestag"}},
+            "Institutes": {"5": {"Name": "INSA"}},
+            "Surveys": {
+                "100": {"Parliament_ID": 10, "Institute_ID": 5, "Date": "2026-10-20", "Results": {"1": 4.0}},
+                "101": {"Parliament_ID": 10, "Institute_ID": 5, "Date": "2026-10-13", "Results": {"1": 5.0}},
+            },
+        }
+
+    def _bund(self, **extra):
+        e = {"id": "bund", "name": "Bundestagswahl", "parlament_regex": "bundestag",
+             "verlauf_tage": 90}
+        e.update(extra)
+        return e
+
+    def test_holt_und_speichert_die_zeitreihe(self, monkeypatch, capsys):
+        monkeypatch.setattr(update, "get", lambda url, timeout=20: json.dumps(self._db()).encode("utf-8"))
+        d = {"ebenen": [self._bund()]}
+        update.update_verlauf(d)
+        v = d["ebenen"][0]["verlauf"]
+        assert v["tage"] == 90 and v["stand"] == "2026-10-24"
+        assert [r["fdp"] for r in v["rows"]] == [5.0, 4.0]          # älteste zuerst
+        assert "Zeitverlauf gespeichert" in capsys.readouterr().out
+
+    def test_ruft_die_gesamtdatenbank_ab_nicht_newest_surveys(self, monkeypatch):
+        gerufen = []
+
+        def merken(url, timeout=20):
+            gerufen.append(url)
+            return json.dumps(self._db()).encode("utf-8")
+
+        monkeypatch.setattr(update, "get", merken)
+        update.update_verlauf({"ebenen": [self._bund()]})
+        assert gerufen == [update.DAWUM_VOLL]
+        assert "newest_surveys" not in gerufen[0]
+
+    def test_ohne_verlauf_tage_wird_nichts_abgerufen(self, monkeypatch):
+        def darf_nicht(url, timeout=20):
+            raise AssertionError("ohne verlauf_tage darf kein Abruf erfolgen")
+
+        monkeypatch.setattr(update, "get", darf_nicht)
+        d = {"ebenen": [{"id": "nrw", "name": "NRW", "parlament_regex": "nordrhein"}]}
+        update.update_verlauf(d)
+        assert "verlauf" not in d["ebenen"][0]
+
+    def test_abgeschlossene_wahl_bekommt_keine_zeitreihe(self, monkeypatch):
+        def darf_nicht(url, timeout=20):
+            raise AssertionError("für eine entschiedene Wahl darf kein Abruf erfolgen")
+
+        monkeypatch.setattr(update, "get", darf_nicht)
+        d = {"ebenen": [self._bund(wahlergebnis={"fdp": 4.0, "datum": "2026-09-06"})]}
+        update.update_verlauf(d)
+        assert "verlauf" not in d["ebenen"][0]
+
+    def test_bei_netzfehler_bleibt_die_alte_zeitreihe_stehen(self, monkeypatch, capsys):
+        def kaputt(url, timeout=20):
+            raise TimeoutError("dawum weg")
+
+        monkeypatch.setattr(update, "get", kaputt)
+        alt = {"stand": "2026-10-17", "tage": 90, "rows": [{"institut": "INSA", "datum": "2026-10-01", "fdp": 4.0}]}
+        d = {"ebenen": [self._bund(verlauf=dict(alt))]}
+        update.update_verlauf(d)
+        assert d["ebenen"][0]["verlauf"] == alt
+        assert "nicht erreichbar" in capsys.readouterr().out

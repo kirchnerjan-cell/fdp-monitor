@@ -102,6 +102,29 @@
   .inst-zeile .val{font-family:var(--mono);font-weight:600;text-align:right}
   details.insts>summary{display:none}
 
+  /* ---------- Zeitverlauf ---------- */
+  /* Farben der Seite, nicht eigene: Punkte wie im Hero (--ueber), Hürde wie überall
+     (--huerde), die Mittelwertlinie in --ink, damit sie sich von den Punkten abhebt. */
+  .verlauf{padding:24px 28px}
+  .verlauf h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+  .verlauf .sub{margin:6px 0 14px;font-size:13px;color:var(--mute)}
+  .fv-chart{position:relative;min-height:260px;
+    --fv-linie:var(--ink); --fv-punkt:var(--ueber); --fv-huerde:var(--huerde);
+    --fv-gitter:var(--line); --fv-mute:var(--mute)}
+  .fv-chart svg{display:block;width:100%;height:auto;overflow:visible}
+  /* Endwert und Hürdenbeschriftung liegen zwangsläufig über Punkten – ein Rand in
+     Papierfarbe stellt sie frei, statt sie dort hineinzuzeichnen. */
+  .fv-chart .fv-frei{paint-order:stroke fill;stroke:var(--paper);stroke-width:3.5px;stroke-linejoin:round}
+  .fv-leer{min-height:0;font-size:14px;color:var(--mute);padding:8px 0}
+  .fv-quelle{margin:12px 0 0;font-size:12px;color:var(--mute)}
+  .fv-quelle a{color:var(--mute)}
+  .fv-tip{position:absolute;pointer-events:none;display:none;z-index:2;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;font-size:12px;line-height:1.45;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(23,26,33,.16)}
+  .fv-tip .fv-d{font-family:var(--mono);color:var(--mute);margin-bottom:2px}
+  .fv-tip .fv-m{font-weight:600}
+
   /* ---------- Anstehende Wahlen ---------- */
   .kacheln{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
   .kachel{padding:20px;display:flex;flex-direction:column;gap:14px}
@@ -162,6 +185,8 @@
     .kachel .wert{grid-column:1 / -1}
     .kachel .wert .num{font-size:26px}
     .kachel .bar,.kachel .basis,.kachel .hinweis,.kachel .notiz{grid-column:1 / -1}
+    .verlauf{padding:18px 16px}
+    .fv-chart{min-height:220px}
     .kachel .basis{display:none}
     th,td{padding:12px 14px}
   }
@@ -187,6 +212,13 @@
 
 <main>
   <section id="bund-hero" aria-labelledby="bund-titel"></section>
+
+  <section id="bund-verlauf" class="karte verlauf" aria-labelledby="verlauf-titel" hidden>
+    <h2 id="verlauf-titel">FDP im Zeitverlauf · Bund</h2>
+    <p class="sub">Punkte: Einzelumfragen · Linie: 14-Tage-Mittel · gestrichelt: 5-%-Hürde</p>
+    <div id="fdp-verlauf-chart" class="fv-chart"></div>
+    <p class="fv-quelle">Quelle: <a href="https://dawum.de/Bundestag/" rel="noopener">dawum.de</a> · 14-Tage-Mittel ungewichtet</p>
+  </section>
 
   <section id="anstehend" aria-labelledby="anstehend-titel">
     <div class="kopfzeile">
@@ -219,7 +251,7 @@
 
 <!-- ?v= bei jeder Änderung an monitor-utils.js hochzählen: sonst kann ein Browser
      die alte Fassung aus dem Cache zur neuen Seite laden (siehe Notbremse unten). -->
-<script src="monitor-utils.js?v=2"></script>
+<script src="monitor-utils.js?v=3"></script>
 <script>
 (async function(){
   // Die Seite besteht aus einer HTML- und einer JS-Datei, die zusammengehören. Liefert ein
@@ -227,7 +259,8 @@
   // eine komplett leere Seite heraus. Deshalb: prüfen, einmal frisch nachladen, und wenn
   // auch das nicht hilft, den Fehler zeigen statt nichts.
   const BENOETIGT = ['fmt','dfmt','esc','extractFdp','filterByAge','filterTrend','rowsNachWahl',
-                     'gruppiereEbenen','tageBis','huerdeText','wahlAbgeschlossen'];
+                     'gruppiereEbenen','tageBis','huerdeText','wahlAbgeschlossen',
+                     'verlaufPunkte','gleitendesMittel','mergeVerlauf'];
   const fehlende = () => BENOETIGT.filter((n) => typeof (window.MonitorUtils || {})[n] !== 'function');
 
   function zeigeFehler(text){
@@ -256,7 +289,8 @@
   const MAX_PCT = 8;                       // Skala aller Balken, einheitlich
   const HUERDE = 5;
   const {fmt, dfmt, esc, extractFdp, filterByAge, filterTrend, rowsNachWahl,
-         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen} = MonitorUtils;
+         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen,
+         verlaufPunkte, gleitendesMittel, mergeVerlauf} = MonitorUtils;
 
   const pz = (v) => fmt(v) + ' %';
   const breite = (v) => (v == null ? 0 : Math.min(Math.max(v, 0), MAX_PCT) / MAX_PCT * 100).toFixed(2) + '%';
@@ -388,6 +422,121 @@
     anpassen();
     breit.addEventListener('change', anpassen);
   }
+
+  // ---------- Zeitverlauf Bund ----------
+  // Die Zeitreihe kommt aus data.json (die Routine holt sie wöchentlich aus der
+  // vollständigen dawum-Datenbank). Die ohnehin schon geladenen neuesten Umfragen
+  // werden dazugemischt, damit der rechte Rand zwischen zwei Läufen aktuell ist –
+  // ohne einen zweiten, großen Abruf im Browser.
+  (function zeitverlauf(){
+    const sec = document.getElementById('bund-verlauf');
+    const host = document.getElementById('fdp-verlauf-chart');
+    if(!sec || !host || !bund) return;
+    sec.hidden = false;
+
+    const TAGE = (bund.verlauf_tage || 90), FENSTER = 14;
+    const gespeichert = (bund.verlauf || {}).rows || [];
+    const live = db ? extractFdp(db, (t) => new RegExp(bund.parlament_regex, 'i').test(t)) : [];
+    const punkte = verlaufPunkte(mergeVerlauf(gespeichert, live), TAGE);
+
+    if(punkte.length < 2){
+      host.className = 'fv-leer';
+      host.textContent = 'Zeitverlauf derzeit nicht verfügbar.';
+      return;
+    }
+    const linie = gleitendesMittel(punkte, FENSTER);
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (n, a, eltern) => { const e = document.createElementNS(NS, n);
+      for(const k in a) e.setAttribute(k, a[k]); if(eltern) eltern.appendChild(e); return e; };
+    const tip = document.createElement('div'); tip.className = 'fv-tip';
+    const dfmKurz = (t) => new Date(t).toLocaleDateString('de-DE',
+      {day: '2-digit', month: '2-digit', year: 'numeric'});
+
+    function zeichne(){
+      host.replaceChildren();
+      const schmal = host.clientWidth < 420;
+      const W = Math.max(280, host.clientWidth), H = schmal ? 220 : 260;
+      const ml = 32, mr = schmal ? 48 : 50, mt = 14, mb = 24;
+      const yMax = Math.max(7, Math.ceil(Math.max(...punkte.map((p) => p.v)) + 1));
+      const x0 = punkte[0].t, x1 = Math.max(punkte[punkte.length - 1].t, x0 + 864e5);
+      const X = (t) => ml + (t - x0) / (x1 - x0) * (W - ml - mr);
+      const Y = (v) => H - mb - v / yMax * (H - mt - mb);
+      const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img',
+        'aria-label': `FDP-Umfragewerte Bund der letzten ${TAGE} Tage, aktuelles `
+          + `${FENSTER}-Tage-Mittel ${fmt(linie[linie.length - 1].v)} Prozent`}, host);
+      host.appendChild(tip);
+
+      const schritt = yMax > 10 ? 2 : 1;
+      for(let v = 0; v <= yMax; v += schritt){
+        el('line', {x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: 'var(--fv-gitter)'}, svg);
+        el('text', {x: ml - 6, y: Y(v), dy: '0.32em', 'text-anchor': 'end',
+          'font-size': 11, fill: 'var(--fv-mute)'}, svg).textContent = v + ' %';
+      }
+      const m = new Date(x0); m.setUTCDate(1); m.setUTCMonth(m.getUTCMonth() + 1);
+      for(; +m <= x1; m.setUTCMonth(m.getUTCMonth() + 1)){
+        el('text', {x: X(+m), y: H - 6, 'text-anchor': 'middle', 'font-size': 11,
+          fill: 'var(--fv-mute)'}, svg).textContent =
+          m.toLocaleDateString('de-DE', {month: 'short', timeZone: 'UTC'});
+      }
+
+      el('line', {x1: ml, x2: W - mr, y1: Y(5), y2: Y(5), stroke: 'var(--fv-huerde)',
+        'stroke-width': 1.5, 'stroke-dasharray': '5 4'}, svg);
+      el('text', {x: ml + 4, y: Y(5) - 5, 'font-size': 11, 'font-weight': 600,
+        class: 'fv-frei', fill: 'var(--fv-huerde)'}, svg).textContent = '5-%-Hürde';
+
+      punkte.forEach((p) => el('circle', {cx: X(p.t), cy: Y(p.v), r: 3.5,
+        fill: 'var(--fv-punkt)', 'fill-opacity': .35}, svg));
+      el('path', {d: 'M' + linie.map((p) => `${X(p.t).toFixed(1)},${Y(p.v).toFixed(1)}`).join('L'),
+        fill: 'none', stroke: 'var(--fv-linie)', 'stroke-width': 2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, svg);
+
+      const letzte = linie[linie.length - 1];
+      el('text', {x: Math.min(X(letzte.t) + 6, W - 4), y: Y(letzte.v), dy: '0.32em',
+        'text-anchor': X(letzte.t) + 6 > W - mr + 4 ? 'end' : 'start',
+        'font-size': 12, 'font-weight': 600, 'font-family': 'var(--mono)',
+        class: 'fv-frei', fill: 'var(--fv-linie)'}, svg).textContent = fmt(letzte.v) + ' %';
+
+      const lot = el('line', {y1: mt, y2: H - mb, stroke: 'var(--fv-mute)',
+        'stroke-opacity': .5, visibility: 'hidden'}, svg);
+      const kugel = el('circle', {r: 4.5, fill: 'var(--fv-linie)', visibility: 'hidden'}, svg);
+      const flaeche = el('rect', {x: ml, y: 0, width: Math.max(1, W - ml - mr), height: H - mb,
+        fill: 'transparent'}, svg);
+
+      const zeigen = (ev) => {
+        const r = svg.getBoundingClientRect(), s = W / r.width;
+        const t = x0 + ((ev.clientX - r.left) * s - ml) / (W - ml - mr) * (x1 - x0);
+        const p = linie.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+        lot.setAttribute('x1', X(p.t)); lot.setAttribute('x2', X(p.t));
+        lot.setAttribute('visibility', 'visible');
+        kugel.setAttribute('cx', X(p.t)); kugel.setAttribute('cy', Y(p.v));
+        kugel.setAttribute('visibility', 'visible');
+        tip.replaceChildren();
+        const zeile = (txt, cls) => { const z = document.createElement('div');
+          if(cls) z.className = cls; z.textContent = txt; tip.appendChild(z); };
+        zeile(dfmKurz(p.t), 'fv-d');
+        zeile(`${FENSTER}-Tage-Mittel: ${fmt(p.v)} % (${p.n} Umfr.)`, 'fv-m');
+        punkte.filter((q) => q.t === p.t).forEach((q) => zeile(`${q.institut}: ${fmt(q.v)} %`));
+        tip.style.display = 'block';
+        const px = X(p.t) / s, py = Y(p.v) / s, b = tip.offsetWidth, h = tip.offsetHeight;
+        tip.style.left = Math.max(0, Math.min(r.width - b,
+          px + 12 > r.width - b ? px - b - 12 : px + 12)) + 'px';
+        // Oberhalb des Punktes, solange dort Platz ist – sonst darunter. Auf schmalen
+        // Schirmen deckte der Kasten sonst die Hürdenlinie und die Achse zu.
+        tip.style.top = (py - h - 10 >= 0 ? py - h - 10
+          : Math.min(r.height - h, py + 14)) + 'px';
+      };
+      const weg = () => { tip.style.display = 'none';
+        lot.setAttribute('visibility', 'hidden'); kugel.setAttribute('visibility', 'hidden'); };
+      flaeche.addEventListener('pointermove', zeigen);
+      flaeche.addEventListener('pointerdown', zeigen);
+      flaeche.addEventListener('pointerleave', weg);
+      svg.addEventListener('pointerleave', weg);
+    }
+
+    zeichne();
+    let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(zeichne, 150); });
+  })();
 
   // ---------- Anstehende Wahlen ----------
   const grid = document.getElementById('anstehend-grid');

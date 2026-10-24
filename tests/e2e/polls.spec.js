@@ -380,3 +380,128 @@ test.describe("Leere Seite verhindern", () => {
     expect(src).toMatch(/monitor-utils\.js\?v=\d+/);
   });
 });
+
+test.describe("Zeitverlauf Bund", () => {
+  // Die Zeitreihe steht in data.json; die Routine holt sie wöchentlich aus der
+  // vollständigen dawum-Datenbank. Der Browser lädt sie nicht selbst nach.
+  const T = (o) => tag(o);
+  function fixtureMitVerlauf(extra = {}) {
+    const d = JSON.parse(dataFixture);
+    const bund = d.ebenen.find((e) => e.id === "bund");
+    bund.verlauf_tage = 90;
+    bund.verlauf = {
+      stand: T(-1), tage: 90,
+      rows: [
+        { institut: "Allensbach", datum: T(-60), fdp: 3.0 },
+        { institut: "GMS", datum: T(-30), fdp: 4.0 },
+        { institut: "INSA", datum: T(-3), fdp: 5.0 },
+        { institut: "Forsa", datum: T(-3), fdp: 3.0 },
+        { institut: "Uralt", datum: T(-200), fdp: 9.9 },   // ausserhalb der 90 Tage
+        ...(extra.rows || []),
+      ],
+    };
+    if (extra.leer) delete bund.verlauf;
+    return JSON.stringify(d);
+  }
+  async function mitVerlauf(page, extra) {
+    await page.route("**/data.json*", (route) =>
+      route.fulfill({ contentType: "application/json", body: fixtureMitVerlauf(extra) }));
+    await page.route("**://api.dawum.de/**", (route) => route.abort("failed"));
+    await page.goto("/index.html");
+    await page.waitForSelector("#bund-verlauf");
+  }
+
+  test("steht zwischen dem Bund-Hero und den anstehenden Wahlen", async ({ page }) => {
+    await mitVerlauf(page);
+    const reihenfolge = await page.locator("main > section").evaluateAll((s) => s.map((e) => e.id));
+    expect(reihenfolge).toEqual(["bund-hero", "bund-verlauf", "anstehend", "gelaufen"]);
+  });
+
+  test("zeichnet je einen Punkt pro Einzelumfrage im Fenster", async ({ page }) => {
+    await mitVerlauf(page);
+    // 4 Umfragen in 90 Tagen; die 200 Tage alte zählt nicht. Dazu kommt die Kugel
+    // des Tooltips, die zunächst verborgen ist.
+    const punkte = page.locator('#fdp-verlauf-chart circle[fill-opacity="0.35"]');
+    await expect(punkte).toHaveCount(4);
+  });
+
+  test("zieht eine Linie und beschriftet ihren Endwert", async ({ page }) => {
+    await mitVerlauf(page);
+    await expect(page.locator("#fdp-verlauf-chart path")).toHaveCount(1);
+    // Letzter Tag: INSA 5,0 und Forsa 3,0 im 14-Tage-Fenster -> 4,0 %
+    await expect(page.locator("#fdp-verlauf-chart text", { hasText: /^4,0 %$/ })).toHaveCount(1);
+  });
+
+  test("markiert die 5-%-Hürde gestrichelt und beschriftet sie", async ({ page }) => {
+    await mitVerlauf(page);
+    await expect(page.locator("#fdp-verlauf-chart text", { hasText: "5-%-Hürde" })).toHaveCount(1);
+    await expect(page.locator('#fdp-verlauf-chart line[stroke-dasharray]')).toHaveCount(1);
+  });
+
+  test("nennt Quelle und Rechenweise unter dem Diagramm", async ({ page }) => {
+    await mitVerlauf(page);
+    const q = page.locator("#bund-verlauf .fv-quelle");
+    await expect(q).toContainText("14-Tage-Mittel ungewichtet");
+    await expect(q.locator('a[href*="dawum.de"]')).toHaveCount(1);
+  });
+
+  test("zeigt im Tooltip Datum, Mittel und die Institute des Tages", async ({ page }) => {
+    await mitVerlauf(page);
+    const svg = page.locator("#fdp-verlauf-chart svg");
+    const box = await svg.boundingBox();
+    // Die Interaktionsfläche endet am rechten Rand des Plotbereichs, nicht am SVG-Rand:
+    // dort liegt der Platz für die Endbeschriftung.
+    await svg.hover({ position: { x: box.width * 0.88, y: box.height / 2 } });
+    const tip = page.locator(".fv-tip");
+    await expect(tip).toBeVisible();
+    await expect(tip).toContainText(deutsch(T(-3)));
+    await expect(tip).toContainText("14-Tage-Mittel: 4,0 %");
+    await expect(tip).toContainText("INSA: 5,0 %");
+    await expect(tip).toContainText("Forsa: 3,0 %");
+  });
+
+  test("sagt Bescheid statt abzubrechen, wenn keine Zeitreihe da ist", async ({ page }) => {
+    await mitVerlauf(page, { leer: true });
+    await expect(page.locator("#fdp-verlauf-chart")).toHaveText("Zeitverlauf derzeit nicht verfügbar.");
+    // Der Rest der Seite muss davon unberührt bleiben.
+    await expect(page.locator("#bund-hero .leitzahl .num")).toContainText("4,4");
+    await expect(page.locator(".kachel")).toHaveCount(2);
+  });
+
+  test("nimmt live geholte Umfragen dazu, ohne sie doppelt zu zählen", async ({ page }) => {
+    // dawum liefert dieselbe Forsa-Umfrage, die schon gespeichert ist, plus eine neue.
+    await page.route("**/data.json*", (route) =>
+      route.fulfill({ contentType: "application/json", body: fixtureMitVerlauf() }));
+    await page.route("**://api.dawum.de/**", (route) =>
+      route.fulfill({ contentType: "application/json", body: dawumLive }));
+    await page.goto("/index.html");
+    await page.waitForSelector("#fdp-verlauf-chart svg");
+    // dawum-live kennt eine Bund-Umfrage im Fenster und eine 250 Tage alte.
+    // Gespeichert sind 4 im Fenster -> 5 Punkte, keine Dublette.
+    await expect(page.locator('#fdp-verlauf-chart circle[fill-opacity="0.35"]')).toHaveCount(5);
+  });
+
+  test.describe("mobil", () => {
+    test.use({ viewport: { width: 390, height: 900 } });
+
+    test("bleibt lesbar und sprengt die Seite nicht", async ({ page }) => {
+      await mitVerlauf(page);
+      const svg = page.locator("#fdp-verlauf-chart svg");
+      await expect(svg).toBeVisible();
+      const ueberlauf = await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(ueberlauf).toBeLessThanOrEqual(1);
+    });
+
+    test("der Tooltip weicht nach unten aus und bleibt im Diagramm", async ({ page }) => {
+      await mitVerlauf(page);
+      const svg = page.locator("#fdp-verlauf-chart svg");
+      const box = await svg.boundingBox();
+      await svg.hover({ position: { x: box.width / 2, y: box.height * 0.2 } });
+      const tip = await page.locator(".fv-tip").boundingBox();
+      const chart = await page.locator("#fdp-verlauf-chart").boundingBox();
+      expect(tip.y).toBeGreaterThanOrEqual(chart.y - 1);
+      expect(tip.y + tip.height).toBeLessThanOrEqual(chart.y + chart.height + 1);
+    });
+  });
+});

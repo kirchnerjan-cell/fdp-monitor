@@ -362,3 +362,55 @@ class TestErgebnisErsetztUmfragen:
         capsys.readouterr()
         update.ergebnis_ersetzt_umfragen(d)          # zweiter Lauf: nichts mehr zu tun
         assert capsys.readouterr().out == ""
+
+
+class TestVerlaufRows:
+    """Die Zeitreihe braucht jede Einzelumfrage, nicht nur die neueste je Institut."""
+    TODAY = date(2026, 10, 24)
+
+    def _db(self, *surveys):
+        return {
+            "Parties": {"1": {"Shortcut": "FDP"}},
+            "Parliaments": {"10": {"Shortcut": "BT", "Name": "Deutscher Bundestag"}},
+            "Institutes": {"5": {"Name": "INSA"}, "6": {"Name": "Forsa"}},
+            "Surveys": {str(i): s for i, s in enumerate(surveys)},
+        }
+
+    def _s(self, datum, fdp, inst=5):
+        return {"Parliament_ID": 10, "Institute_ID": inst, "Date": datum, "Results": {"1": fdp}}
+
+    def test_behaelt_mehrere_umfragen_desselben_instituts(self):
+        db = self._db(self._s("2026-10-01", 4.0), self._s("2026-10-08", 5.0),
+                      self._s("2026-10-15", 3.0))
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["datum"] for r in rows] == ["2026-10-01", "2026-10-08", "2026-10-15"]
+
+    def test_sortiert_aelteste_zuerst(self):
+        db = self._db(self._s("2026-10-15", 3.0), self._s("2026-08-01", 4.0))
+        assert [r["datum"] for r in update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)] \
+            == ["2026-08-01", "2026-10-15"]
+
+    def test_schneidet_aelteres_als_das_fenster_ab(self):
+        db = self._db(self._s("2026-10-01", 4.0), self._s("2025-01-01", 9.9))
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["fdp"] for r in rows] == [4.0]
+
+    def test_behaelt_den_wert_genau_am_fensterrand(self):
+        db = self._db(self._s("2026-07-26", 4.0))      # genau 90 Tage vor TODAY
+        assert len(update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)) == 1
+
+    def test_verwirft_einen_tag_jenseits_des_randes(self):
+        db = self._db(self._s("2026-07-25", 4.0))
+        assert update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY) == []
+
+    def test_nimmt_nur_das_eigene_parlament(self):
+        db = self._db(self._s("2026-10-01", 4.0))
+        db["Parliaments"]["20"] = {"Shortcut": "ST", "Name": "Landtag von Sachsen-Anhalt"}
+        db["Surveys"]["9"] = {"Parliament_ID": 20, "Institute_ID": 5,
+                              "Date": "2026-10-02", "Results": {"1": 9.9}}
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["fdp"] for r in rows] == [4.0]
+
+    def test_unbrauchbares_datum_faellt_raus(self):
+        db = self._db(self._s(None, 4.0), self._s("2026-10-01", 5.0))
+        assert [r["fdp"] for r in update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)] == [5.0]
