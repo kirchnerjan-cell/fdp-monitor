@@ -17,6 +17,9 @@ test("Parteiseite zeichnet Kennzahlen und alle Diagramme", async ({ page }) => {
   await expect(page.locator("#chart-themen rect")).toHaveCount(88);
   await expect(page.locator("#chart-shift rect")).toHaveCount(11);
   await expect(page.locator("#chart-zeit rect")).not.toHaveCount(0);
+  await expect(page.locator("#chart-vorsitz rect")).toHaveCount(16);
+  await expect(page.locator("#tabelle-vorsitz tbody tr")).toHaveCount(16);
+  await expect(page.locator("#vorsitz-kennzahlen")).toContainText("Theodor Heuss");
   expect(fehler).toEqual([]);
 });
 

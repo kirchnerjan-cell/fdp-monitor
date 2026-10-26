@@ -51,7 +51,31 @@
       .filter((e) => e.x1 > e.x0);
   }
 
-  const api = { kennzahlen, verschiebung, monat, zeitBalken };
+  /* Amtsdauer je Vorsitzendem in Jahren (Tage / 365,25, eine Nachkommastelle).
+     ende: null heißt "amtiert noch" und zählt bis heute. */
+  function amtszeiten(vorsitzende, heute) {
+    const jetzt = heute == null ? Date.now() : +heute;
+    return (vorsitzende || []).map((v) => {
+      const a = monat(v.beginn), b = v.ende == null ? jetzt : monat(v.ende);
+      return { ...v, a, b, laufend: v.ende == null, jahre: Math.round((b - a) / 864e5 / 365.25 * 10) / 10 };
+    });
+  }
+
+  /* Längste und kürzeste Amtszeit sowie Mittel. Die laufende Amtszeit zählt für die
+     längste mit, nicht aber für kürzeste und Mittel: sie ist noch nicht zu Ende. */
+  function amtsKennzahlen(zeiten) {
+    const abg = (zeiten || []).filter((z) => !z.laufend);
+    if (!abg.length) return null;
+    return {
+      anzahl: zeiten.length,
+      laengste: zeiten.reduce((a, b) => (b.jahre > a.jahre ? b : a)),
+      kuerzeste: abg.reduce((a, b) => (b.jahre < a.jahre ? b : a)),
+      mittel: Math.round(abg.reduce((s, z) => s + z.jahre, 0) / abg.length * 10) / 10,
+      amtierend: zeiten.find((z) => z.laufend) || null,
+    };
+  }
+
+  const api = { kennzahlen, verschiebung, monat, zeitBalken, amtszeiten, amtsKennzahlen };
 
   if (typeof module !== "undefined" && module.exports) {
     module.exports = api;

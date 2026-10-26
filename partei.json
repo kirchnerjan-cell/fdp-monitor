@@ -1,6 +1,6 @@
 {
   "stand": "2026-10-26",
-  "quellen": "Bundeswahlleiterin (Ergebnisse), bpb und fdp.de (Programme, Vorsitz). Redaktionell zusammengestellt.",
+  "quellen": "Bundeswahlleiterin (Ergebnisse), bpb und fdp.de (Programme, Vorsitz). Vorsitzende seit 1948: Wikipedia, Wahl Kubicki: ZDFheute. Redaktionell zusammengestellt.",
   "wahlen": [
     {
       "jahr": 1998,
@@ -75,6 +75,24 @@
       "vorsitz": "Christian Lindner"
     }
   ],
+  "vorsitzende": [
+    {"nr": 1, "name": "Theodor Heuss", "beginn": "1948-12-12", "ende": "1949-09-12"},
+    {"nr": 2, "name": "Franz Blücher", "beginn": "1949-09-12", "ende": "1954-03-06"},
+    {"nr": 3, "name": "Thomas Dehler", "beginn": "1954-03-06", "ende": "1957-01-26"},
+    {"nr": 4, "name": "Reinhold Maier", "beginn": "1957-01-26", "ende": "1960-01-28"},
+    {"nr": 5, "name": "Erich Mende", "beginn": "1960-01-28", "ende": "1968-01-30"},
+    {"nr": 6, "name": "Walter Scheel", "beginn": "1968-01-30", "ende": "1974-10-01"},
+    {"nr": 7, "name": "Hans-Dietrich Genscher", "beginn": "1974-10-01", "ende": "1985-02-23"},
+    {"nr": 8, "name": "Martin Bangemann", "beginn": "1985-02-23", "ende": "1988-10-08"},
+    {"nr": 9, "name": "Otto Graf Lambsdorff", "beginn": "1988-10-08", "ende": "1993-06-11"},
+    {"nr": 10, "name": "Klaus Kinkel", "beginn": "1993-06-11", "ende": "1995-06-10"},
+    {"nr": 11, "name": "Wolfgang Gerhardt", "beginn": "1995-06-10", "ende": "2001-05-04"},
+    {"nr": 12, "name": "Guido Westerwelle", "beginn": "2001-05-04", "ende": "2011-05-13"},
+    {"nr": 13, "name": "Philipp Rösler", "beginn": "2011-05-13", "ende": "2013-12-07"},
+    {"nr": 14, "name": "Christian Lindner", "beginn": "2013-12-07", "ende": "2025-05-16"},
+    {"nr": 15, "name": "Christian Dürr", "beginn": "2025-05-16", "ende": "2026-05-30"},
+    {"nr": 16, "name": "Wolfgang Kubicki", "beginn": "2026-05-30", "ende": null}
+  ],
   "zeitleiste": [
     {
       "spur": "Vorsitz",
@@ -107,14 +125,14 @@
     {
       "spur": "Vorsitz",
       "label": "Dürr",
-      "von": "2025-05",
-      "bis": "2026-04",
+      "von": "2025-05-16",
+      "bis": "2026-05-30",
       "status": "abgeschlossen"
     },
     {
       "spur": "Vorsitz",
       "label": "Kubicki",
-      "von": "2026-05",
+      "von": "2026-05-30",
       "bis": null,
       "status": "laufend"
     },
