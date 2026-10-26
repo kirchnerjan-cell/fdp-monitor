@@ -46,6 +46,12 @@
   .marke .unter{font-size:13px;color:#B9BDC6}
   .badges{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:13px}
   .badges span{padding:6px 10px;border:1px solid #3A3F4B;border-radius:6px;white-space:nowrap}
+  nav.seiten{background:var(--ink);border-top:1px solid #2A2E38}
+  nav.seiten .wrap{display:flex;gap:4px}
+  nav.seiten a{color:#B9BDC6;text-decoration:none;font-weight:600;font-size:14px;padding:12px 14px;border-bottom:3px solid transparent}
+  nav.seiten a:hover{color:#F5F6F2}
+  nav.seiten a[aria-current="page"]{color:#F5F6F2;border-bottom-color:#EFC41A}
+  nav.seiten a:focus-visible{outline:2px solid #EFC41A;outline-offset:-2px}
 
   main{max-width:var(--max);margin:0 auto;padding:32px 24px 8px;display:flex;flex-direction:column;gap:40px}
   .kopfzeile{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
@@ -209,6 +215,12 @@
     </div>
   </div>
 </header>
+<nav class="seiten" aria-label="Seiten">
+  <div class="wrap">
+    <a href="index.html" aria-current="page">Umfragen</a>
+    <a href="partei.html">Partei</a>
+  </div>
+</nav>
 
 <main>
   <section id="bund-hero" aria-labelledby="bund-titel"></section>
