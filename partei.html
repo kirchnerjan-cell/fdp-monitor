@@ -81,6 +81,19 @@
   .tip .k{font-family:var(--mono);color:var(--mute);margin-bottom:2px}
   .tip .m{font-weight:600}
 
+  .kopfzeile{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .kopfzeile .hint{font-size:13px;color:var(--mute)}
+  .vorsitz{display:flex;flex-direction:column;gap:16px}
+  details.vtab{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  details.vtab>summary{cursor:pointer;font-size:14px;font-weight:600;min-height:32px;display:flex;align-items:center}
+  details.vtab>summary:focus-visible{outline:2px solid var(--ueber);outline-offset:2px}
+  .tabelle{overflow-x:auto;margin-top:8px}
+  .tabelle table{width:100%;border-collapse:collapse;font-size:14px;min-width:420px}
+  .tabelle th{text-align:left;padding:8px 12px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  .tabelle td{padding:8px 12px;border-top:1px solid var(--hair)}
+  .tabelle td.zahl,.tabelle th.zahl{text-align:right;font-family:var(--mono)}
+  .tabelle td.datum{font-family:var(--mono);color:var(--mute)}
+  .tabelle tr.laufend td{font-weight:600}
   .methode{font-size:13px;color:var(--mute);max-width:80ch;margin:0}
   .fehler{padding:20px;font-size:14px;color:#8A1C12;background:#FDECEA;border-radius:var(--r)}
 
@@ -92,7 +105,9 @@
     main{padding-top:20px}
     .einleitung h1{font-size:24px}
     .diagramm{padding:18px 16px}
-    .kennzahlen .num{font-size:32px}
+    .kennzahlen{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .kennzahlen .karte{padding:14px}
+    .kennzahlen .num{font-size:26px}
   }
 </style>
 </head>
@@ -123,7 +138,7 @@
 <main>
   <section class="einleitung">
     <h1>Die FDP im Bund 1998–2026</h1>
-    <p>Wahlergebnisse, Vorsitz und Programme seit 1998 und wie sich die Schwerpunkte der Wahlprogramme verschoben haben.</p>
+    <p>Wahlergebnisse, Vorsitz und Programme seit 1998 und wie sich die Schwerpunkte der Wahlprogramme verschoben haben. Dazu alle Bundesvorsitzenden seit der Gründung 1948.</p>
   </section>
 
   <section class="kennzahlen" id="kennzahlen" aria-label="Kennzahlen"></section>
@@ -141,6 +156,28 @@
       <div class="chart" id="chart-zeit"></div>
     </section>
   </div>
+
+  <section class="vorsitz" id="vorsitz" aria-labelledby="vorsitz-titel">
+    <div class="kopfzeile">
+      <h2 id="vorsitz-titel">Bundesvorsitzende seit 1948</h2>
+      <span class="hint">Amtsende = Wahltag des Nachfolgers</span>
+    </div>
+    <div class="kennzahlen" id="vorsitz-kennzahlen"></div>
+    <div class="karte diagramm">
+      <h2 id="vorsitz-chart-titel">Amtszeiten im Zeitstrahl</h2>
+      <p class="sub">Ein Balken je Vorsitzendem, Amtsdauer in Jahren am Balkenende. Blau: amtierender Vorsitzender, Amtszeit bis heute gerechnet.</p>
+      <div class="chart" id="chart-vorsitz"></div>
+      <details class="vtab">
+        <summary>Alle Vorsitzenden als Tabelle</summary>
+        <div class="tabelle">
+          <table id="tabelle-vorsitz">
+            <thead><tr><th class="zahl">Nr.</th><th>Name</th><th>Beginn</th><th>Ende</th><th class="zahl">Jahre</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
 
   <section class="karte diagramm" aria-labelledby="themen-titel">
     <h2 id="themen-titel">Themengewichtung der Wahlprogramme</h2>
@@ -168,7 +205,7 @@
 
 <!-- ?v= bei jeder Änderung an monitor-utils.js / partei-utils.js hochzählen (Browser-Cache). -->
 <script src="monitor-utils.js?v=3"></script>
-<script src="partei-utils.js?v=1"></script>
+<script src="partei-utils.js?v=2"></script>
 <script>
 (async function(){
   const {fmt, dfmt, esc} = window.MonitorUtils || {};
@@ -229,6 +266,56 @@
         k.letzte.ergebnis < HUERDE ? 'rot' : ''],
       ['Wahlen unter 5 %', k.unter + ' von ' + k.anzahl, 'Bundestagswahlen ' + d.wahlen[0].jahr + '–' + k.letzte.jahr, ''],
     ].map(([l, n, s, c]) => `<div class="karte"><div class="lbl">${esc(l)}</div><div class="num ${c}">${esc(n)}</div><div class="sub">${esc(s)}</div></div>`).join('');
+  }
+
+  // ---------- Bundesvorsitzende: Kennzahlen und Tabelle ----------
+  // Laufende Amtszeit zählt bis heute, deshalb einmal beim Laden berechnet.
+  const zeiten = PU.amtszeiten(d.vorsitzende);
+  const vk = PU.amtsKennzahlen(zeiten);
+  const jahre = (v) => fmt(v) + ' J.';
+  if(vk){
+    document.getElementById('vorsitz-kennzahlen').innerHTML = [
+      ['Vorsitzende seit 1948', String(vk.anzahl), vk.amtierend ? 'amtierend: ' + vk.amtierend.name : ''],
+      ['Längste Amtszeit', jahre(vk.laengste.jahre), vk.laengste.name + (vk.laengste.laufend ? ' (amtierend)' : '')],
+      ['Kürzeste Amtszeit', jahre(vk.kuerzeste.jahre), vk.kuerzeste.name],
+      ['Ø Amtszeit', jahre(vk.mittel), 'abgeschlossene Amtszeiten'],
+    ].map(([l, n, s]) => `<div class="karte"><div class="lbl">${esc(l)}</div><div class="num">${esc(n)}</div><div class="sub">${esc(s)}</div></div>`).join('');
+  }
+  document.querySelector('#tabelle-vorsitz tbody').innerHTML = zeiten.map((z) =>
+    `<tr${z.laufend ? ' class="laufend"' : ''}><td class="zahl">${z.nr}</td><td>${esc(z.name)}</td>
+      <td class="datum">${dfmt(z.beginn)}</td><td class="datum">${z.ende ? dfmt(z.ende) : 'amtierend'}</td>
+      <td class="zahl">${fmt(z.jahre)}</td></tr>`).join('');
+
+  // ---------- Bundesvorsitzende: Zeitstrahl ----------
+  function vorsitzChart(){
+    const host = document.getElementById('chart-vorsitz'); host.replaceChildren();
+    const W = Math.max(280, host.clientWidth), schmal = W < 520;
+    // Auf schmalen Schirmen nur Nachnamen, sonst bleibt für die Balken kaum Platz.
+    const name = (z) => schmal ? z.name.split(' ').slice(-1)[0] : z.name;
+    const svg = el('svg', {role: 'img', 'aria-label': 'Amtszeiten der FDP-Bundesvorsitzenden: '
+      + zeiten.map((z) => z.name + ' ' + fmt(z.jahre) + ' Jahre').join(', ')}, host);
+    const ml = textBreite(svg, zeiten.map(name), 'stark') + 10;
+    const mr = textBreite(svg, zeiten.map((z) => jahre(z.jahre)), 'wert') + 8;
+    const mt = 4, mb = 24, zh = 24, H = mt + zeiten.length * zh + mb;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const von = Date.UTC(1948, 0, 1), bis = Math.max(...zeiten.map((z) => z.b));
+    const X = (t) => ml + (t - von) / (bis - von) * (W - ml - mr);
+    const tip = tooltip(host);
+    const schritt = schmal ? 20 : 10;
+    for(let j = 1950; j <= new Date(bis).getUTCFullYear(); j += schritt){
+      el('line', {x1: X(Date.UTC(j, 0, 1)), x2: X(Date.UTC(j, 0, 1)), y1: mt, y2: H - mb, stroke: 'var(--line)'}, svg);
+      txt(svg, {x: X(Date.UTC(j, 0, 1)), y: H - 6, 'text-anchor': 'middle'}, j);
+    }
+    zeiten.forEach((z, i) => {
+      const y = mt + i * zh, m = y + zh / 2;
+      txt(svg, {x: ml - 8, y: m, dy: '0.32em', 'text-anchor': 'end', class: 'stark'}, name(z));
+      const b = el('rect', {x: X(z.a), y: y + 4, width: Math.max(3, X(z.b) - X(z.a)), height: zh - 8, rx: 4,
+        fill: z.laufend ? 'var(--ueber)' : 'var(--ink)'}, svg);
+      hover(b, tip, (ev) => tip.zeige(ev, z.nr + '. ' + z.name, [
+        fmt(z.jahre) + ' Jahre' + (z.laufend ? ' (amtierend)' : ''),
+        dfmt(z.beginn) + ' – ' + (z.ende ? dfmt(z.ende) : 'heute')]));
+      txt(svg, {x: X(z.b) + 5, y: m, dy: '0.32em', class: 'wert'}, jahre(z.jahre));
+    });
   }
 
   // ---------- Bundestagswahlen ----------
@@ -364,7 +451,7 @@
     legende('legende-shift', [['var(--ueber)', 'Heute wichtiger als 1998–2005'], ['var(--huerde)', 'Heute weniger wichtig']]);
   }
 
-  const alles = () => { wahlen(); zeitleiste(); themen(); shift(); };
+  const alles = () => { wahlen(); zeitleiste(); vorsitzChart(); themen(); shift(); };
   alles();
   let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(alles, 150); });
 })().catch((e) => {

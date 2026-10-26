@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import fs from "node:fs";
 import path from "node:path";
-import { kennzahlen, verschiebung, monat, zeitBalken } from "../partei-utils.js";
+import { kennzahlen, verschiebung, monat, zeitBalken, amtszeiten, amtsKennzahlen } from "../partei-utils.js";
 
 const WAHLEN = [
   { jahr: 2009, ergebnis: 14.6 },
@@ -75,6 +75,34 @@ describe("zeitBalken", () => {
   });
 });
 
+describe("amtszeiten / amtsKennzahlen", () => {
+  const V = [
+    { nr: 1, name: "A", beginn: "2000-01-01", ende: "2010-01-01" },
+    { nr: 2, name: "B", beginn: "2010-01-01", ende: "2011-01-01" },
+    { nr: 3, name: "C", beginn: "2011-01-01", ende: null },
+  ];
+  const heute = Date.UTC(2041, 0, 1);
+
+  it("computes terms in years and runs the current one until today", () => {
+    const z = amtszeiten(V, heute);
+    expect(z.map((x) => x.jahre)).toEqual([10, 1, 30]);
+    expect(z[2].laufend).toBe(true);
+  });
+
+  it("counts the current term for the longest, not for shortest or mean", () => {
+    const k = amtsKennzahlen(amtszeiten(V, heute));
+    expect(k.anzahl).toBe(3);
+    expect(k.laengste.name).toBe("C");
+    expect(k.kuerzeste.name).toBe("B");
+    expect(k.mittel).toBe(5.5);
+    expect(k.amtierend.name).toBe("C");
+  });
+
+  it("returns null without completed terms", () => {
+    expect(amtsKennzahlen(amtszeiten([V[2]], heute))).toBeNull();
+  });
+});
+
 describe("partei.json", () => {
   const d = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "..", "partei.json"), "utf-8"));
 
@@ -84,6 +112,13 @@ describe("partei.json", () => {
       expect(t.position).toHaveLength(d.themen.jahre.length);
       for (const g of t.gewicht) expect(g >= 0 && g < d.themen.skala.length).toBe(true);
     }
+  });
+
+  it("lists chairs without gaps: each term starts when the previous one ends", () => {
+    const v = d.vorsitzende;
+    v.slice(1).forEach((x, i) => expect(x.beginn).toBe(v[i].ende));
+    expect(v.filter((x) => x.ende == null)).toHaveLength(1);
+    expect(v[v.length - 1].ende).toBeNull();
   });
 
   it("has a programme year for every federal election", () => {
