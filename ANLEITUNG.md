@@ -8,9 +8,12 @@ Die Instagram-Anbindung (Posts, Faktencheck) wurde entfernt und kann bei Bedarf 
 
 | Datei | Zweck | Anfassen? |
 |---|---|---|
-| `index.html` | Die Website (eine Datei, kein Framework) | nur bei Design-Änderungen |
+| `index.html` | Seite 1: Umfragewerte (eine Datei, kein Framework) | nur bei Design-Änderungen |
+| `partei.html` | Seite 2: Statistiken zur Partei (Wahlergebnisse, Vorsitz, Programme, Themen) | nur bei Design-Änderungen |
 | `monitor-utils.js` | Reine Hilfsfunktionen der Website (getestet mit Vitest) | nur bei Logik-Änderungen |
 | `data.json` | Ebenen (Bund + Länder) mit Wahltermin, Wahltrend, Umfrage-Fallback | Wahltermine/Wahlergebnisse redaktionell pflegen |
+| `partei.json` | Daten der Parteiseite | redaktionell pflegen (siehe unten) |
+| `partei-utils.js` | Reine Hilfsfunktionen der Parteiseite (getestet mit Vitest) | nur bei Logik-Änderungen |
 | `update.py` | Holt Umfragen von dawum.de, schreibt `data.json` | nein |
 | `ROUTINE-PROMPT.md` | Zusatzschritt für die Claude-Code-Routine | einmal einbauen |
 
@@ -65,6 +68,19 @@ Jeder Eintrag in `data.json["ebenen"]` beschreibt eine Wahl:
 | Niedersachsen | 26.09.2027 | Kabinettsbeschluss, Pressemitteilung der Staatskanzlei |
 
 Saarland und Schleswig-Holstein wählen am selben Tag. Bei gleichem `wahltermin` entscheidet die Reihenfolge in `data.json` über die Anzeige – dort steht Saarland vor Schleswig-Holstein.
+
+## Parteiseite (`partei.html` / `partei.json`)
+
+Die zweite Seite zeigt die FDP auf Bundesebene seit 1998. Beide Seiten sind über die Leiste unter dem Kopf verbunden. Die Daten kommen nicht von dawum und werden weder von `update.py` noch von der Routine angefasst – sie stehen redaktionell in `partei.json`:
+
+- `stand`: Datum der letzten inhaltlichen Prüfung (YYYY-MM-DD), erscheint oben rechts.
+- `wahlen`: je Bundestagswahl `jahr`, `datum` (Wahltag), `ergebnis` (Zweitstimmen in %), `sitze`, `rolle` in der folgenden Wahlperiode (`Regierung`, `Opposition` oder `Nicht im Bundestag` – bestimmt die Farbe), `programm`, `vorsitz`.
+- `zeitleiste`: Abschnitte mit `spur` (`Rolle im Bund`, `Vorsitz`, `Grundsatzprogramm`, `Neues Programm`), `label`, `von`/`bis` als `YYYY-MM` und `status`. `bis: null` heißt „läuft noch“ und reicht bis heute. In der Spur `Rolle im Bund` bestimmt `status` die Farbe wie bei `rolle`; `status: "in Arbeit"` wird blass gezeichnet.
+- `themen`: `jahre` (ein Eintrag je Wahlprogramm, gleiche Reihenfolge wie `wahlen`), `skala` (Bezeichnung der Stufen 0–3) und `liste` mit je `thema`, `gewicht` (eine Zahl 0–3 je Jahr) und `position` (Kurztext je Jahr, erscheint im Tooltip). Die Gewichtung ist eine redaktionelle Einschätzung, keine Inhaltsanalyse.
+
+**Nach einer Bundestagswahl:** einen Eintrag in `wahlen` anhängen, in `themen.jahre` das Jahr ergänzen und bei jedem Thema einen Wert in `gewicht` und `position` anhängen; `stand` aktualisieren. Ein Vitest-Test prüft, dass `wahlen` und `themen.jahre` zusammenpassen und jedes Thema gleich viele Werte hat.
+
+Die Grafik „Verschiebung der Schwerpunkte“ vergleicht den Durchschnitt der Programme bis 2005 mit dem ab 2021 (Grenzen in `partei.html`, Aufruf von `verschiebung()`).
 
 ## Reihenfolge auf der Seite
 
