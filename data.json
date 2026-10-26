@@ -1,5 +1,5 @@
 {
-  "erstellt": "2026-10-24T20:01+02:00",
+  "erstellt": "2026-10-26T09:14+02:00",
   "ebenen": [
     {
       "id": "bund",
@@ -14,13 +14,28 @@
       "wahltrend_max_alter_tage": 21,
       "wahlergebnis": null,
       "wahltrend": {
-        "wert": 4.2,
-        "delta": 0.4,
-        "stand": "2026-10-22"
+        "wert": 3.9,
+        "delta": -0.3,
+        "stand": "2026-10-24"
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": [
+          {
+            "institut": "INSA",
+            "datum": "2026-10-24",
+            "fdp": 4.0
+          },
+          {
+            "institut": "Verian (Emnid)",
+            "datum": "2026-10-23",
+            "fdp": 3.0
+          },
+          {
+            "institut": "Forschungsgruppe Wahlen",
+            "datum": "2026-10-23",
+            "fdp": 3.0
+          },
           {
             "institut": "Allensbach",
             "datum": "2026-10-22",
@@ -35,11 +50,6 @@
             "institut": "Forsa",
             "datum": "2026-10-20",
             "fdp": 4.0
-          },
-          {
-            "institut": "INSA",
-            "datum": "2026-10-20",
-            "fdp": 5.0
           },
           {
             "institut": "YouGov",
@@ -57,24 +67,14 @@
             "fdp": 4.0
           },
           {
-            "institut": "Forschungsgruppe Wahlen",
-            "datum": "2026-10-08",
-            "fdp": 3.0
-          },
-          {
             "institut": "Infratest dimap",
             "datum": "2026-10-01",
-            "fdp": 4.0
-          },
-          {
-            "institut": "Verian (Emnid)",
-            "datum": "2026-09-25",
             "fdp": 4.0
           }
         ]
       },
       "verlauf": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "tage": 90,
         "rows": [
           {
@@ -391,6 +391,21 @@
             "institut": "Allensbach",
             "datum": "2026-10-22",
             "fdp": 4.0
+          },
+          {
+            "institut": "Forschungsgruppe Wahlen",
+            "datum": "2026-10-23",
+            "fdp": 3.0
+          },
+          {
+            "institut": "Verian (Emnid)",
+            "datum": "2026-10-23",
+            "fdp": 3.0
+          },
+          {
+            "institut": "INSA",
+            "datum": "2026-10-24",
+            "fdp": 4.0
           }
         ]
       }
@@ -485,7 +500,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": []
       }
     },
@@ -506,7 +521,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": [
           {
             "institut": "INSA",
@@ -533,7 +548,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": [
           {
             "institut": "INSA",
@@ -570,7 +585,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": [
           {
             "institut": "INSA",
@@ -597,7 +612,7 @@
         "stand": null
       },
       "umfragen": {
-        "stand": "2026-10-23T06:07:58+02:00",
+        "stand": "2026-10-25T15:19:38+01:00",
         "rows": [
           {
             "institut": "INSA",
