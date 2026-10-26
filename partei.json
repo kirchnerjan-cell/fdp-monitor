@@ -125,14 +125,14 @@
     {
       "spur": "Vorsitz",
       "label": "Dürr",
-      "von": "2025-05",
-      "bis": "2026-04",
+      "von": "2025-05-16",
+      "bis": "2026-05-30",
       "status": "abgeschlossen"
     },
     {
       "spur": "Vorsitz",
       "label": "Kubicki",
-      "von": "2026-05",
+      "von": "2026-05-30",
       "bis": null,
       "status": "laufend"
     },

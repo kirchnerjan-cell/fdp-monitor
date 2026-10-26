@@ -121,6 +121,15 @@ describe("partei.json", () => {
     expect(v[v.length - 1].ende).toBeNull();
   });
 
+  it("matches the timeline's chair track to the chair list (same month)", () => {
+    for (const z of d.zeitleiste.filter((e) => e.spur === "Vorsitz")) {
+      const v = d.vorsitzende.find((x) => x.name.endsWith(" " + z.label));
+      expect(v, z.label).toBeTruthy();
+      expect(z.von.slice(0, 7)).toBe(v.beginn.slice(0, 7));
+      expect(z.bis == null ? null : z.bis.slice(0, 7)).toBe(v.ende == null ? null : v.ende.slice(0, 7));
+    }
+  });
+
   it("has a programme year for every federal election", () => {
     expect(d.wahlen.map((w) => w.jahr)).toEqual(d.themen.jahre);
   });
