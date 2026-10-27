@@ -1,9 +1,75 @@
 {
-  "erstellt": null,
+  "erstellt": "2026-10-27T19:00+01:00",
   "quellen": {
     "cicero_suche": "site:cicero.de Wolfgang Kubicki",
     "sender": ["WELT TV", "ARD", "ZDF", "Phoenix", "Deutschlandfunk"]
   },
-  "beitraege": [],
+  "beitraege": [
+    {
+      "titel": "Ein Land im Stillstand - Über die Kanzlerkrise wird Deutschland vergessen",
+      "datum": "2026-08-01",
+      "url": "https://www.cicero.de/innenpolitik/ein-land-im-stillstand-uber-die-kanzlerkrise-wird-deutschland-vergessen"
+    },
+    {
+      "titel": "Linksextremes Agendasetting - Mit Schmutzkampagne zu Rot-Rot-Grün",
+      "datum": "2026-08-08",
+      "url": "https://www.cicero.de/innenpolitik/linksextremes-agendasetting-mit-schmutzkampagne-zu-rot-rot-grun"
+    },
+    {
+      "titel": "Niedergang und Zwangsoptimismus - Wegtreten, Schönfärber!",
+      "datum": "2026-08-15",
+      "url": "https://www.cicero.de/innenpolitik/niedergang-und-zwangsoptimismus-wegtreten-schonfarber"
+    },
+    {
+      "titel": "Innerdeutscher Ost-West-Konflikt - Die Spalter der Nation",
+      "datum": "2026-08-22",
+      "url": "https://www.cicero.de/innenpolitik/innerdeutscher-ost-west-konflikt-die-spalter-der-nation"
+    },
+    {
+      "titel": "Wahlkampf in Sachsen-Anhalt - Komplett aus den Fugen",
+      "datum": "2026-08-29",
+      "url": "https://www.cicero.de/innenpolitik/wahlkampf-sachsen-anhalt-wolfgang-kubicki"
+    },
+    {
+      "titel": "„Coesfelder Liste“ und anderer Irrsinn - Die gefährliche Normalisierung staatlichen Versagens",
+      "datum": "2026-09-05",
+      "url": "https://www.cicero.de/innenpolitik/coesfelder-liste-staatsversagen-wolfgang-kubicki"
+    },
+    {
+      "titel": "„Wir gegen die“ - Die Mitte ist kein Einheitsblock",
+      "datum": "2026-09-12",
+      "url": "https://www.cicero.de/innenpolitik/wir-gegen-die-die-mitte-ist-kein-einheitsblock"
+    },
+    {
+      "titel": "Schluss mit falscher Rücksichtnahme - Aufruf zu einem Kulturkampf für die Freiheit",
+      "datum": "2026-09-19",
+      "url": "https://www.cicero.de/innenpolitik/schluss-mit-falscher-rucksichtnahme-aufruf-zu-einem-kulturkampf-fur-die-freiheit"
+    },
+    {
+      "titel": "Nach der Hauptstadt-Wahl - Rot-Rot-Grün in Berlin ist eine Gefahr und Zumutung",
+      "datum": "2026-09-26",
+      "url": "https://www.cicero.de/innenpolitik/nach-der-hauptstadt-wahl-rot-rot-grun-in-berlin-ist-eine-gefahr-und-zumutung"
+    },
+    {
+      "titel": "Tag der Deutschen Einheit - Deutschland braucht ein gemeinsames Feuer!",
+      "datum": "2026-10-03",
+      "url": "https://www.cicero.de/innenpolitik/tag-der-deutschen-einheit-deutschland-braucht-ein-gemeinsames-feuer"
+    },
+    {
+      "titel": "Schwarz-rotes Regieren unter Friedrich Merz - Kein Aufbruch, nirgends",
+      "datum": "2026-10-10",
+      "url": "https://www.cicero.de/innenpolitik/wolfgang-kubicki-friedrich-merz-kein-aufbruch-ludwig-erhard"
+    },
+    {
+      "titel": "Berliner Koalitionspläne - Wohlstand für alle oder Gleichheit im Elend?",
+      "datum": "2026-10-17",
+      "url": "https://www.cicero.de/innenpolitik/berliner-koalitionsplane-wohlstand-fur-alle-statt-gleichheit-im-elend"
+    },
+    {
+      "titel": "Chaos um die Tabaksteuer - Beruft den Bundestag ein!",
+      "datum": "2026-10-24",
+      "url": "https://www.cicero.de/innenpolitik/chaos-tabaksteuer-bundestag-klingbeil-wolfgang-kubicki"
+    }
+  ],
   "interviews": []
 }
