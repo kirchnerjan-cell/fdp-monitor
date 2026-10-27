@@ -26,7 +26,7 @@
     --mono:"IBM Plex Mono",ui-monospace,monospace;
     --max:1180px; --r:14px;
     /* Sender-Kategorien: fixe Reihenfolge (nie zyklisch neu vergeben), CVD-geprüft. */
-    --s-welt:#2a78d6; --s-ard:#eb6834; --s-zdf:#1baf7a; --s-phoenix:#eda100; --s-dlf:#e87ba4; --s-sonst:var(--mute);
+    --s-welt:#2a78d6; --s-ard:#eb6834; --s-zdf:#1baf7a; --s-phoenix:#eda100; --s-dlf:#e87ba4; --s-taz:#008300; --s-sonst:var(--mute);
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
@@ -178,7 +178,7 @@
 
   const SENDER_COLOR = {
     'WELT TV': 'var(--s-welt)', 'ARD': 'var(--s-ard)', 'ZDF': 'var(--s-zdf)',
-    'Phoenix': 'var(--s-phoenix)', 'Deutschlandfunk': 'var(--s-dlf)'
+    'Phoenix': 'var(--s-phoenix)', 'Deutschlandfunk': 'var(--s-dlf)', 'taz': 'var(--s-taz)'
   };
   const senderColor = (s) => SENDER_COLOR[s] || 'var(--s-sonst)';
 

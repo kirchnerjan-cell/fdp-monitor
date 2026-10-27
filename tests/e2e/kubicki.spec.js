@@ -71,7 +71,7 @@ test.describe("Interviews pro Woche", () => {
   test("shows a legend entry for every configured sender", async ({ page }) => {
     await mockKubickiData(page, { interviews: [] });
     await page.goto("/kubicki.html");
-    await expect(page.locator("#legende span")).toHaveCount(5);
+    await expect(page.locator("#legende span")).toHaveCount(6);
     await expect(page.locator("#legende")).toContainText("WELT TV");
     await expect(page.locator("#legende")).toContainText("Deutschlandfunk");
   });

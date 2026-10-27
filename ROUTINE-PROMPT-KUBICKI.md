@@ -20,16 +20,30 @@ Abruf-Skript wie `update.py` beim FDP-Monitor.
    anhängen. Keine Duplikate (Abgleich über `url`).
 
 2. **Interview-Vorschläge.** Für jeden Sender in `kubicki-data.json["quellen"]["sender"]`
-   (Standard: WELT TV, ARD, ZDF, Phoenix, Deutschlandfunk) per Websuche nach aktuellen
-   Kubicki-Interviews der letzten 7 Tage suchen (z. B. `Wolfgang Kubicki Interview
-   <Sender>`). Jeden neuen, plausiblen Treffer als **Vorschlag** anhängen:
+   (Standard: WELT TV, ARD, ZDF, Phoenix, Deutschlandfunk, taz) nach aktuellen
+   Kubicki-Interviews der letzten 7 Tage suchen. Welche Suchform funktioniert, ist pro
+   Sender sehr unterschiedlich (Stand Okt. 2026, per Websuche geprüft):
+   - **`site:`-Suche funktioniert zuverlässig:** cicero.de, taz.de, zdf.de. Also z. B.
+     `site:zdf.de Kubicki` oder `site:taz.de Kubicki Interview`.
+   - **`site:`-Suche liefert nichts Brauchbares** (Paywall/fehlende Indexierung, leer
+     oder nur fachfremde Treffer): welt.de, spiegel.de, phoenix.de, deutschlandfunk.de,
+     tagesschau.de. Hier stattdessen mit Klartext-Fragen suchen (z. B. `Wolfgang Kubicki
+     Interview WELT TV <Monat Jahr>`) – liefert erfahrungsgemäß vor allem ältere
+     YouTube-Treffer und kein verlässliches Datum für die laufende Woche. Lieber keinen
+     Treffer eintragen als ein geratenes Datum.
+   - Direkter Abruf (`WebFetch`) von cicero.de, welt.de, spiegel.de, taz.de scheitert in
+     der Sandbox-Umgebung an der Netzwerk-Sperre – nur die Websuche selbst funktioniert.
+   Jeden neuen, mit Titel **und** Datum **und** URL eindeutig belegten Treffer als
+   **Vorschlag** anhängen:
    ```json
-   {"sender": "WELT TV", "titel": "...", "datum": "YYYY-MM-DD", "url": "...", "status": "vorschlag"}
+   {"sender": "taz", "titel": "...", "datum": "YYYY-MM-DD", "url": "...", "status": "vorschlag"}
    ```
    Wichtig: **immer** `"status": "vorschlag"` setzen, nie `"bestaetigt"` – das entscheidet
    ausschließlich Jan von Hand (siehe unten). Keine Duplikate (Abgleich über `url`,
    unabhängig vom Status). Sender außerhalb der Liste ebenfalls aufnehmen, wenn ein
-   Treffer eindeutig ist – das Feld ist kein hartes Limit, nur eine Startliste.
+   Treffer eindeutig ist – das Feld ist kein hartes Limit, nur eine Startliste. Lässt
+   sich für einen Sender in einer Woche nichts Verlässliches finden, einfach weglassen
+   statt zu raten – das ist der Normalfall, kein Fehler.
 
 3. Prüfe, dass `kubicki-data.json` gültiges JSON ist:
    `python3 -c "import json;json.load(open('kubicki-data.json'))"`.

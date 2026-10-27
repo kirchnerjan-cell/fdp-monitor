@@ -2,7 +2,7 @@
   "erstellt": "2026-10-27T19:00+01:00",
   "quellen": {
     "cicero_suche": "site:cicero.de Wolfgang Kubicki",
-    "sender": ["WELT TV", "ARD", "ZDF", "Phoenix", "Deutschlandfunk"]
+    "sender": ["WELT TV", "ARD", "ZDF", "Phoenix", "Deutschlandfunk", "taz"]
   },
   "beitraege": [
     {
@@ -71,5 +71,13 @@
       "url": "https://www.cicero.de/innenpolitik/chaos-tabaksteuer-bundestag-klingbeil-wolfgang-kubicki"
     }
   ],
-  "interviews": []
+  "interviews": [
+    {
+      "sender": "taz",
+      "titel": "FDP-Chef Wolfgang Kubicki: „Wie Sie sehen, lebe ich“",
+      "datum": "2026-08-03",
+      "url": "https://taz.de/FDP-Chef-Kubicki-ueber-seine-Partei/!6199928/",
+      "status": "vorschlag"
+    }
+  ]
 }

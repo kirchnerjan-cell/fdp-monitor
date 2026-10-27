@@ -14,8 +14,8 @@ Websuche in einer eigenen Claude-Code-Routine, siehe `ROUTINE-PROMPT-KUBICKI.md`
 | `kubicki_stats.py` | Wochen-Report + Validierung für die Routine (Python-Gegenstück zu `kubicki-utils.js`) | nein |
 | `ROUTINE-PROMPT-KUBICKI.md` | Wöchentliche Routine (Websuche statt API-Abruf) | einmal einbauen |
 
-Von `index.html` (FDP-Monitor) führt oben rechts ein Link "Kubicki-Monitor →" zu
-`kubicki.html` und zurück, beide Seiten teilen sich das Repo und `monitor-utils.js`.
+`kubicki.html` teilt sich Design, `monitor-utils.js` und die Kopf-Navigation (Reiter
+"Umfragen · Partei · Kubicki") mit `index.html` und `partei.html`.
 
 ## Datenmodell (`kubicki-data.json`)
 
@@ -24,7 +24,7 @@ Von `index.html` (FDP-Monitor) führt oben rechts ein Link "Kubicki-Monitor →"
   "erstellt": "2026-09-15T12:00+02:00",
   "quellen": {
     "cicero_suche": "site:cicero.de Wolfgang Kubicki",
-    "sender": ["WELT TV", "ARD", "ZDF", "Phoenix", "Deutschlandfunk"]
+    "sender": ["WELT TV", "ARD", "ZDF", "Phoenix", "Deutschlandfunk", "taz"]
   },
   "beitraege": [
     {"titel": "...", "datum": "2026-09-08", "url": "https://www.cicero.de/..."}
@@ -81,3 +81,12 @@ falsch zuordnen kann.
 - Cicero-Beiträge gelten als verlässlich genug für eine direkte Übernahme ohne
   Bestätigungsschritt; sollte sich das als falsch erweisen (z. B. Falschzuordnungen),
   lässt sich derselbe `"status"`-Mechanismus wie bei Interviews ergänzen.
+- Welche Quellen sich per `site:`-Websuche überhaupt finden lassen, schwankt stark
+  (Stand Oktober 2026): cicero.de, taz.de und zdf.de liefern brauchbare Treffer,
+  welt.de, spiegel.de, phoenix.de, deutschlandfunk.de und tagesschau.de dagegen kaum
+  bis gar nichts (vermutlich Paywall bzw. fehlende Indexierung) – direkter Seitenabruf
+  (`WebFetch`) ist für all diese Domains in der Sandbox-Umgebung zusätzlich
+  netzwerkseitig gesperrt. WELT TV bleibt dadurch trotz Namensgebung der ursprünglich
+  schwächste Teil der Erfassung; taz kam deshalb als zusätzliche, tatsächlich
+  funktionierende Quelle dazu. Siehe `ROUTINE-PROMPT-KUBICKI.md` für das Vorgehen je
+  Sender.
