@@ -28,7 +28,6 @@ test.describe("Cicero-Beiträge pro Woche", () => {
     await page.goto("/kubicki.html");
     await expect(page.locator("#beitraege-weeks .wrow")).toHaveCount(12);
     const current = page.locator("#beitraege-weeks .wrow").last();
-    await expect(current).not.toHaveClass(/empty/);
     await expect(current.locator(".brk")).toHaveText("1 Beitrag");
   });
 
@@ -43,11 +42,10 @@ test.describe("Cicero-Beiträge pro Woche", () => {
     await expect(page.locator("#beitraege-weeks .wrow").last().locator(".brk")).toHaveText("2 Beiträge");
   });
 
-  test("a week with no Beitrag renders as empty with no .brk line", async ({ page }) => {
+  test("a week with no Beitrag has no .brk line and no bar segment", async ({ page }) => {
     await mockKubickiData(page, { beitraege: [] });
     await page.goto("/kubicki.html");
     const current = page.locator("#beitraege-weeks .wrow").last();
-    await expect(current).toHaveClass(/empty/);
     await expect(current.locator(".brk")).toHaveCount(0);
     // regression: min-width on .seg must not render a visible sliver for a zero count
     await expect(current.locator(".seg")).toHaveCount(0);
@@ -73,9 +71,9 @@ test.describe("Interviews pro Woche", () => {
   test("shows a legend entry for every configured sender", async ({ page }) => {
     await mockKubickiData(page, { interviews: [] });
     await page.goto("/kubicki.html");
-    await expect(page.locator("#legend .item")).toHaveCount(5);
-    await expect(page.locator("#legend")).toContainText("WELT TV");
-    await expect(page.locator("#legend")).toContainText("Deutschlandfunk");
+    await expect(page.locator("#legende span")).toHaveCount(5);
+    await expect(page.locator("#legende")).toContainText("WELT TV");
+    await expect(page.locator("#legende")).toContainText("Deutschlandfunk");
   });
 });
 

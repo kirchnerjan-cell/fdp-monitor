@@ -3,105 +3,157 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Kubicki-Monitor · Beiträge &amp; Interviews</title>
+<title>FDP-Monitor · Kubicki</title>
 <meta name="description" content="Wolfgang Kubicki: Cicero-Beiträge und Interviews pro Woche.">
+<link rel="icon" href="icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#171A21">
+<meta name="apple-mobile-web-app-title" content="FDP-Monitor">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
+  /* Farben und Schrift wie index.html/partei.html. */
   :root{
-    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5F6672; --line:#DCDFD8;
-    --bund:#1E4FD8; --grey:#8A9099;
-    /* Sender-Kategorien: fixe Reihenfolge (nie zyklisch neu vergeben), CVD-geprüft. */
-    --s-welt:#2a78d6; --s-ard:#eb6834; --s-zdf:#1baf7a; --s-phoenix:#eda100; --s-dlf:#e87ba4; --s-sonst:var(--grey);
-    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5E6470; --line:#E3E5DE;
+    --rail:#EEF0EA; --hair:#F0F1EC;
+    --ueber:#1E4FD8; --huerde:#C8322B;
+    --keine-bg:#EEF0EA; --keine-fg:#4A505B;
     --body:"IBM Plex Sans",system-ui,sans-serif;
     --mono:"IBM Plex Mono",ui-monospace,monospace;
-    --max:1200px; --r:10px;
+    --max:1180px; --r:14px;
+    /* Sender-Kategorien: fixe Reihenfolge (nie zyklisch neu vergeben), CVD-geprüft. */
+    --s-welt:#2a78d6; --s-ard:#eb6834; --s-zdf:#1baf7a; --s-phoenix:#eda100; --s-dlf:#e87ba4; --s-sonst:var(--mute);
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
-  a{color:inherit}
-  .wrap{max-width:var(--max);margin:0 auto;padding:0 18px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+  a{color:var(--ueber)} a:hover{color:#163BA3}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+  h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
 
-  header.top{border-bottom:1px solid var(--line);background:var(--paper)}
-  header.top .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:14px;flex-wrap:wrap}
-  .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;line-height:1}
-  .brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:6px}
-  .stand{font-family:var(--mono);font-size:12px;color:var(--mute)}
-  nav.crumb{font-size:12px;color:var(--mute)}
-  nav.crumb a{text-decoration:underline}
+  /* ---------- Kopf (wie index.html) ---------- */
+  header.top{background:var(--ink);color:#F5F6F2}
+  header.top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:18px}
+  .marke{display:flex;align-items:center;gap:14px}
+  .marke img{width:40px;height:40px;display:block;border-radius:9px}
+  .marke .name{font-weight:700;font-size:20px;letter-spacing:-.01em}
+  .marke .unter{font-size:13px;color:#B9BDC6}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:13px}
+  .badges span{padding:6px 10px;border:1px solid #3A3F4B;border-radius:6px;white-space:nowrap}
+  nav.seiten{background:var(--ink);border-top:1px solid #2A2E38}
+  nav.seiten .wrap{display:flex;gap:4px}
+  nav.seiten a{color:#B9BDC6;text-decoration:none;font-weight:600;font-size:14px;padding:12px 14px;border-bottom:3px solid transparent}
+  nav.seiten a:hover{color:#F5F6F2}
+  nav.seiten a[aria-current="page"]{color:#F5F6F2;border-bottom-color:#EFC41A}
+  nav.seiten a:focus-visible{outline:2px solid #EFC41A;outline-offset:-2px}
 
-  section{padding:28px 0 8px}
-  h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
-  .sub{color:var(--mute);font-size:14px;margin:0 0 18px}
+  main{max-width:var(--max);margin:0 auto;padding:32px 24px 8px;display:flex;flex-direction:column;gap:40px}
+  .kopfzeile{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .kopfzeile .hint{font-size:13px;color:var(--mute)}
+  .karte{background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
 
-  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 14px;margin-bottom:16px}
+  .diagramm{padding:24px 28px}
+  .diagramm .sub{margin:6px 0 14px;font-size:13px;color:var(--mute);max-width:80ch}
 
-  .legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--mute);margin:0 0 14px}
-  .legend .item{display:flex;align-items:center;gap:6px}
-  .legend .dot{width:9px;height:9px;border-radius:2px;flex:none}
+  /* ---------- Legende (wie partei.html) ---------- */
+  .legende{display:flex;flex-wrap:wrap;gap:6px 16px;margin:0 0 16px;font-size:13px;color:var(--mute)}
+  .legende span{display:inline-flex;align-items:center;gap:6px}
+  .legende i{width:12px;height:12px;border-radius:3px;display:inline-block}
 
-  .weeks{display:flex;flex-direction:column}
-  .wrow{padding:9px 0;border-top:1px solid var(--line)}
+  /* ---------- Wochen-Zeilen ---------- */
+  .wochen{display:flex;flex-direction:column}
+  .wrow{padding:10px 0;border-top:1px solid var(--hair)}
   .wrow:first-of-type{border-top:0}
-  .wrow .meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px}
-  .wrow .meta .kw{font-weight:500}
+  .wrow .meta{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+  .wrow .meta .kw{font-weight:600}
   .wrow .meta .range{font-family:var(--mono);font-size:11px;color:var(--mute)}
-  .wrow .track{position:relative;height:16px;background:var(--bg);border-radius:3px;display:flex;gap:2px;overflow:visible}
-  .wrow .seg{height:100%;border-radius:2px;min-width:3px}
-  .wrow .total{font-family:var(--mono);font-size:12px;margin-left:8px;white-space:nowrap}
-  .wrow .brk{font-size:11px;color:var(--mute);margin-top:4px}
-  .wrow.empty .track{background:transparent}
+  .wrow .track{position:relative;height:12px;background:var(--rail);border-radius:6px;display:flex;gap:2px;overflow:visible}
+  .wrow .seg{height:100%;border-radius:3px;min-width:3px}
+  .wrow .brk{font-size:12px;color:var(--mute);margin-top:5px}
 
+  /* ---------- Vorschläge ---------- */
   .vorschlaege{list-style:none;margin:0;padding:0}
-  .vorschlaege li{padding:10px 0;border-top:1px solid var(--line);font-size:13px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .vorschlaege li{padding:11px 0;border-top:1px solid var(--hair);font-size:14px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
   .vorschlaege li:first-of-type{border-top:0}
   .vorschlaege .titel{font-weight:500}
   .vorschlaege .titel a{text-decoration:none;border-bottom:1px solid var(--line)}
   .vorschlaege .info{font-family:var(--mono);font-size:11px;color:var(--mute);white-space:nowrap}
-  .empty-note{font-size:13px;color:var(--mute)}
-  .hint{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.4}
+  .basis{font-size:13px;color:var(--mute)}
 
-  footer{margin-top:40px;border-top:1px solid var(--line);padding:22px 0 40px;font-size:12px;color:var(--mute);line-height:1.6}
-  footer a{color:var(--mute)}
+  .fehler{padding:20px;font-size:14px;color:#8A1C12;background:#FDECEA;border-radius:var(--r)}
+
+  footer{margin-top:40px}
+  footer .wrap{border-top:1px solid var(--line);padding:20px 0 48px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--mute)}
+
+  @media(max-width:599px){
+    .wrap,main{padding-left:16px;padding-right:16px}
+    main{gap:28px;padding-top:20px}
+    h2{font-size:20px}
+    .diagramm{padding:18px 16px}
+  }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">Kubicki-Monitor<small>Beiträge &amp; Interviews</small></div>
-    <div>
-      <div class="stand" id="stand">Stand: wird geladen …</div>
-      <nav class="crumb"><a href="index.html">← FDP-Monitor</a></nav>
+    <div class="marke">
+      <img src="icons/icon.svg" width="40" height="40" alt="">
+      <div>
+        <div class="name">FDP-Monitor</div>
+        <div class="unter">Wolfgang Kubicki: Beiträge &amp; Interviews</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span id="stand">Stand wird geladen …</span>
+      <span>Quelle: Websuche</span>
     </div>
   </div>
 </header>
+<nav class="seiten" aria-label="Seiten">
+  <div class="wrap">
+    <a href="index.html">Umfragen</a>
+    <a href="partei.html">Partei</a>
+    <a href="kubicki.html" aria-current="page">Kubicki</a>
+  </div>
+</nav>
 
-<main class="wrap">
+<main>
 
-  <section id="beitraege">
-    <h2>Cicero-Beiträge pro Woche</h2>
-    <p class="sub">Alle Texte von Wolfgang Kubicki auf cicero.de, gezählt je ISO-Kalenderwoche.</p>
-    <div class="panel"><div class="weeks" id="beitraege-weeks"></div></div>
-  </section>
-
-  <section id="interviews">
-    <h2>Interviews pro Woche</h2>
-    <p class="sub">Bestätigte Interview-Auftritte je Sender und Woche.</p>
-    <div class="panel">
-      <div class="legend" id="legend"></div>
-      <div class="weeks" id="interviews-weeks"></div>
+  <section id="beitraege" aria-labelledby="beitraege-titel">
+    <div class="kopfzeile">
+      <h2 id="beitraege-titel">Cicero-Beiträge pro Woche</h2>
+      <span class="hint">alle Texte auf cicero.de</span>
+    </div>
+    <div class="karte diagramm" style="margin-top:16px">
+      <div class="wochen" id="beitraege-weeks"></div>
     </div>
   </section>
 
-  <section id="vorschlaege">
-    <h2>Unbestätigte Vorschläge</h2>
-    <p class="sub">Von der Routine per Websuche gefundene, aber noch nicht geprüfte Interview-Kandidaten. Nach Prüfung in <code>kubicki-data.json</code> den Status von "vorschlag" auf "bestaetigt" setzen.</p>
-    <div class="panel">
-      <ul class="vorschlaege" id="vorschlaege-liste"></ul>
-      <p class="empty-note" id="vorschlaege-leer" hidden>Keine offenen Vorschläge.</p>
+  <section id="interviews" aria-labelledby="interviews-titel">
+    <div class="kopfzeile">
+      <h2 id="interviews-titel">Interviews pro Woche</h2>
+      <span class="hint">bestätigte Auftritte je Sender</span>
+    </div>
+    <div class="karte diagramm" style="margin-top:16px">
+      <div class="legende" id="legende"></div>
+      <div class="wochen" id="interviews-weeks"></div>
+    </div>
+  </section>
+
+  <section id="vorschlaege" aria-labelledby="vorschlaege-titel">
+    <div class="kopfzeile">
+      <h2 id="vorschlaege-titel">Unbestätigte Vorschläge</h2>
+      <span class="hint">Status in kubicki-data.json prüfen</span>
+    </div>
+    <div class="karte diagramm" style="margin-top:16px">
+      <p class="basis">Von der Routine per Websuche gefundene, aber noch nicht geprüfte Interview-Kandidaten. Nach Prüfung in <code>kubicki-data.json</code> den Status von "vorschlag" auf "bestaetigt" setzen, oder den Eintrag löschen.</p>
+      <ul class="vorschlaege" id="vorschlaege-liste" style="margin-top:8px"></ul>
+      <p class="basis" id="vorschlaege-leer" hidden>Keine offenen Vorschläge.</p>
     </div>
   </section>
 
@@ -109,18 +161,20 @@
 
 <footer>
   <div class="wrap">
-    Quellen: <a href="https://www.cicero.de/themen/wolfgang-kubicki" rel="noopener">cicero.de</a> (Beiträge, automatisch per Websuche erfasst), Sender-Websites/Mediatheken (Interviews, Vorschläge zur manuellen Bestätigung).
+    <span>Quellen: <a href="https://www.cicero.de/themen/wolfgang-kubicki" rel="noopener">cicero.de</a> (Beiträge, automatisch per Websuche erfasst), Sender-Websites/Mediatheken (Interviews, Vorschläge zur manuellen Bestätigung).</span>
+    <span><a href="index.html">Zu den Umfragewerten</a></span>
   </div>
 </footer>
 
-<script src="monitor-utils.js"></script>
-<script src="kubicki-utils.js"></script>
+<!-- ?v= bei jeder Änderung an monitor-utils.js / kubicki-utils.js hochzählen (Browser-Cache). -->
+<script src="monitor-utils.js?v=3"></script>
+<script src="kubicki-utils.js?v=1"></script>
 <script>
 (async function(){
   const DATA_URL = 'kubicki-data.json?t=' + Date.now();
   const WEEKS_SHOWN = 12;
   const {dfmt, esc} = MonitorUtils;
-  const {isoWeekInfo, groupByWeek, lastNWeeks, countBy} = KubickiUtils;
+  const {groupByWeek, lastNWeeks, countBy} = KubickiUtils;
 
   const SENDER_COLOR = {
     'WELT TV': 'var(--s-welt)', 'ARD': 'var(--s-ard)', 'ZDF': 'var(--s-zdf)',
@@ -131,22 +185,18 @@
   let data = {beitraege: [], interviews: [], quellen: {}};
   try{ data = await (await fetch(DATA_URL,{cache:'no-store'})).json(); }
   catch(e){ console.warn('kubicki-data.json nicht ladbar', e); }
-  document.getElementById('stand').textContent = 'Stand: ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
+  document.getElementById('stand').textContent = 'Stand ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
 
   const senderReihenfolge = (data.quellen && data.quellen.sender) || Object.keys(SENDER_COLOR);
-  const legend = document.getElementById('legend');
+  const legend = document.getElementById('legende');
   legend.innerHTML = senderReihenfolge.map(s =>
-    `<span class="item"><span class="dot" style="background:${senderColor(s)}"></span>${esc(s)}</span>`
+    `<span><i style="background:${senderColor(s)}"></i>${esc(s)}</span>`
   ).join('');
 
   const weeks = lastNWeeks(WEEKS_SHOWN);
 
-  function weekLabel(w){
-    return `KW ${String(w.week).padStart(2,'0')}`;
-  }
-  function rangeLabel(w){
-    return dfmt(w.start) + '–' + dfmt(w.end);
-  }
+  function weekLabel(w){ return `KW ${String(w.week).padStart(2,'0')}`; }
+  function rangeLabel(w){ return dfmt(w.start) + '–' + dfmt(w.end); }
 
   // ---------- Beiträge pro Woche ----------
   const beitraegeByWeek = new Map(groupByWeek(data.beitraege || []).map(g => [g.key, g]));
@@ -157,9 +207,9 @@
     const n = g ? g.items.length : 0;
     const pct = n ? Math.max(4, n / beitraegeMax * 100) : 0;
     const titel = g ? g.items.map(r => esc(r.titel)).join(' · ') : '';
-    return `<div class="wrow${n?'':' empty'}" title="${titel}">
+    return `<div class="wrow" title="${titel}">
       <div class="meta"><span class="kw">${weekLabel(w)}</span><span class="range">${rangeLabel(w)}</span></div>
-      <div class="track">${n ? `<div class="seg" style="width:${pct}%;background:var(--bund)"></div>` : ''}</div>
+      <div class="track">${n ? `<div class="seg" style="width:${pct}%;background:var(--ueber)"></div>` : ''}</div>
       ${n ? `<div class="brk">${n} ${n===1?'Beitrag':'Beiträge'}</div>` : ''}
     </div>`;
   }).join('');
@@ -179,7 +229,7 @@
     ).join('');
     const brk = Object.entries(bySender).map(([sender, count]) => `${esc(sender)}: ${count}`).join(' · ');
     const widthPct = n ? Math.max(8, n / interviewsMax * 100) : 0;
-    return `<div class="wrow${n?'':' empty'}">
+    return `<div class="wrow">
       <div class="meta"><span class="kw">${weekLabel(w)}</span><span class="range">${rangeLabel(w)}</span></div>
       <div class="track" style="width:${widthPct}%">${segs}</div>
       ${n ? `<div class="brk">${brk}</div>` : ''}
@@ -192,10 +242,15 @@
   const vEl = document.getElementById('vorschlaege-liste');
   document.getElementById('vorschlaege-leer').hidden = vorschlaege.length > 0;
   vEl.innerHTML = vorschlaege.map(v => `<li>
-    <span class="titel"><span class="dot" style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${senderColor(v.sender)};margin-right:6px"></span>${v.url ? `<a href="${esc(v.url)}" rel="noopener">${esc(v.titel||v.sender)}</a>` : esc(v.titel||v.sender)}</span>
+    <span class="titel"><i style="display:inline-block;width:9px;height:9px;border-radius:3px;background:${senderColor(v.sender)};margin-right:6px"></i>${v.url ? `<a href="${esc(v.url)}" rel="noopener">${esc(v.titel||v.sender)}</a>` : esc(v.titel||v.sender)}</span>
     <span class="info">${esc(v.sender)} · ${dfmt(v.datum)}</span>
   </li>`).join('');
-})();
+})().catch((e) => {
+  console.error('FDP-Monitor (Kubicki):', e);
+  const el = document.getElementById('beitraege-weeks');
+  if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+    + 'Technischer Hinweis: ' + String(e && e.message ? e.message : e).replace(/[&<>]/g, '') + '</div>';
+});
 </script>
 </body>
 </html>
