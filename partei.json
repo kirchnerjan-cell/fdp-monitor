@@ -1,0 +1,382 @@
+{
+  "stand": "2026-10-26",
+  "quellen": "Bundeswahlleiterin (Ergebnisse), bpb und fdp.de (Programme, Vorsitz). Vorsitzende seit 1948: Wikipedia, Wahl Kubicki: ZDFheute. Redaktionell zusammengestellt.",
+  "wahlen": [
+    {
+      "jahr": 1998,
+      "datum": "1998-09-27",
+      "ergebnis": 6.2,
+      "sitze": 43,
+      "rolle": "Opposition",
+      "programm": "Wahlprogramm 1998",
+      "vorsitz": "Wolfgang Gerhardt"
+    },
+    {
+      "jahr": 2002,
+      "datum": "2002-09-22",
+      "ergebnis": 7.4,
+      "sitze": 47,
+      "rolle": "Opposition",
+      "programm": "Bürgerprogramm 2002 (\"Projekt 18\")",
+      "vorsitz": "Guido Westerwelle"
+    },
+    {
+      "jahr": 2005,
+      "datum": "2005-09-18",
+      "ergebnis": 9.8,
+      "sitze": 61,
+      "rolle": "Opposition",
+      "programm": "Arbeit hat Vorfahrt",
+      "vorsitz": "Guido Westerwelle"
+    },
+    {
+      "jahr": 2009,
+      "datum": "2009-09-27",
+      "ergebnis": 14.6,
+      "sitze": 93,
+      "rolle": "Regierung",
+      "programm": "Die Mitte stärken",
+      "vorsitz": "Guido Westerwelle"
+    },
+    {
+      "jahr": 2013,
+      "datum": "2013-09-22",
+      "ergebnis": 4.8,
+      "sitze": 0,
+      "rolle": "Nicht im Bundestag",
+      "programm": "Bürgerprogramm 2013",
+      "vorsitz": "Philipp Rösler"
+    },
+    {
+      "jahr": 2017,
+      "datum": "2017-09-24",
+      "ergebnis": 10.7,
+      "sitze": 80,
+      "rolle": "Opposition",
+      "programm": "Denken wir neu",
+      "vorsitz": "Christian Lindner"
+    },
+    {
+      "jahr": 2021,
+      "datum": "2021-09-26",
+      "ergebnis": 11.5,
+      "sitze": 92,
+      "rolle": "Regierung",
+      "programm": "Nie gab es mehr zu tun",
+      "vorsitz": "Christian Lindner"
+    },
+    {
+      "jahr": 2025,
+      "datum": "2025-02-23",
+      "ergebnis": 4.3,
+      "sitze": 0,
+      "rolle": "Nicht im Bundestag",
+      "programm": "Alles lässt sich ändern",
+      "vorsitz": "Christian Lindner"
+    }
+  ],
+  "vorsitzende": [
+    {"nr": 1, "name": "Theodor Heuss", "beginn": "1948-12-12", "ende": "1949-09-12"},
+    {"nr": 2, "name": "Franz Blücher", "beginn": "1949-09-12", "ende": "1954-03-06"},
+    {"nr": 3, "name": "Thomas Dehler", "beginn": "1954-03-06", "ende": "1957-01-26"},
+    {"nr": 4, "name": "Reinhold Maier", "beginn": "1957-01-26", "ende": "1960-01-28"},
+    {"nr": 5, "name": "Erich Mende", "beginn": "1960-01-28", "ende": "1968-01-30"},
+    {"nr": 6, "name": "Walter Scheel", "beginn": "1968-01-30", "ende": "1974-10-01"},
+    {"nr": 7, "name": "Hans-Dietrich Genscher", "beginn": "1974-10-01", "ende": "1985-02-23"},
+    {"nr": 8, "name": "Martin Bangemann", "beginn": "1985-02-23", "ende": "1988-10-08"},
+    {"nr": 9, "name": "Otto Graf Lambsdorff", "beginn": "1988-10-08", "ende": "1993-06-11"},
+    {"nr": 10, "name": "Klaus Kinkel", "beginn": "1993-06-11", "ende": "1995-06-10"},
+    {"nr": 11, "name": "Wolfgang Gerhardt", "beginn": "1995-06-10", "ende": "2001-05-04"},
+    {"nr": 12, "name": "Guido Westerwelle", "beginn": "2001-05-04", "ende": "2011-05-13"},
+    {"nr": 13, "name": "Philipp Rösler", "beginn": "2011-05-13", "ende": "2013-12-07"},
+    {"nr": 14, "name": "Christian Lindner", "beginn": "2013-12-07", "ende": "2025-05-16"},
+    {"nr": 15, "name": "Christian Dürr", "beginn": "2025-05-16", "ende": "2026-05-30"},
+    {"nr": 16, "name": "Wolfgang Kubicki", "beginn": "2026-05-30", "ende": null}
+  ],
+  "zeitleiste": [
+    {
+      "spur": "Vorsitz",
+      "label": "Gerhardt",
+      "von": "1995-06",
+      "bis": "2001-05",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Vorsitz",
+      "label": "Westerwelle",
+      "von": "2001-05",
+      "bis": "2011-05",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Vorsitz",
+      "label": "Rösler",
+      "von": "2011-05",
+      "bis": "2013-12",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Vorsitz",
+      "label": "Lindner",
+      "von": "2013-12",
+      "bis": "2025-05",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Vorsitz",
+      "label": "Dürr",
+      "von": "2025-05-16",
+      "bis": "2026-05-30",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Vorsitz",
+      "label": "Kubicki",
+      "von": "2026-05-30",
+      "bis": null,
+      "status": "laufend"
+    },
+    {
+      "spur": "Grundsatzprogramm",
+      "label": "Wiesbadener Grundsätze",
+      "von": "1997-05",
+      "bis": "2012-04",
+      "status": "abgeschlossen"
+    },
+    {
+      "spur": "Grundsatzprogramm",
+      "label": "Karlsruher Freiheitsthesen",
+      "von": "2012-04",
+      "bis": null,
+      "status": "laufend"
+    },
+    {
+      "spur": "Neues Programm",
+      "label": "Neues Grundsatzprogramm (Beschluss 2027 geplant)",
+      "von": "2025-06",
+      "bis": null,
+      "status": "in Arbeit"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Regierung (Kohl)",
+      "von": "1982-10",
+      "bis": "1998-10",
+      "status": "Regierung"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Opposition",
+      "von": "1998-10",
+      "bis": "2009-10",
+      "status": "Opposition"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Schwarz-Gelb",
+      "von": "2009-10",
+      "bis": "2013-10",
+      "status": "Regierung"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Nicht im Bundestag",
+      "von": "2013-10",
+      "bis": "2017-10",
+      "status": "Nicht im Bundestag"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Opposition",
+      "von": "2017-10",
+      "bis": "2021-12",
+      "status": "Opposition"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Ampel",
+      "von": "2021-12",
+      "bis": "2024-11",
+      "status": "Regierung"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Opposition",
+      "von": "2024-11",
+      "bis": "2025-03",
+      "status": "Opposition"
+    },
+    {
+      "spur": "Rolle im Bund",
+      "label": "Nicht im Bundestag",
+      "von": "2025-03",
+      "bis": "2026-10",
+      "status": "Nicht im Bundestag"
+    }
+  ],
+  "themen": {
+    "skala": [
+      "kaum vorhanden",
+      "Nebenthema",
+      "wichtig",
+      "Kernthema"
+    ],
+    "jahre": [1998, 2002, 2005, 2009, 2013, 2017, 2021, 2025],
+    "liste": [
+      {
+        "thema": "Steuern & Entlastung",
+        "gewicht": [3, 3, 3, 3, 2, 2, 3, 3],
+        "position": [
+          "Große Steuerreform, niedrigere Sätze",
+          "Stufentarif 15/25/35 %",
+          "Stufentarif, Gewerbesteuer abschaffen",
+          "„Mehr Netto vom Brutto“, Stufentarif",
+          "Soli-Abbau, kleinere Entlastung",
+          "Soli-Abschaffung, Mittelstandsbauch",
+          "Keine Steuererhöhungen, Entlastung",
+          "Soli weg, Unternehmenssteuer runter"
+        ]
+      },
+      {
+        "thema": "Haushalt & Schuldenbremse",
+        "gewicht": [1, 1, 1, 1, 3, 2, 3, 3],
+        "position": [
+          "Konsolidierung als Nebenziel",
+          "Nebenziel",
+          "Nebenziel",
+          "Nebenziel neben Entlastung",
+          "Schuldenabbau als Leitthema",
+          "Schuldenbremse, Haushaltsdisziplin",
+          "Schuldenbremse als Markenkern",
+          "Schuldenbremse unverändert"
+        ]
+      },
+      {
+        "thema": "Arbeitsmarkt & Bürokratie",
+        "gewicht": [2, 3, 3, 2, 1, 2, 2, 3],
+        "position": [
+          "Deregulierung",
+          "Kündigungsschutz lockern",
+          "„Arbeit hat Vorfahrt“, Flächentarif lockern",
+          "Bürgergeld (negative Einkommensteuer)",
+          "Randthema",
+          "Entbürokratisierung, Gründer",
+          "Entfesselung, Bürokratieabbau",
+          "„Wirtschaftswende“, Lieferkettengesetz abschaffen"
+        ]
+      },
+      {
+        "thema": "Rente",
+        "gewicht": [1, 1, 2, 1, 1, 2, 3, 2],
+        "position": [
+          "Private Vorsorge stärken",
+          "Kapitaldeckung ergänzen",
+          "Kapitaldeckung, flexibler Renteneintritt",
+          "Flexibler Renteneintritt",
+          "Randthema",
+          "Flexibler Renteneintritt",
+          "Aktienrente (schwedisches Modell)",
+          "Aktienrente, flexible Lebensarbeitszeit"
+        ]
+      },
+      {
+        "thema": "Bürgerrechte",
+        "gewicht": [1, 1, 2, 3, 2, 2, 2, 1],
+        "position": [
+          "Uneinheitlich (Lauschangriff)",
+          "Randthema",
+          "Datenschutz",
+          "Nein zur Vorratsdatenspeicherung",
+          "Bürgerrechte als Profil",
+          "Nein zur Vorratsdatenspeicherung",
+          "Quick Freeze statt Speicherung",
+          "Weniger Gewicht, mehr innere Sicherheit"
+        ]
+      },
+      {
+        "thema": "Klima & Energie",
+        "gewicht": [0, 0, 1, 1, 1, 1, 3, 2],
+        "position": [
+          "Kaum Thema, Kernkraft ja",
+          "Kaum Thema",
+          "Marktinstrumente",
+          "Laufzeitverlängerung Kernkraft",
+          "Kosten der Energiewende",
+          "Emissionshandel, gegen Subventionen",
+          "Emissionshandel als Leitinstrument, Ziel 2045",
+          "Klimaziel 2050, Kernkraft als Option"
+        ]
+      },
+      {
+        "thema": "Migration",
+        "gewicht": [0, 1, 1, 1, 1, 2, 2, 3],
+        "position": [
+          "Kaum Thema",
+          "Zuwanderungssteuerung",
+          "Randthema",
+          "Fachkräfte",
+          "Randthema",
+          "Einwanderungsgesetz, Punktesystem",
+          "Punktesystem, Fachkräfte",
+          "Restriktiv: Zurückweisungen an der Grenze"
+        ]
+      },
+      {
+        "thema": "Europa",
+        "gewicht": [2, 1, 1, 1, 2, 2, 2, 1],
+        "position": [
+          "Pro Euro-Einführung",
+          "Integrationsfreundlich",
+          "Integrationsfreundlich",
+          "Integrationsfreundlich",
+          "Euro-Rettung umstritten",
+          "Eurokritisch (ESM, Griechenland)",
+          "Pro EU, Stabilitätsregeln",
+          "Gegen EU-Regulierung"
+        ]
+      },
+      {
+        "thema": "Digitalisierung",
+        "gewicht": [0, 0, 0, 1, 1, 3, 3, 2],
+        "position": [
+          "Kein Thema",
+          "Kein Thema",
+          "Kein Thema",
+          "Netzpolitik",
+          "Netzpolitik",
+          "„Digital first“, Kernthema",
+          "Digitalministerium, Staat digital",
+          "Teil der Staatsmodernisierung"
+        ]
+      },
+      {
+        "thema": "Bildung",
+        "gewicht": [1, 2, 1, 2, 2, 3, 3, 2],
+        "position": [
+          "Randthema",
+          "Bildungsoffensive",
+          "Randthema",
+          "Bildungsrepublik",
+          "Chancengerechtigkeit",
+          "„Weltbeste Bildung“",
+          "Bildungs-Milliarde, Föderalismus lockern",
+          "Bildung als Aufstiegsthema"
+        ]
+      },
+      {
+        "thema": "Gesellschaftspolitik",
+        "gewicht": [1, 1, 1, 1, 1, 2, 3, 1],
+        "position": [
+          "Randthema",
+          "Randthema",
+          "Randthema",
+          "Lebenspartnerschaft gleichstellen",
+          "Randthema",
+          "Ehe für alle",
+          "Cannabis, Selbstbestimmung",
+          "Kaum betont"
+        ]
+      }
+    ]
+  }
+}

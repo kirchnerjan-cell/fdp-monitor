@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FDP-Monitor · Partei</title>
+<meta name="description" content="FDP auf Bundesebene 1998–2026: Wahlergebnisse, Vorsitz, Grundsatzprogramme und Themen der Wahlprogramme.">
+<link rel="icon" href="icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#171A21">
+<meta name="apple-mobile-web-app-title" content="FDP-Monitor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* Farben und Schrift wie index.html. Rollen: Regierung = --ueber, Opposition = --opp,
+     nicht im Bundestag = --huerde (dieselbe Farbe wie die 5-%-Hürde). */
+  :root{
+    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5E6470; --line:#E3E5DE;
+    --rail:#EEF0EA; --hair:#F0F1EC;
+    --ueber:#1E4FD8; --huerde:#C8322B; --opp:#9AA0AA;
+    --body:"IBM Plex Sans",system-ui,sans-serif;
+    --mono:"IBM Plex Mono",ui-monospace,monospace;
+    --max:1180px; --r:14px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+  a{color:var(--ueber)} a:hover{color:#163BA3}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+  h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+
+  /* ---------- Kopf (wie index.html) ---------- */
+  header.top{background:var(--ink);color:#F5F6F2}
+  header.top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:18px}
+  .marke{display:flex;align-items:center;gap:14px}
+  .marke img{width:40px;height:40px;display:block;border-radius:9px}
+  .marke .name{font-weight:700;font-size:20px;letter-spacing:-.01em}
+  .marke .unter{font-size:13px;color:#B9BDC6}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:13px}
+  .badges span{padding:6px 10px;border:1px solid #3A3F4B;border-radius:6px;white-space:nowrap}
+  nav.seiten{background:var(--ink);border-top:1px solid #2A2E38}
+  nav.seiten .wrap{display:flex;gap:4px}
+  nav.seiten a{color:#B9BDC6;text-decoration:none;font-weight:600;font-size:14px;padding:12px 14px;border-bottom:3px solid transparent}
+  nav.seiten a:hover{color:#F5F6F2}
+  nav.seiten a[aria-current="page"]{color:#F5F6F2;border-bottom-color:#EFC41A}
+  nav.seiten a:focus-visible{outline:2px solid #EFC41A;outline-offset:-2px}
+
+  main{max-width:var(--max);margin:0 auto;padding:32px 24px 8px;display:flex;flex-direction:column;gap:24px}
+  .karte{background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
+  .einleitung h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.015em}
+  .einleitung p{margin:6px 0 0;color:var(--mute);max-width:72ch}
+
+  .kennzahlen{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+  .kennzahlen .karte{padding:18px 20px}
+  .kennzahlen .lbl{font-size:13px;color:var(--mute)}
+  .kennzahlen .num{font-family:var(--mono);font-weight:600;font-size:40px;letter-spacing:-.03em;line-height:1.1;margin-top:4px}
+  .kennzahlen .num.rot{color:var(--huerde)}
+  .kennzahlen .sub{font-size:13px;color:var(--mute);margin-top:4px}
+
+  .diagramm{padding:24px 28px;min-width:0}
+  .diagramm h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+  .diagramm .sub{margin:6px 0 14px;font-size:13px;color:var(--mute);max-width:80ch}
+  .chart{position:relative;min-height:240px}
+  .chart svg{display:block;width:100%;height:auto;overflow:visible}
+  .chart text{font-family:var(--body);font-size:11px;fill:var(--mute)}
+  .chart text.stark{fill:var(--ink);font-weight:500}
+  .chart text.wert{font-family:var(--mono);font-weight:600;fill:var(--ink)}
+  /* Werte über Linien freistellen, wie .fv-frei auf der Umfrageseite */
+  .chart text.frei{paint-order:stroke fill;stroke:var(--paper);stroke-width:3.5px;stroke-linejoin:round}
+  .legende{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:13px;color:var(--mute)}
+  .legende span{display:inline-flex;align-items:center;gap:6px}
+  .legende i{width:12px;height:12px;border-radius:3px;display:inline-block}
+
+  .tip{position:absolute;pointer-events:none;display:none;z-index:2;max-width:280px;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;font-size:12px;line-height:1.45;box-shadow:0 4px 14px rgba(23,26,33,.16)}
+  .tip .k{font-family:var(--mono);color:var(--mute);margin-bottom:2px}
+  .tip .m{font-weight:600}
+
+  .kopfzeile{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .kopfzeile .hint{font-size:13px;color:var(--mute)}
+  .vorsitz{display:flex;flex-direction:column;gap:16px}
+  details.vtab{margin-top:16px;border-top:1px solid var(--line);padding-top:12px}
+  details.vtab>summary{cursor:pointer;font-size:14px;font-weight:600;min-height:32px;display:flex;align-items:center}
+  details.vtab>summary:focus-visible{outline:2px solid var(--ueber);outline-offset:2px}
+  .tabelle{overflow-x:auto;margin-top:8px}
+  .tabelle table{width:100%;border-collapse:collapse;font-size:14px;min-width:420px}
+  .tabelle th{text-align:left;padding:8px 12px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+  .tabelle td{padding:8px 12px;border-top:1px solid var(--hair)}
+  .tabelle td.zahl,.tabelle th.zahl{text-align:right;font-family:var(--mono)}
+  .tabelle td.datum{font-family:var(--mono);color:var(--mute)}
+  .tabelle tr.laufend td{font-weight:600}
+  .methode{font-size:13px;color:var(--mute);max-width:80ch;margin:0}
+  .fehler{padding:20px;font-size:14px;color:#8A1C12;background:#FDECEA;border-radius:var(--r)}
+
+  footer{margin-top:40px}
+  footer .wrap{border-top:1px solid var(--line);padding:20px 0 48px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--mute)}
+
+  @media(max-width:599px){
+    .wrap,main{padding-left:16px;padding-right:16px}
+    main{padding-top:20px}
+    .einleitung h1{font-size:24px}
+    .diagramm{padding:18px 16px}
+    .kennzahlen{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .kennzahlen .karte{padding:14px}
+    .kennzahlen .num{font-size:26px}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="marke">
+      <img src="icons/icon.svg" width="40" height="40" alt="">
+      <div>
+        <div class="name">FDP-Monitor</div>
+        <div class="unter">Die Partei auf Bundesebene</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span id="stand">Stand wird geladen …</span>
+      <span>Redaktionell gepflegt</span>
+    </div>
+  </div>
+</header>
+<nav class="seiten" aria-label="Seiten">
+  <div class="wrap">
+    <a href="index.html">Umfragen</a>
+    <a href="partei.html" aria-current="page">Partei</a>
+  </div>
+</nav>
+
+<main>
+  <section class="einleitung">
+    <h1>Die FDP im Bund 1998–2026</h1>
+    <p>Wahlergebnisse seit 1998 und wie sich die Schwerpunkte der Wahlprogramme verschoben haben. Darunter Vorsitz, Grundsatzprogramme und alle Bundesvorsitzenden seit der Gründung 1948.</p>
+  </section>
+
+  <section class="kennzahlen" id="kennzahlen" aria-label="Kennzahlen"></section>
+
+  <section class="karte diagramm" aria-labelledby="wahlen-titel">
+    <h2 id="wahlen-titel">Bundestagswahlen</h2>
+    <p class="sub">Zweitstimmen in Prozent. Farbe: Rolle in der folgenden Wahlperiode. Gestrichelt: 5-%-Hürde.</p>
+    <div class="chart" id="chart-wahlen"></div>
+    <div class="legende" id="legende-wahlen"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="themen-titel">
+    <h2 id="themen-titel">Themengewichtung der Wahlprogramme</h2>
+    <p class="sub">Redaktionelle Einordnung je Programm: 0 kaum vorhanden, 1 Nebenthema, 2 wichtig, 3 Kernthema. Für die Position eine Zelle antippen.</p>
+    <div class="chart" id="chart-themen"></div>
+    <div class="legende" id="legende-themen"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="shift-titel">
+    <h2 id="shift-titel">Verschiebung der Schwerpunkte</h2>
+    <p class="sub">Durchschnitt 2021–2025 minus Durchschnitt 1998–2005, auf der Skala 0–3. Balken nach rechts: heute wichtiger.</p>
+    <div class="chart" id="chart-shift"></div>
+    <div class="legende" id="legende-shift"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="zeit-titel">
+    <h2 id="zeit-titel">Vorsitz, Programme, Rolle im Bund</h2>
+    <p class="sub">Senkrechte Linien: Bundestagswahlen. Das neue Grundsatzprogramm soll 2027 beschlossen werden.</p>
+    <div class="chart" id="chart-zeit"></div>
+  </section>
+
+  <section class="vorsitz" id="vorsitz" aria-labelledby="vorsitz-titel">
+    <div class="kopfzeile">
+      <h2 id="vorsitz-titel">Bundesvorsitzende seit 1948</h2>
+      <span class="hint">Amtsende = Wahltag des Nachfolgers</span>
+    </div>
+    <div class="kennzahlen" id="vorsitz-kennzahlen"></div>
+    <div class="karte diagramm">
+      <h2 id="vorsitz-chart-titel">Amtszeiten im Zeitstrahl</h2>
+      <p class="sub">Ein Balken je Vorsitzendem, Amtsdauer in Jahren am Balkenende. Blau: amtierender Vorsitzender, Amtszeit bis heute gerechnet.</p>
+      <div class="chart" id="chart-vorsitz"></div>
+      <details class="vtab">
+        <summary>Alle Vorsitzenden als Tabelle</summary>
+        <div class="tabelle">
+          <table id="tabelle-vorsitz">
+            <thead><tr><th class="zahl">Nr.</th><th>Name</th><th>Beginn</th><th>Ende</th><th class="zahl">Jahre</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <p class="methode" id="methode"></p>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Daten: <code>partei.json</code>, redaktionell gepflegt. Die Themengewichtung ist eine Einschätzung, keine systematische Inhaltsanalyse.</span>
+    <span><a href="index.html">Zu den Umfragewerten</a></span>
+  </div>
+</footer>
+
+<!-- ?v= bei jeder Änderung an monitor-utils.js / partei-utils.js hochzählen (Browser-Cache). -->
+<script src="monitor-utils.js?v=3"></script>
+<script src="partei-utils.js?v=2"></script>
+<script>
+(async function(){
+  const {fmt, dfmt, esc} = window.MonitorUtils || {};
+  const PU = window.ParteiUtils;
+  if(!fmt || !PU) throw new Error('Hilfsdateien nicht geladen – bitte die Seite neu laden.');
+
+  const d = await (await fetch('partei.json?t=' + Date.now(), {cache: 'no-store'})).json();
+  document.getElementById('stand').textContent = 'Stand ' + (d.stand ? dfmt(d.stand) : 'unbekannt');
+  document.getElementById('methode').textContent = 'Quellen: ' + (d.quellen || '–');
+
+  const HUERDE = 5;
+  const ROLLEN = [['Regierung', 'var(--ueber)'], ['Opposition', 'var(--opp)'], ['Nicht im Bundestag', 'var(--huerde)']];
+  const rolleFarbe = (r) => (ROLLEN.find((x) => x[0] === r) || [, 'var(--opp)'])[1];
+  const sign = (v) => (v > 0 ? '+' : v < 0 ? '−' : '±') + fmt(Math.abs(v));
+
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (n, a, eltern) => { const e = document.createElementNS(NS, n);
+    for(const k in a) e.setAttribute(k, a[k]); if(eltern) eltern.appendChild(e); return e; };
+  const txt = (eltern, a, t) => { const e = el('text', a, eltern); e.textContent = t; return e; };
+  // Breite eines Textes im SVG messen, damit Ränder zum längsten Label passen.
+  const textBreite = (svg, liste, cls) => { let b = 0;
+    liste.forEach((t) => { const e = txt(svg, {class: cls || ''}, t); b = Math.max(b, e.getComputedTextLength()); e.remove(); });
+    return Math.ceil(b); };
+  const legende = (id, eintraege) => {
+    const l = document.getElementById(id); l.replaceChildren();
+    eintraege.forEach(([farbe, name, stil]) => { const s = document.createElement('span'), i = document.createElement('i');
+      i.style.background = farbe; if(stil) Object.assign(i.style, stil);
+      s.append(i, name); l.appendChild(s); });
+  };
+
+  // Tooltip je Diagramm: eine Kopfzeile, darunter Zeilen. Antippen zeigt ihn auch am Handy.
+  function tooltip(host){
+    const tip = document.createElement('div'); tip.className = 'tip'; host.appendChild(tip);
+    return {
+      zeige(ev, kopf, zeilen){
+        tip.replaceChildren();
+        const z = (t, c) => { const e = document.createElement('div'); if(c) e.className = c; e.textContent = t; tip.appendChild(e); };
+        z(kopf, 'k'); zeilen.forEach((t, i) => z(t, i === 0 ? 'm' : ''));
+        tip.style.display = 'block';
+        const r = host.getBoundingClientRect(), b = tip.offsetWidth, h = tip.offsetHeight;
+        let x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+        if(x + b > r.width) x = Math.max(0, ev.clientX - r.left - b - 12);
+        if(y + h > r.height) y = Math.max(0, ev.clientY - r.top - h - 12);
+        tip.style.left = x + 'px'; tip.style.top = y + 'px';
+      },
+      weg(){ tip.style.display = 'none'; },
+    };
+  }
+  const hover = (e, tip, f) => { e.addEventListener('pointermove', f); e.addEventListener('pointerdown', f);
+    e.addEventListener('pointerleave', () => tip.weg()); };
+
+  // ---------- Kennzahlen ----------
+  const k = PU.kennzahlen(d.wahlen, HUERDE);
+  if(k){
+    document.getElementById('kennzahlen').innerHTML = [
+      ['Bestes Ergebnis', fmt(k.best.ergebnis) + ' %', 'Bundestagswahl ' + k.best.jahr, ''],
+      ['Letztes Ergebnis', fmt(k.letzte.ergebnis) + ' %', 'Bundestagswahl ' + k.letzte.jahr + ' · ' + k.letzte.rolle,
+        k.letzte.ergebnis < HUERDE ? 'rot' : ''],
+      ['Wahlen unter 5 %', k.unter + ' von ' + k.anzahl, 'Bundestagswahlen ' + d.wahlen[0].jahr + '–' + k.letzte.jahr, ''],
+    ].map(([l, n, s, c]) => `<div class="karte"><div class="lbl">${esc(l)}</div><div class="num ${c}">${esc(n)}</div><div class="sub">${esc(s)}</div></div>`).join('');
+  }
+
+  // ---------- Bundesvorsitzende: Kennzahlen und Tabelle ----------
+  // Laufende Amtszeit zählt bis heute, deshalb einmal beim Laden berechnet.
+  const zeiten = PU.amtszeiten(d.vorsitzende);
+  const vk = PU.amtsKennzahlen(zeiten);
+  const jahre = (v) => fmt(v) + ' J.';
+  if(vk){
+    document.getElementById('vorsitz-kennzahlen').innerHTML = [
+      ['Vorsitzende seit 1948', String(vk.anzahl), vk.amtierend ? 'amtierend: ' + vk.amtierend.name : ''],
+      ['Längste Amtszeit', jahre(vk.laengste.jahre), vk.laengste.name + (vk.laengste.laufend ? ' (amtierend)' : '')],
+      ['Kürzeste Amtszeit', jahre(vk.kuerzeste.jahre), vk.kuerzeste.name],
+      ['Ø Amtszeit', jahre(vk.mittel), 'abgeschlossene Amtszeiten'],
+    ].map(([l, n, s]) => `<div class="karte"><div class="lbl">${esc(l)}</div><div class="num">${esc(n)}</div><div class="sub">${esc(s)}</div></div>`).join('');
+  }
+  document.querySelector('#tabelle-vorsitz tbody').innerHTML = zeiten.map((z) =>
+    `<tr${z.laufend ? ' class="laufend"' : ''}><td class="zahl">${z.nr}</td><td>${esc(z.name)}</td>
+      <td class="datum">${dfmt(z.beginn)}</td><td class="datum">${z.ende ? dfmt(z.ende) : 'amtierend'}</td>
+      <td class="zahl">${fmt(z.jahre)}</td></tr>`).join('');
+
+  // ---------- Bundesvorsitzende: Zeitstrahl ----------
+  function vorsitzChart(){
+    const host = document.getElementById('chart-vorsitz'); host.replaceChildren();
+    const W = Math.max(280, host.clientWidth), schmal = W < 520;
+    // Auf schmalen Schirmen nur Nachnamen, sonst bleibt für die Balken kaum Platz.
+    const name = (z) => schmal ? z.name.split(' ').slice(-1)[0] : z.name;
+    const svg = el('svg', {role: 'img', 'aria-label': 'Amtszeiten der FDP-Bundesvorsitzenden: '
+      + zeiten.map((z) => z.name + ' ' + fmt(z.jahre) + ' Jahre').join(', ')}, host);
+    const ml = textBreite(svg, zeiten.map(name), 'stark') + 10;
+    const mr = textBreite(svg, zeiten.map((z) => jahre(z.jahre)), 'wert') + 8;
+    const mt = 4, mb = 24, zh = 24, H = mt + zeiten.length * zh + mb;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const von = Date.UTC(1948, 0, 1), bis = Math.max(...zeiten.map((z) => z.b));
+    const X = (t) => ml + (t - von) / (bis - von) * (W - ml - mr);
+    const tip = tooltip(host);
+    const schritt = schmal ? 20 : 10;
+    for(let j = 1950; j <= new Date(bis).getUTCFullYear(); j += schritt){
+      el('line', {x1: X(Date.UTC(j, 0, 1)), x2: X(Date.UTC(j, 0, 1)), y1: mt, y2: H - mb, stroke: 'var(--line)'}, svg);
+      txt(svg, {x: X(Date.UTC(j, 0, 1)), y: H - 6, 'text-anchor': 'middle'}, j);
+    }
+    zeiten.forEach((z, i) => {
+      const y = mt + i * zh, m = y + zh / 2;
+      txt(svg, {x: ml - 8, y: m, dy: '0.32em', 'text-anchor': 'end', class: 'stark'}, name(z));
+      const b = el('rect', {x: X(z.a), y: y + 4, width: Math.max(3, X(z.b) - X(z.a)), height: zh - 8, rx: 4,
+        fill: z.laufend ? 'var(--ueber)' : 'var(--ink)'}, svg);
+      hover(b, tip, (ev) => tip.zeige(ev, z.nr + '. ' + z.name, [
+        fmt(z.jahre) + ' Jahre' + (z.laufend ? ' (amtierend)' : ''),
+        dfmt(z.beginn) + ' – ' + (z.ende ? dfmt(z.ende) : 'heute')]));
+      txt(svg, {x: X(z.b) + 5, y: m, dy: '0.32em', class: 'wert'}, jahre(z.jahre));
+    });
+  }
+
+  // ---------- Bundestagswahlen ----------
+  function wahlen(){
+    const host = document.getElementById('chart-wahlen'); host.replaceChildren();
+    const rows = d.wahlen, W = Math.max(280, host.clientWidth), H = 250, schmal = W < 420;
+    const ml = 30, mr = 6, mt = 22, mb = 26;
+    const yMax = Math.max(16, Math.ceil(Math.max(...rows.map((r) => r.ergebnis)) / 2) * 2);
+    const band = (W - ml - mr) / rows.length, bw = Math.min(32, band * 0.62);
+    const X = (i) => ml + i * band + band / 2, Y = (v) => H - mb - v / yMax * (H - mt - mb);
+    const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img',
+      'aria-label': 'FDP-Ergebnisse bei Bundestagswahlen ' + rows.map((r) => r.jahr + ': ' + fmt(r.ergebnis) + ' %').join(', ')}, host);
+    const tip = tooltip(host);
+    for(let v = 0; v <= yMax; v += 4){
+      el('line', {x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: 'var(--line)'}, svg);
+      txt(svg, {x: ml - 6, y: Y(v), dy: '0.32em', 'text-anchor': 'end'}, v);
+    }
+    el('line', {x1: ml, x2: W - mr, y1: Y(HUERDE), y2: Y(HUERDE), stroke: 'var(--huerde)',
+      'stroke-width': 1.5, 'stroke-dasharray': '5 4'}, svg);
+    rows.forEach((r, i) => {
+      const b = el('rect', {x: X(i) - bw / 2, y: Y(r.ergebnis), width: bw, height: Y(0) - Y(r.ergebnis),
+        rx: 4, fill: rolleFarbe(r.rolle)}, svg);
+      hover(b, tip, (ev) => tip.zeige(ev, 'Bundestagswahl ' + dfmt(r.datum), [
+        fmt(r.ergebnis) + ' % · ' + r.sitze + ' Sitze', 'Programm: ' + r.programm,
+        'Vorsitz: ' + r.vorsitz, 'Danach: ' + r.rolle]));
+      txt(svg, {x: X(i), y: Y(r.ergebnis) - 6, 'text-anchor': 'middle', class: 'wert frei'}, fmt(r.ergebnis));
+      txt(svg, {x: X(i), y: H - 8, 'text-anchor': 'middle'}, schmal ? "'" + String(r.jahr).slice(2) : r.jahr);
+    });
+    legende('legende-wahlen', ROLLEN.map(([n, f]) => [f, n]));
+  }
+
+  // ---------- Zeitleiste ----------
+  const SPUREN = ['Rolle im Bund', 'Vorsitz', 'Grundsatzprogramm', 'Neues Programm'];
+  function zeitleiste(){
+    const host = document.getElementById('chart-zeit'); host.replaceChildren();
+    const jetzt = new Date();
+    const von = Date.UTC(1998, 0, 1), bis = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), jetzt.getUTCDate());
+    const balken = PU.zeitBalken(d.zeitleiste, von, bis);
+    const W = Math.max(280, host.clientWidth), ml = 4, mr = 4, mt = 4, mb = 24, lh = 26, kopf = 16;
+    const H = mt + SPUREN.length * (lh + kopf + 4) + mb;
+    const X = (t) => ml + (t - von) / (bis - von) * (W - ml - mr);
+    const spurY = (i) => mt + i * (lh + kopf + 4) + kopf;
+    const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img',
+      'aria-label': 'Zeitleiste: ' + balken.filter((b) => b.spur === 'Vorsitz').map((b) => b.label).join(', ')}, host);
+    const tip = tooltip(host);
+    d.wahlen.forEach((w) => { const x = X(PU.monat(w.datum));
+      el('line', {x1: x, x2: x, y1: mt, y2: H - mb, stroke: 'var(--opp)', 'stroke-dasharray': '3 3'}, svg); });
+    const schritt = W < 480 ? 8 : 4;
+    for(let j = 2000; j <= jetzt.getUTCFullYear(); j += schritt)
+      txt(svg, {x: X(Date.UTC(j, 0, 1)), y: H - 6, 'text-anchor': 'middle'}, j);
+    SPUREN.forEach((s, i) => txt(svg, {x: ml, y: spurY(i) - 5, class: 'stark'}, s));
+    const vorsitz = balken.filter((b) => b.spur === 'Vorsitz');
+    const farbe = (b) => b.spur === 'Rolle im Bund' ? rolleFarbe(b.status)
+      : b.spur === 'Vorsitz' ? (vorsitz.indexOf(b) % 2 ? '#4A505B' : 'var(--ink)') : '#EFC41A';
+    const mfmt = (t) => new Date(t).toLocaleDateString('de-DE', {month: '2-digit', year: 'numeric', timeZone: 'UTC'});
+    balken.forEach((b) => {
+      const i = SPUREN.indexOf(b.spur); if(i < 0) return;
+      const x0 = X(b.x0) + 1, w = Math.max(2, X(b.x1) - X(b.x0) - 2);
+      const r = el('rect', {x: x0, y: spurY(i), width: w, height: lh, rx: 4, fill: farbe(b),
+        'fill-opacity': b.status === 'in Arbeit' ? .45 : 1}, svg);
+      hover(r, tip, (ev) => tip.zeige(ev, b.spur, [b.label, mfmt(b.a) + ' bis ' + (b.laeuft ? 'heute' : mfmt(b.b))]));
+      const hell = b.spur === 'Vorsitz' || b.status === 'Regierung' || b.status === 'Nicht im Bundestag';
+      const t = txt(svg, {x: x0 + 6, y: spurY(i) + lh / 2, dy: '0.32em', 'pointer-events': 'none'}, b.label);
+      t.style.fill = hell ? '#FFFFFF' : 'var(--ink)';
+      if(t.getComputedTextLength() > w - 10) t.remove();
+    });
+  }
+
+  // ---------- Themengewichtung ----------
+  const DECKKRAFT = [0, .2, .55, 1];
+  function themen(){
+    const host = document.getElementById('chart-themen'); host.replaceChildren();
+    const {jahre, liste, skala} = d.themen;
+    const W = Math.max(280, host.clientWidth), schmal = W < 560;
+    const svg = el('svg', {role: 'img', 'aria-label': 'Themengewichtung je Wahlprogramm'}, host);
+    const ml = textBreite(svg, liste.map((t) => t.thema), 'stark') + 10, mt = 22, zh = 32;
+    const H = mt + liste.length * zh;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    const sp = (W - ml) / jahre.length, lu = 2;
+    const tip = tooltip(host);
+    jahre.forEach((j, c) => txt(svg, {x: ml + c * sp + sp / 2, y: mt - 8, 'text-anchor': 'middle'}, schmal ? "'" + String(j).slice(2) : j));
+    liste.forEach((t, z) => {
+      const y = mt + z * zh;
+      txt(svg, {x: ml - 10, y: y + zh / 2, dy: '0.32em', 'text-anchor': 'end', class: 'stark'}, t.thema);
+      t.gewicht.forEach((g, c) => {
+        const x = ml + c * sp;
+        const r = el('rect', {x: x + lu, y: y + lu, width: sp - 2 * lu, height: zh - 2 * lu, rx: 3,
+          fill: 'var(--ueber)', 'fill-opacity': DECKKRAFT[g] ?? 0,
+          stroke: g === 0 ? 'var(--opp)' : 'none', 'stroke-dasharray': '3 2'}, svg);
+        hover(r, tip, (ev) => tip.zeige(ev, t.thema + ' · ' + jahre[c], [g + ' – ' + skala[g], t.position[c]]));
+        const w = txt(svg, {x: x + sp / 2, y: y + zh / 2, dy: '0.32em', 'text-anchor': 'middle',
+          class: 'wert', 'pointer-events': 'none'}, g);
+        w.style.fill = g === 3 ? '#FFFFFF' : g === 0 ? 'var(--mute)' : 'var(--ink)';
+      });
+    });
+    legende('legende-themen', skala.map((s, i) => [
+      i ? `rgba(30,79,216,${DECKKRAFT[i]})` : 'transparent', i + ' ' + s,
+      i ? null : {border: '1px dashed var(--opp)'}]));
+  }
+
+  // ---------- Verschiebung ----------
+  function shift(){
+    const host = document.getElementById('chart-shift'); host.replaceChildren();
+    const rows = PU.verschiebung(d.themen, 2005, 2021);
+    const W = Math.max(280, host.clientWidth), schmal = W < 560;
+    const svg = el('svg', {role: 'img', 'aria-label': 'Veränderung der Themengewichtung: '
+      + rows.map((r) => r.thema + ' ' + sign(r.differenz)).join(', ')}, host);
+    const ml = textBreite(svg, rows.map((r) => r.thema), 'stark') + 12, mr = schmal ? 6 : 96, mt = 26, zh = 32;
+    const H = mt + rows.length * zh + 4;
+    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    // Achse nur so weit, wie die Daten reichen: Sind fast alle Werte positiv, bekäme
+    // eine symmetrische Achse eine leere linke Hälfte und halb so lange Balken.
+    const lo = Math.min(0, ...rows.map((r) => r.differenz)), hi = Math.max(0.5, ...rows.map((r) => r.differenz));
+    const padL = lo < 0 ? 44 : 4, padR = 44;
+    const X = (v) => ml + padL + (v - lo) / (hi - lo) * (W - ml - mr - padL - padR);
+    const tip = tooltip(host);
+    txt(svg, {x: X(0) - 8, y: 12, 'text-anchor': 'end', fill: 'var(--huerde)'}, '← weniger Gewicht');
+    txt(svg, {x: X(0) + 8, y: 12, fill: 'var(--ueber)'}, 'mehr Gewicht →');
+    if(!schmal) txt(svg, {x: W, y: 12, 'text-anchor': 'end'}, 'früher → heute');
+    rows.forEach((r, i) => {
+      const y = mt + i * zh, m = y + zh / 2, f = r.differenz > 0 ? 'var(--ueber)' : r.differenz < 0 ? 'var(--huerde)' : 'var(--opp)';
+      txt(svg, {x: ml - 10, y: m, dy: '0.32em', 'text-anchor': 'end', class: 'stark'}, r.thema);
+      const x0 = Math.min(X(0), X(r.differenz));
+      const b = el('rect', {x: x0, y: y + 6, width: Math.max(2, Math.abs(X(r.differenz) - X(0))), height: zh - 12, rx: 4, fill: f}, svg);
+      hover(b, tip, (ev) => tip.zeige(ev, r.thema, ['Veränderung: ' + sign(r.differenz),
+        '1998–2005: ' + fmt(r.frueh), '2021–2025: ' + fmt(r.heute)]));
+      const w = txt(svg, {x: r.differenz >= 0 ? X(r.differenz) + 6 : X(r.differenz) - 6, y: m, dy: '0.32em',
+        'text-anchor': r.differenz >= 0 ? 'start' : 'end', class: 'wert'}, sign(r.differenz));
+      w.style.fill = f;
+      if(!schmal) txt(svg, {x: W, y: m, dy: '0.32em', 'text-anchor': 'end'}, fmt(r.frueh) + ' → ' + fmt(r.heute));
+    });
+    el('line', {x1: X(0), x2: X(0), y1: mt - 6, y2: H, stroke: 'var(--ink)'}, svg);
+    legende('legende-shift', [['var(--ueber)', 'Heute wichtiger als 1998–2005'], ['var(--huerde)', 'Heute weniger wichtig']]);
+  }
+
+  const alles = () => { wahlen(); zeitleiste(); vorsitzChart(); themen(); shift(); };
+  alles();
+  let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(alles, 150); });
+})().catch((e) => {
+  console.error('FDP-Monitor (Partei):', e);
+  const el = document.getElementById('kennzahlen');
+  if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+    + 'Technischer Hinweis: ' + String(e && e.message ? e.message : e).replace(/[&<>]/g, '') + '</div>';
+});
+</script>
+</body>
+</html>

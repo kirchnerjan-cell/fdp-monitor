@@ -5,202 +5,652 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FDP-Monitor · Umfragewerte</title>
 <meta name="description" content="Aktuelle FDP-Umfragewerte: Bundestagswahl und Landtagswahlen, sortiert nach Wahltermin.">
+<link rel="icon" href="icons/favicon.ico" sizes="32x32">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="apple-touch-icon-precomposed" sizes="180x180" href="icons/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#171A21">
+<meta name="apple-mobile-web-app-title" content="FDP-Monitor">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5F6672; --line:#DCDFD8;
-    --bund:#1E4FD8; --bund-soft:#E3EAFB; --land:#EFC41A; --land-soft:#FBF3CF;
-    --huerde:#D7263D; --ok:#1E8E5A; --warn:#C7871D; --bad:#B8232F; --grey:#8A9099;
-    --display:"Bricolage Grotesque",system-ui,sans-serif;
+    --bg:#F5F6F2; --paper:#FFFFFF; --ink:#171A21; --mute:#5E6470; --line:#E3E5DE;
+    --rail:#EEF0EA; --hair:#F0F1EC;
+    --ueber:#1E4FD8; --unter:#171A21; --huerde:#C8322B;
+    --ok-bg:#E3EAFB; --ok-fg:#163BA3;
+    --bad-bg:#FDECEA; --bad-fg:#8A1C12; --bad-dot:#B42318;
+    --keine-bg:#EEF0EA; --keine-fg:#4A505B;
+    --hinweis-bg:#FBF3CF; --hinweis-fg:#7A4A00;
     --body:"IBM Plex Sans",system-ui,sans-serif;
     --mono:"IBM Plex Mono",ui-monospace,monospace;
-    --max:1200px; --r:10px;
+    --max:1180px; --r:14px;
+    --huerde-pos:62.5%;          /* 5 % auf der Skala 0–8 % */
   }
   *{box-sizing:border-box}
   html{-webkit-text-size-adjust:100%}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
-  a{color:inherit}
-  .wrap{max-width:var(--max);margin:0 auto;padding:0 18px}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45}
+  a{color:var(--ueber)} a:hover{color:#163BA3}
+  .wrap{max-width:var(--max);margin:0 auto;padding:0 24px}
+  h2{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em}
+  .mono{font-family:var(--mono)}
 
-  /* Kopf */
-  header.top{border-bottom:1px solid var(--line);background:var(--paper)}
-  header.top .wrap{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:14px;flex-wrap:wrap}
-  .brand{font-family:var(--display);font-weight:700;font-size:26px;letter-spacing:-.01em;line-height:1}
-  .brand small{display:block;font-family:var(--body);font-weight:500;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute);margin-top:6px}
-  .stand{font-family:var(--mono);font-size:12px;color:var(--mute)}
-  nav.crumb{font-size:12px;color:var(--mute)}
-  nav.crumb a{text-decoration:underline}
+  /* ---------- Kopf ---------- */
+  header.top{background:var(--ink);color:#F5F6F2}
+  header.top .wrap{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:16px;padding-top:18px;padding-bottom:18px}
+  .marke{display:flex;align-items:center;gap:14px}
+  .marke img{width:40px;height:40px;display:block;border-radius:9px}
+  .marke .name{font-weight:700;font-size:20px;letter-spacing:-.01em}
+  .marke .unter{font-size:13px;color:#B9BDC6}
+  .badges{display:flex;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:13px}
+  .badges span{padding:6px 10px;border:1px solid #3A3F4B;border-radius:6px;white-space:nowrap}
+  nav.seiten{background:var(--ink);border-top:1px solid #2A2E38}
+  nav.seiten .wrap{display:flex;gap:4px}
+  nav.seiten a{color:#B9BDC6;text-decoration:none;font-weight:600;font-size:14px;padding:12px 14px;border-bottom:3px solid transparent}
+  nav.seiten a:hover{color:#F5F6F2}
+  nav.seiten a[aria-current="page"]{color:#F5F6F2;border-bottom-color:#EFC41A}
+  nav.seiten a:focus-visible{outline:2px solid #EFC41A;outline-offset:-2px}
 
-  section{padding:28px 0 8px}
-  h2{font-family:var(--display);font-weight:700;font-size:22px;margin:0 0 4px;letter-spacing:-.01em}
-  .sub{color:var(--mute);font-size:14px;margin:0 0 18px}
+  main{max-width:var(--max);margin:0 auto;padding:32px 24px 8px;display:flex;flex-direction:column;gap:40px}
+  .kopfzeile{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+  .kopfzeile .hint{font-size:13px;color:var(--mute)}
+  .karte{background:var(--paper);border:1px solid var(--line);border-radius:var(--r)}
 
-  /* Umfragen */
-  .polls{display:grid;gap:16px;grid-template-columns:1fr}
-  @media(min-width:760px){.polls{grid-template-columns:1fr 1fr}}
-  @media(min-width:1080px){.polls{grid-template-columns:1fr 1fr 1fr}}
-  .panel{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 18px 14px}
-  .panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:2px}
-  .panel-head h3{margin:0;font-size:15px;font-weight:600}
-  .panel-head .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600;padding:3px 8px;border-radius:4px}
-  .tag.bund{background:var(--bund-soft);color:var(--bund)}
-  .tag.land{background:var(--land-soft);color:#7A5F00}
-  .termin{font-size:12px;color:var(--mute);margin-bottom:8px}
-  .avg{display:flex;align-items:baseline;gap:10px;margin:4px 0 14px}
-  .avg .num{font-family:var(--mono);font-size:44px;font-weight:500;line-height:1;letter-spacing:-.02em;white-space:nowrap}
-  .avg .lbl{font-size:13px;color:var(--mute);max-width:220px;line-height:1.3}
-  .avg .num.under{color:var(--huerde)}
-  .avg .delta{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--mute)}
-  .avg .delta.up{color:var(--ok)} .avg .delta.down{color:var(--huerde)}
-  .simple{font-size:12px;color:var(--mute);margin:-8px 0 12px}
+  /* ---------- Balken ---------- */
+  .bar{position:relative;height:10px;background:var(--rail);border-radius:5px}
+  .bar .fill{position:absolute;left:0;top:0;height:100%;width:var(--w);background:var(--c);border-radius:5px}
+  .bar .mark{position:absolute;left:var(--huerde-pos);top:-5px;bottom:-5px;border-left:2px dashed var(--huerde)}
 
-  .bars{position:relative;margin-top:6px;padding-top:16px}
-  .bars .huerde{position:absolute;top:10px;bottom:-4px;left:calc(var(--h) * 1%);border-left:2px dashed var(--huerde);z-index:2}
-  .bars .huerde span{position:absolute;top:-14px;left:-13px;white-space:nowrap;font-family:var(--mono);font-size:11px;color:var(--huerde);background:var(--paper);padding:0 3px}
-  .row{display:grid;grid-template-columns:1fr;gap:2px;padding:7px 0;border-top:1px solid var(--line)}
-  .row:first-of-type{border-top:0}
-  .row .meta{display:flex;justify-content:space-between;font-size:13px}
-  .row .meta .inst{font-weight:500}
-  .row .meta .date{font-family:var(--mono);font-size:12px;color:var(--mute)}
-  .track{position:relative;height:18px;background:var(--bg);border-radius:3px;overflow:visible}
-  .fill{height:100%;border-radius:3px;min-width:2px;transition:width .5s ease}
-  .fill.bund{background:var(--bund)} .fill.land{background:var(--land)}
-  .fill.ergebnis{background:repeating-linear-gradient(45deg,var(--ink),var(--ink) 4px,transparent 4px,transparent 8px),var(--ink)}
-  .row.ergebnis .meta .inst{font-weight:700}
-  .val{position:absolute;top:-1px;left:calc(var(--w) * 1% + 8px);font-family:var(--mono);font-size:13px;font-weight:500;line-height:20px}
-  .note{font-size:12px;color:var(--mute);margin-top:12px;line-height:1.4}
-  .note a{color:var(--mute)}
-  .panel.err .note{color:var(--bad)}
-  @media(prefers-reduced-motion:reduce){.fill{transition:none}}
+  /* ---------- Bund-Hero ---------- */
+  .hero{padding:28px;display:flex;flex-wrap:wrap;gap:40px}
+  .hero .zahlen{flex:1 1 340px;display:flex;flex-direction:column;gap:20px;min-width:0}
+  .hero .liste{flex:1.3 1 420px;min-width:0;display:flex;flex-direction:column;gap:4px}
+  .ueberschrift{margin:0;font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+  .leitzahl{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+  .leitzahl .num{font-family:var(--mono);font-weight:600;font-size:96px;line-height:1;letter-spacing:-.04em}
+  .leitzahl .num .pz{font-size:48px}
+  .leitzahl .delta{display:flex;flex-direction:column;gap:6px}
+  .leitzahl .delta .wert{font-family:var(--mono);font-size:18px;font-weight:600}
+  .leitzahl .delta .wert.ab{color:var(--bad-dot)} .leitzahl .delta .wert.auf{color:var(--ok-fg)}
+  .leitzahl .delta .lbl{font-size:13px;color:var(--mute)}
+  .chip{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-weight:600;font-size:14px}
+  .chip .dot{width:8px;height:8px;border-radius:50%}
+  .chip.unter{background:var(--bad-bg);color:var(--bad-fg)} .chip.unter .dot{background:var(--bad-dot)}
+  .chip.ueber,.chip.auf{background:var(--ok-bg);color:var(--ok-fg)} .chip.ueber .dot,.chip.auf .dot{background:var(--ueber)}
+  .chip.keine{background:var(--keine-bg);color:var(--keine-fg)} .chip.keine .dot{background:var(--keine-fg)}
 
-  footer{margin-top:40px;border-top:1px solid var(--line);padding:22px 0 40px;font-size:12px;color:var(--mute);line-height:1.6}
-  footer a{color:var(--mute)}
+  .skala{display:flex;flex-direction:column;gap:8px}
+  .skala .feld{position:relative;height:60px}
+  .skala .bar{position:absolute;left:0;right:0;top:26px;height:12px}
+  .skala .bar .fill{border-radius:6px}
+  .skala .bar .mark{top:-4px;bottom:-14px}
+  /* marklbl und punkt liegen im .bar, ihre top-Werte zählen also ab dessen Oberkante:
+     die Marke 20 px darüber, die Punkte 22 px darunter – so bleibt beides im .feld
+     und läuft weder in den Balken noch in die Achsenbeschriftung. */
+  .skala .marklbl{position:absolute;left:var(--huerde-pos);top:-24px;transform:translateX(-50%);font-family:var(--mono);font-size:12px;font-weight:600;color:#A1261F}
+  .skala .punkt{position:absolute;top:22px;width:8px;height:8px;border-radius:50%;background:var(--ueber);transform:translateX(-50%);box-shadow:0 0 0 2px var(--paper)}
+  .skala .achse{display:flex;justify-content:space-between;font-family:var(--mono);font-size:12px;color:var(--mute)}
+  .skala .legende{font-size:13px;color:var(--mute)}
+
+  .kennzahlen{margin:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .kennzahlen>div{background:var(--bg);border-radius:10px;padding:12px 14px}
+  .kennzahlen dt{font-size:12px;color:var(--mute)}
+  .kennzahlen dd{margin:2px 0 0;font-family:var(--mono);font-size:22px;font-weight:600}
+
+  .liste .lkopf{display:flex;justify-content:space-between;align-items:baseline;padding-bottom:8px;border-bottom:1px solid var(--line)}
+  .liste .lkopf h3{margin:0;font-size:15px;font-weight:600}
+  .liste .lkopf .skl{font-size:12px;color:var(--mute)}
+  .inst-zeile{display:grid;grid-template-columns:150px 1fr 60px;align-items:center;gap:14px;padding:7px 0;border-bottom:1px solid var(--hair)}
+  .inst-zeile .nam{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .inst-zeile .dat{font-family:var(--mono);font-size:12px;color:var(--mute)}
+  .inst-zeile .val{font-family:var(--mono);font-weight:600;text-align:right}
+  details.insts>summary{display:none}
+
+  /* ---------- Zeitverlauf ---------- */
+  /* Farben der Seite, nicht eigene: Punkte wie im Hero (--ueber), Hürde wie überall
+     (--huerde), die Mittelwertlinie in --ink, damit sie sich von den Punkten abhebt. */
+  .verlauf{padding:24px 28px}
+  .verlauf h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+  .verlauf .sub{margin:6px 0 14px;font-size:13px;color:var(--mute)}
+  .fv-chart{position:relative;min-height:260px;
+    --fv-linie:var(--ink); --fv-punkt:var(--ueber); --fv-huerde:var(--huerde);
+    --fv-gitter:var(--line); --fv-mute:var(--mute)}
+  .fv-chart svg{display:block;width:100%;height:auto;overflow:visible}
+  /* Endwert und Hürdenbeschriftung liegen zwangsläufig über Punkten – ein Rand in
+     Papierfarbe stellt sie frei, statt sie dort hineinzuzeichnen. */
+  .fv-chart .fv-frei{paint-order:stroke fill;stroke:var(--paper);stroke-width:3.5px;stroke-linejoin:round}
+  .fv-leer{min-height:0;font-size:14px;color:var(--mute);padding:8px 0}
+  .fv-quelle{margin:12px 0 0;font-size:12px;color:var(--mute)}
+  .fv-quelle a{color:var(--mute)}
+  .fv-tip{position:absolute;pointer-events:none;display:none;z-index:2;
+    background:var(--paper);border:1px solid var(--line);border-radius:8px;
+    padding:8px 10px;font-size:12px;line-height:1.45;white-space:nowrap;
+    box-shadow:0 4px 14px rgba(23,26,33,.16)}
+  .fv-tip .fv-d{font-family:var(--mono);color:var(--mute);margin-bottom:2px}
+  .fv-tip .fv-m{font-weight:600}
+
+  /* ---------- Anstehende Wahlen ---------- */
+  .kacheln{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+  .kachel{padding:20px;display:flex;flex-direction:column;gap:14px}
+  .kachel .kkopf{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .kachel h3{margin:0;font-size:17px;font-weight:600}
+  .kachel .wann{font-size:13px;color:var(--mute)}
+  .kachel .tage{font-family:var(--mono);font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;background:var(--ink);color:#EFC41A;white-space:nowrap}
+  .kachel .wert{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .kachel .wert .num{font-family:var(--mono);font-size:40px;font-weight:600;letter-spacing:-.03em;line-height:1}
+  .kachel .pill{font-size:12px;font-weight:600;padding:3px 8px;border-radius:999px}
+  .pill.unter{background:var(--bad-bg);color:var(--bad-fg)}
+  .pill.ueber,.pill.auf{background:var(--ok-bg);color:var(--ok-fg)}
+  .pill.keine{background:var(--keine-bg);color:var(--keine-fg)}
+  .kachel .basis{font-size:13px;color:var(--mute)}
+  .notiz{font-size:12px;line-height:1.4;color:var(--keine-fg);background:var(--keine-bg);border-radius:6px;padding:6px 8px}
+  .hinweis{font-size:12px;color:var(--hinweis-fg);background:var(--hinweis-bg);border-radius:6px;padding:6px 8px}
+  .kachel.leer{gap:10px}
+  .kachel.leer .wert .num{font-size:28px;color:var(--mute)}
+
+  /* ---------- Gelaufene Wahlen ---------- */
+  .tabelle{overflow-x:auto}
+  table{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+  thead tr{text-align:left;color:var(--mute);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  th{padding:14px 20px;font-weight:600}
+  td{padding:14px 20px}
+  tbody tr{border-top:1px solid var(--hair)}
+  td.wahl{font-weight:500}
+  td.mono{font-family:var(--mono);color:var(--mute)}
+  td.erg{font-family:var(--mono);font-weight:600;text-align:right}
+  td.trend{font-family:var(--mono);color:var(--mute);text-align:right}
+  th.abstand,td.abstand{width:34%}
+
+  footer{margin-top:40px}
+  footer .wrap{border-top:1px solid var(--line);padding:20px 0 48px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:13px;color:var(--mute)}
+  footer .erklaer{max-width:720px}
+
+  .fehler{padding:20px;font-size:14px;color:var(--bad-fg);background:var(--bad-bg);border-radius:var(--r)}
+
+  /* ---------- Mobil ---------- */
+  @media(max-width:599px){
+    .wrap,main{padding-left:16px;padding-right:16px}
+    main{gap:28px;padding-top:20px}
+    .hero{padding:20px;gap:20px;flex-direction:column}
+    .hero .zahlen,.hero .liste{flex:1 1 auto}
+    .leitzahl .num{font-size:72px}
+    .leitzahl .num .pz{font-size:36px}
+    h2{font-size:20px}
+    details.insts>summary{display:flex;align-items:center;justify-content:center;min-height:44px;padding:0 14px;
+      border:1px solid var(--line);background:var(--bg);border-radius:10px;font-size:14px;font-weight:600;cursor:pointer}
+    details.insts>summary::-webkit-details-marker{display:none}
+    .inst-zeile{grid-template-columns:1fr 52px;gap:4px 12px}
+    .inst-zeile .bar{grid-column:1 / -1}
+    /* Wahlen als schmale Zeilen statt Kacheln */
+    .kacheln{grid-template-columns:1fr;gap:10px}
+    .kachel{padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center}
+    .kachel .kkopf{display:contents}
+    .kachel .tage{justify-self:end;align-self:start}
+    .kachel .wert{grid-column:1 / -1}
+    .kachel .wert .num{font-size:26px}
+    .kachel .bar,.kachel .basis,.kachel .hinweis,.kachel .notiz{grid-column:1 / -1}
+    .verlauf{padding:18px 16px}
+    .fv-chart{min-height:220px}
+    .kachel .basis{display:none}
+    th,td{padding:12px 14px}
+  }
 </style>
 </head>
 <body>
 
 <header class="top">
   <div class="wrap">
-    <div class="brand">FDP-Monitor<small>Umfragewerte</small></div>
-    <div>
-      <div class="stand" id="stand">Stand: wird geladen …</div>
-      <nav class="crumb"><a href="kubicki.html">Kubicki-Monitor →</a></nav>
+    <div class="marke">
+      <img src="icons/icon.svg" width="40" height="40" alt="">
+      <div>
+        <div class="name">FDP-Monitor</div>
+        <div class="unter">Umfragewerte Bund und Länder</div>
+      </div>
+    </div>
+    <div class="badges">
+      <span id="stand">Stand wird geladen …</span>
+      <span>Quelle: dawum.de</span>
     </div>
   </div>
 </header>
+<nav class="seiten" aria-label="Seiten">
+  <div class="wrap">
+    <a href="index.html" aria-current="page">Umfragen</a>
+    <a href="partei.html">Partei</a>
+    <a href="kubicki.html">Kubicki</a>
+  </div>
+</nav>
 
-<main class="wrap">
+<main>
+  <section id="bund-hero" aria-labelledby="bund-titel"></section>
 
-  <section id="umfragen">
-    <h2>Umfragewerte</h2>
-    <p class="sub">Leitzahl: gewichteter dawum-Wahltrend. Balken: neueste Umfrage je Institut, gestrichelt schraffiert: amtliches Wahlergebnis. Rote Linie: 5-%-Hürde. Bundesebene zuerst, danach die anstehenden Landtagswahlen (nächster Termin zuerst), am Ende die bereits gelaufenen.</p>
-    <div class="polls" id="polls"></div>
+  <section id="bund-verlauf" class="karte verlauf" aria-labelledby="verlauf-titel" hidden>
+    <h2 id="verlauf-titel">FDP im Zeitverlauf · Bund</h2>
+    <p class="sub" id="verlauf-sub">Punkte: Einzelumfragen · Linie: 14-Tage-Mittel · gestrichelt: 5-%-Hürde</p>
+    <div id="fdp-verlauf-chart" class="fv-chart"></div>
+    <p class="fv-quelle">Quelle: <a href="https://dawum.de/Bundestag/" rel="noopener">dawum.de</a> · 14-Tage-Mittel ungewichtet</p>
   </section>
 
+  <section id="anstehend" aria-labelledby="anstehend-titel">
+    <div class="kopfzeile">
+      <h2 id="anstehend-titel">Anstehende Wahlen</h2>
+      <span class="hint">nächster Termin zuerst</span>
+    </div>
+    <div class="kacheln" id="anstehend-grid" style="margin-top:16px"></div>
+  </section>
+
+  <section id="gelaufen" aria-labelledby="gelaufen-titel" hidden>
+    <div class="kopfzeile"><h2 id="gelaufen-titel">Gelaufene Wahlen</h2></div>
+    <div class="karte tabelle" id="gelaufen-tabelle" style="margin-top:16px"></div>
+  </section>
 </main>
 
 <footer>
   <div class="wrap">
-    Umfragedaten: <a href="https://dawum.de" rel="noopener">dawum.de</a> (<a href="https://opendatacommons.org/licenses/odbl/1.0/" rel="noopener">Open Database License, ODbL</a>).
+    <span class="erklaer">
+      Leitzahl: bei gelaufenen Wahlen das amtliche Ergebnis, sonst der gewichtete dawum-Wahltrend –
+      fehlt er oder ist er veraltet, der Ø der neuesten Umfrage je Institut. Alle Balken auf der Skala
+      0–8 %, die gestrichelte Linie markiert die 5-%-Hürde. Bundesebene zuerst, danach die anstehenden
+      Wahlen (nächster Termin zuerst), am Ende die bereits gelaufenen.
+    </span>
+    <span>
+      Daten: <a href="https://dawum.de" rel="noopener">dawum.de</a> ·
+      Lizenz <a href="https://opendatacommons.org/licenses/odbl/1.0/" rel="noopener">ODbL 1.0</a>
+    </span>
   </div>
 </footer>
 
-<script src="monitor-utils.js"></script>
+<!-- ?v= bei jeder Änderung an monitor-utils.js hochzählen: sonst kann ein Browser
+     die alte Fassung aus dem Cache zur neuen Seite laden (siehe Notbremse unten). -->
+<script src="monitor-utils.js?v=3"></script>
 <script>
 (async function(){
+  // Die Seite besteht aus einer HTML- und einer JS-Datei, die zusammengehören. Liefert ein
+  // Cache die alte monitor-utils.js zur neuen index.html, fehlen Funktionen und es käme
+  // eine komplett leere Seite heraus. Deshalb: prüfen, einmal frisch nachladen, und wenn
+  // auch das nicht hilft, den Fehler zeigen statt nichts.
+  const BENOETIGT = ['fmt','dfmt','esc','extractFdp','filterByAge','filterTrend','rowsNachWahl',
+                     'gruppiereEbenen','tageBis','huerdeText','wahlAbgeschlossen',
+                     'verlaufPunkte','gleitendesMittel','mergeVerlauf'];
+  const fehlende = () => BENOETIGT.filter((n) => typeof (window.MonitorUtils || {})[n] !== 'function');
+
+  function zeigeFehler(text){
+    const el = document.getElementById('bund-hero');
+    if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+      + text + '</div>';
+  }
+
+  if(fehlende().length){
+    console.warn('monitor-utils.js unvollständig (vermutlich aus dem Cache), lade neu:', fehlende());
+    await new Promise((fertig) => {
+      const s = document.createElement('script');
+      s.src = 'monitor-utils.js?frisch=' + Date.now();
+      s.onload = s.onerror = fertig;
+      document.head.appendChild(s);
+    });
+  }
+  if(fehlende().length){
+    zeigeFehler('Eine veraltete Fassung von <code>monitor-utils.js</code> steckt im Cache. '
+      + 'Bitte die Seite neu laden (am Handy: Browser-Cache leeren).');
+    return;
+  }
+
   const DATA_URL = 'data.json?t=' + Date.now();
   const DAWUM_URL = 'https://api.dawum.de/newest_surveys.json';
-  const MAX_PCT = 10;                 // Skala der Balken (0–10 %)
-  const {fmt, dfmt, esc, extractFdp, sortEbenen, filterByAge} = MonitorUtils;
+  const MAX_PCT = 8;                       // Skala aller Balken, einheitlich
+  const HUERDE = 5;
+  const {fmt, dfmt, esc, extractFdp, filterByAge, filterTrend, rowsNachWahl,
+         gruppiereEbenen, tageBis, huerdeText, wahlAbgeschlossen,
+         verlaufPunkte, gleitendesMittel, mergeVerlauf} = MonitorUtils;
 
-  // ---------- data.json ----------
-  let data = {ebenen:[]};
-  try{ data = await (await fetch(DATA_URL,{cache:'no-store'})).json(); }
-  catch(e){ console.warn('data.json nicht ladbar',e); }
-  document.getElementById('stand').textContent = 'Stand: ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
+  const pz = (v) => fmt(v) + ' %';
+  const breite = (v) => (v == null ? 0 : Math.min(Math.max(v, 0), MAX_PCT) / MAX_PCT * 100).toFixed(2) + '%';
+  const farbe = (v) => (v != null && v >= HUERDE ? 'var(--ueber)' : 'var(--unter)');
+  const balken = (v, extra) => `<div class="bar">
+      <div class="fill" style="--w:${breite(v)};--c:${farbe(v)}"></div>
+      <div class="mark"></div>${extra || ''}</div>`;
+  // "Landtagswahl Saarland" -> Land "Saarland", Typ "Landtagswahl"
+  const teileName = (name) => {
+    const t = String(name || '').split(' ');
+    return t.length > 1 ? {typ: t[0], land: t.slice(1).join(' ')} : {typ: '', land: name || ''};
+  };
 
-  const ebenen = sortEbenen(data.ebenen || []);
-  const pollsEl = document.getElementById('polls');
-
-  function panelSkeleton(ebene){
-    const p = document.createElement('div');
-    p.className = 'panel';
-    p.id = 'panel-' + ebene.id;
-    p.innerHTML = `
-      <div class="panel-head"><h3>${esc(ebene.name)}</h3><span class="tag ${esc(ebene.css||'land')}">${esc(ebene.kurz||'')}</span></div>
-      ${ebene.wahltermin ? `<div class="termin">Wahltermin: ${dfmt(ebene.wahltermin)}</div>` : ''}
-      <div class="avg"><div class="num">–</div><div class="lbl">wird geladen …</div></div>
-      <div class="simple"></div>
-      <div class="bars" style="--h:50"><div class="huerde"><span>5 %</span></div></div>
-      <div class="note">wird geladen …</div>`;
-    return p;
-  }
-
-  function renderPolls(panel, rows, cls, source, trend, wahlergebnis){
-    const bars = panel.querySelector('.bars');
-    const note = panel.querySelector('.note');
-    const num = panel.querySelector('.avg .num');
-    const lbl = panel.querySelector('.avg .lbl');
-    const simple = panel.querySelector('.simple');
-    bars.querySelectorAll('.row').forEach(r=>r.remove());
-    const avg = rows && rows.length ? rows.reduce((s,r)=>s+r.fdp,0)/rows.length : null;
-    if(trend && trend.wert!=null){
-      // dawum-Wahltrend (gewichtet) als Leitzahl; kommt aus data.json (Routine)
-      const d = trend.delta;
-      const dHtml = d!=null ? ` <span class="delta ${d>0?'up':d<0?'down':''}">${d>0?'+':''}${fmt(d).replace('-','−')}</span>` : '';
-      num.innerHTML = fmt(trend.wert) + ' %' + dHtml;
-      num.classList.toggle('under', trend.wert < 5);
-      lbl.textContent = 'dawum-Wahltrend' + (trend.stand ? ', Stand ' + dfmt(trend.stand) : '') + (d!=null ? ' · Δ zur Vorwoche' : '');
-      simple.textContent = avg!=null ? 'Ø der neuesten Umfragen je Institut: ' + fmt(avg) + ' %' : '';
-    } else {
-      num.textContent = avg!=null ? fmt(avg) + ' %' : '–';
-      num.classList.toggle('under', avg!=null && avg < 5);
-      lbl.textContent = 'Ø der neuesten Umfragen je Institut (Wahltrend noch nicht hinterlegt)';
-      simple.textContent = '';
-    }
-    const hasErgebnis = wahlergebnis && wahlergebnis.fdp!=null;
-    if(!rows?.length && !hasErgebnis){ panel.classList.add('err'); note.textContent='Keine Einzelumfragen gefunden.'; return; }
-    bars.style.setProperty('--h', 5/MAX_PCT*100);
-    if(hasErgebnis){
-      const w = Math.min(wahlergebnis.fdp, MAX_PCT)/MAX_PCT*100;
-      const el = document.createElement('div');
-      el.className='row ergebnis';
-      el.innerHTML = `<div class="meta"><span class="inst">Amtliches Ergebnis</span><span class="date">${dfmt(wahlergebnis.datum)}</span></div>
-        <div class="track" style="--w:${w}"><div class="fill ergebnis" style="width:${w}%"></div><span class="val">${fmt(wahlergebnis.fdp)} %</span></div>`;
-      bars.appendChild(el);
-    }
-    for(const r of (rows||[]).slice().sort((a,b)=> (b.datum||'').localeCompare(a.datum||''))){
-      const w = Math.min(r.fdp, MAX_PCT)/MAX_PCT*100;
-      const el = document.createElement('div');
-      el.className='row';
-      el.innerHTML = `<div class="meta"><span class="inst">${esc(r.institut)}</span><span class="date">${dfmt(r.datum)}</span></div>
-        <div class="track" style="--w:${w}"><div class="fill ${cls}" style="width:${w}%"></div><span class="val">${fmt(r.fdp)} %</span></div>`;
-      bars.appendChild(el);
-    }
-    panel.classList.remove('err');
-    note.innerHTML = source;
-  }
+  // ---------- Daten laden (unveränderte Logik) ----------
+  let data = {ebenen: []};
+  try { data = await (await fetch(DATA_URL, {cache: 'no-store'})).json(); }
+  catch(e){ console.warn('data.json nicht ladbar', e); }
+  document.getElementById('stand').textContent =
+    'Stand ' + (data.erstellt ? dfmt(data.erstellt) : 'unbekannt');
 
   let db = null;
-  try{ db = await (await fetch(DAWUM_URL)).json(); }
-  catch(e){ console.warn('dawum live nicht erreichbar, nutze data.json',e); }
+  if((data.ebenen || []).some((e) => !wahlAbgeschlossen(e))){
+    try { db = await (await fetch(DAWUM_URL)).json(); }
+    catch(e){ console.warn('dawum live nicht erreichbar, nutze data.json', e); }
+  } // sind alle Wahlen gelaufen, gibt es nichts abzufragen
 
-  for(const ebene of ebenen){
-    const panel = panelSkeleton(ebene);
-    pollsEl.appendChild(panel);
-    const fallback = ebene.umfragen || {};
-    const fbNote = fallback.stand ? `Daten aus der letzten Aktualisierung (${dfmt(fallback.stand)}), Quelle <a href="https://dawum.de" rel="noopener">dawum.de</a>.` : 'Live-Abruf nicht möglich und keine gespeicherten Daten vorhanden.';
+  // Einzelumfragen je Ebene: live von dawum, sonst der gespeicherte Fallback.
+  function umfragen(ebene){
+    // Ist die Wahl gelaufen und amtlich, ersetzt das Ergebnis die Umfragen: dann hier
+    // nichts mehr abfragen oder auswerten.
+    if(wahlAbgeschlossen(ebene))
+      return {rows: [], live: false, stand: (ebene.wahlergebnis || {}).datum, fertig: true};
     if(db){
-      const rows = filterByAge(extractFdp(db, t => new RegExp(ebene.parlament_regex, 'i').test(t)), ebene.umfrage_max_alter_tage);
-      const live = `Live von <a href="https://dawum.de/${esc(ebene.dawum_slug||'')}/" rel="noopener">dawum.de</a>, Datenbank-Stand ${dfmt(db.Database&&db.Database.Last_Update)}.`;
-      renderPolls(panel, rows, ebene.css, live, ebene.wahltrend, ebene.wahlergebnis);
-    } else {
-      const rows = filterByAge(fallback.rows || [], ebene.umfrage_max_alter_tage);
-      renderPolls(panel, rows, ebene.css, fbNote, ebene.wahltrend, ebene.wahlergebnis);
+      const rows = filterByAge(
+        extractFdp(db, (t) => new RegExp(ebene.parlament_regex, 'i').test(t)),
+        ebene.umfrage_max_alter_tage);
+      return {rows, live: true, stand: db.Database && db.Database.Last_Update};
     }
+    const fb = ebene.umfragen || {};
+    return {rows: filterByAge(fb.rows || [], ebene.umfrage_max_alter_tage), live: false, stand: fb.stand};
   }
-})();
+
+  // Leitzahl-Rangfolge: amtliches Ergebnis -> aktueller Wahltrend -> Ø der Umfragen.
+  function leitzahl(ebene, rows){
+    const erg = ebene.wahlergebnis && ebene.wahlergebnis.fdp != null ? ebene.wahlergebnis : null;
+    const mittel = erg ? rowsNachWahl(rows, erg.datum) : rows;
+    const avg = mittel.length ? mittel.reduce((s, r) => s + r.fdp, 0) / mittel.length : null;
+    const trend = filterTrend(ebene.wahltrend, ebene.wahltrend_max_alter_tage);
+    if(erg)   return {art: 'ergebnis', wert: erg.fdp, erg, avg, anzahl: mittel.length};
+    if(trend) return {art: 'trend', wert: trend.wert, trend, avg, anzahl: mittel.length};
+    return {art: 'avg', wert: avg, avg, anzahl: mittel.length};
+  }
+
+  // Hinweis, wenn der Wahltrend fehlt oder eingefroren ist.
+  function hinweis(ebene){
+    const t = ebene.wahltrend;
+    if(t && t.wert != null && !filterTrend(t, ebene.wahltrend_max_alter_tage))
+      return 'Wahltrend vom ' + dfmt(t.stand) + ' – Aktualisierung prüfen';
+    if(!t || t.wert == null) return 'Kein Wahltrend hinterlegt';
+    return '';
+  }
+
+  const gruppen = gruppiereEbenen(data.ebenen || []);
+
+  // ---------- Bund-Hero ----------
+  const heroEl = document.getElementById('bund-hero');
+  const bund = gruppen.bund[0];
+  if(!bund){
+    heroEl.innerHTML = '<div class="fehler">Keine Bundesdaten in data.json gefunden.</div>';
+  } else {
+    const {rows, live, stand} = umfragen(bund);
+    const lz = leitzahl(bund, rows);
+    const h = huerdeText(lz.wert);
+    const d = lz.art === 'trend' ? lz.trend.delta : null;
+    const ueber5 = rows.filter((r) => r.fdp >= HUERDE).length;
+    const punkte = rows.map((r) =>
+      `<span class="punkt" style="left:${breite(r.fdp)}" title="${esc(r.institut)}: ${pz(r.fdp)}"></span>`).join('');
+    const hw = hinweis(bund);
+
+    heroEl.innerHTML = `<div class="karte hero">
+      <div class="zahlen">
+        <h2 class="ueberschrift" id="bund-titel">${esc(bund.name)} · ${
+          lz.art === 'trend' ? 'Wahltrend' : lz.art === 'ergebnis' ? 'Amtliches Ergebnis' : 'Ø der Umfragen'}</h2>
+        <div class="leitzahl">
+          <div class="num">${lz.wert == null ? '–' : fmt(lz.wert) + '<span class="pz">%</span>'}</div>
+          ${d != null ? `<div class="delta">
+              <span class="wert ${d < 0 ? 'ab' : 'auf'}">${d < 0 ? '▼' : '▲'} ${fmt(Math.abs(d))}</span>
+              <span class="lbl">zur Vorwoche</span></div>` : ''}
+        </div>
+        <div class="chip ${h.status}"><span class="dot"></span>${esc(h.lang)}</div>
+        ${hw ? `<div class="hinweis">${esc(hw)}</div>` : ''}
+        <div class="skala">
+          <div class="feld">
+            ${balken(lz.wert, '<div class="marklbl">5 %</div>' + punkte)}
+          </div>
+          <div class="achse"><span>0 %</span><span>2 %</span><span>4 %</span><span>6 %</span><span>8 %</span></div>
+          <div class="legende">Balken: ${lz.art === 'trend' ? 'Wahltrend' : 'Leitzahl'} · Punkte: Einzelumfragen${
+            lz.art === 'trend' && lz.trend.stand ? ' · Trend-Stand ' + dfmt(lz.trend.stand) : ''}</div>
+        </div>
+        <dl class="kennzahlen">
+          <div><dt>Ø neueste Umfragen</dt><dd>${lz.avg == null ? '–' : pz(lz.avg)}</dd></div>
+          <div><dt>Institute ≥ 5 %</dt><dd>${ueber5} von ${rows.length}</dd></div>
+        </dl>
+      </div>
+      <div class="liste">
+        <details class="insts" id="insts">
+          <summary>Alle Institute anzeigen</summary>
+          <div class="lkopf">
+            <h3>Neueste Umfrage je Institut</h3><span class="skl">Skala 0–8 %</span>
+          </div>
+          ${rows.length ? rows.slice().sort((a, b) => (b.datum || '').localeCompare(a.datum || '')).map((r) =>
+            `<div class="inst-zeile">
+               <div><div class="nam">${esc(r.institut)}</div><div class="dat">${dfmt(r.datum)}</div></div>
+               ${balken(r.fdp)}
+               <div class="val">${pz(r.fdp)}</div>
+             </div>`).join('')
+            : '<p class="basis">Keine Einzelumfragen gefunden.</p>'}
+          <p class="legende" style="margin:10px 0 0">${live
+            ? 'Live von <a href="https://dawum.de/' + esc(bund.dawum_slug || '') + '/" rel="noopener">dawum.de</a>, Datenbank-Stand ' + dfmt(stand) + '.'
+            : (stand ? 'Daten aus der letzten Aktualisierung (' + dfmt(stand) + ').' : 'Live-Abruf nicht möglich und keine gespeicherten Daten.')}</p>
+        </details>
+      </div>
+    </div>`;
+
+    // Auf dem Desktop ist die Institutsliste offen, auf dem Handy hinter dem Button.
+    const insts = document.getElementById('insts');
+    const breit = window.matchMedia('(min-width:600px)');
+    const anpassen = () => { insts.open = breit.matches; };
+    anpassen();
+    breit.addEventListener('change', anpassen);
+  }
+
+  // ---------- Zeitverlauf Bund ----------
+  // Die Zeitreihe kommt aus data.json (die Routine holt sie wöchentlich aus der
+  // vollständigen dawum-Datenbank). Die ohnehin schon geladenen neuesten Umfragen
+  // werden dazugemischt, damit der rechte Rand zwischen zwei Läufen aktuell ist –
+  // ohne einen zweiten, großen Abruf im Browser.
+  (function zeitverlauf(){
+    const sec = document.getElementById('bund-verlauf');
+    const host = document.getElementById('fdp-verlauf-chart');
+    if(!sec || !host || !bund) return;
+    sec.hidden = false;
+
+    const TAGE = (bund.verlauf_tage || 90), FENSTER = 14;
+    const gespeichert = (bund.verlauf || {}).rows || [];
+    const live = db ? extractFdp(db, (t) => new RegExp(bund.parlament_regex, 'i').test(t)) : [];
+    const punkte = verlaufPunkte(mergeVerlauf(gespeichert, live), TAGE);
+
+    if(punkte.length < 2){
+      host.className = 'fv-leer';
+      host.textContent = 'Zeitverlauf derzeit nicht verfügbar.';
+      return;
+    }
+    const linie = gleitendesMittel(punkte, FENSTER);
+    const sub = document.getElementById('verlauf-sub');
+    if(sub) sub.textContent = `Letzte ${TAGE} Tage · Punkte: Einzelumfragen · `
+      + `Linie: ${FENSTER}-Tage-Mittel · gestrichelt: 5-%-Hürde`;
+
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (n, a, eltern) => { const e = document.createElementNS(NS, n);
+      for(const k in a) e.setAttribute(k, a[k]); if(eltern) eltern.appendChild(e); return e; };
+    const tip = document.createElement('div'); tip.className = 'fv-tip';
+    const dfmKurz = (t) => new Date(t).toLocaleDateString('de-DE',
+      {day: '2-digit', month: '2-digit', year: 'numeric'});
+
+    function zeichne(){
+      host.replaceChildren();
+      const schmal = host.clientWidth < 420;
+      const W = Math.max(280, host.clientWidth), H = schmal ? 220 : 260;
+      const ml = 32, mr = schmal ? 48 : 50, mt = 14, mb = 24;
+      const yMax = Math.max(7, Math.ceil(Math.max(...punkte.map((p) => p.v)) + 1));
+      // Die Achse spannt das ganze Fenster, nicht nur die vorhandenen Daten: sonst
+      // schrumpft sie mit dünner Datenlage stillschweigend zusammen, der Zeitraum
+      // stimmt nicht mehr mit der Beschriftung überein, und es bleibt womöglich nur
+      // eine einzige Monatsgrenze zur Einordnung übrig.
+      const jetzt = new Date();
+      const x1 = Date.UTC(jetzt.getUTCFullYear(), jetzt.getUTCMonth(), jetzt.getUTCDate());
+      const x0 = x1 - TAGE * 864e5;
+      const X = (t) => ml + (t - x0) / (x1 - x0) * (W - ml - mr);
+      const Y = (v) => H - mb - v / yMax * (H - mt - mb);
+      const svg = el('svg', {viewBox: `0 0 ${W} ${H}`, role: 'img',
+        'aria-label': `FDP-Umfragewerte Bund der letzten ${TAGE} Tage, aktuelles `
+          + `${FENSTER}-Tage-Mittel ${fmt(linie[linie.length - 1].v)} Prozent`}, host);
+      host.appendChild(tip);
+
+      const schritt = yMax > 10 ? 2 : 1;
+      for(let v = 0; v <= yMax; v += schritt){
+        el('line', {x1: ml, x2: W - mr, y1: Y(v), y2: Y(v), stroke: 'var(--fv-gitter)'}, svg);
+        el('text', {x: ml - 6, y: Y(v), dy: '0.32em', 'text-anchor': 'end',
+          'font-size': 11, fill: 'var(--fv-mute)'}, svg).textContent = v + ' %';
+      }
+      const monatsX = [];
+      const m = new Date(x0); m.setUTCDate(1); m.setUTCMonth(m.getUTCMonth() + 1);
+      for(; +m <= x1; m.setUTCMonth(m.getUTCMonth() + 1)){
+        monatsX.push(X(+m));
+        el('line', {x1: X(+m), x2: X(+m), y1: mt, y2: H - mb,
+          stroke: 'var(--fv-gitter)'}, svg);
+        el('text', {x: X(+m), y: H - 6, 'text-anchor': 'middle', 'font-size': 11,
+          fill: 'var(--fv-mute)'}, svg).textContent =
+          m.toLocaleDateString('de-DE', {month: 'long', timeZone: 'UTC'})
+            .slice(0, schmal ? 3 : 20);
+      }
+      // Fensterränder benennen – aber nur, wenn genug Abstand zur nächsten
+      // Monatsbeschriftung bleibt. Wie weit die erste Monatsgrenze vom Fensteranfang
+      // entfernt liegt, hängt vom Kalender ab; ohne Prüfung überlagern sich die
+      // beiden auf schmalen Schirmen zu Unlesbarem.
+      const platz = schmal ? 38 : 62;
+      const rand = (t, anker, txt) => el('text', {x: X(t), y: H - 6, 'text-anchor': anker,
+        'font-size': 10, fill: 'var(--fv-mute)'}, svg).textContent = txt;
+      if(!monatsX.length || monatsX[0] - X(x0) >= platz)
+        rand(x0, 'start', new Date(x0).toLocaleDateString('de-DE',
+          {day: '2-digit', month: '2-digit', timeZone: 'UTC'}));
+      if(!monatsX.length || X(x1) - monatsX[monatsX.length - 1] >= platz)
+        rand(x1, 'end', 'heute');
+
+      el('line', {x1: ml, x2: W - mr, y1: Y(5), y2: Y(5), stroke: 'var(--fv-huerde)',
+        'stroke-width': 1.5, 'stroke-dasharray': '5 4'}, svg);
+      el('text', {x: ml + 4, y: Y(5) - 5, 'font-size': 11, 'font-weight': 600,
+        class: 'fv-frei', fill: 'var(--fv-huerde)'}, svg).textContent = '5-%-Hürde';
+
+      punkte.forEach((p) => el('circle', {cx: X(p.t), cy: Y(p.v), r: 3.5,
+        fill: 'var(--fv-punkt)', 'fill-opacity': .35}, svg));
+      el('path', {d: 'M' + linie.map((p) => `${X(p.t).toFixed(1)},${Y(p.v).toFixed(1)}`).join('L'),
+        fill: 'none', stroke: 'var(--fv-linie)', 'stroke-width': 2,
+        'stroke-linecap': 'round', 'stroke-linejoin': 'round'}, svg);
+
+      const letzte = linie[linie.length - 1];
+      el('text', {x: Math.min(X(letzte.t) + 6, W - 4), y: Y(letzte.v), dy: '0.32em',
+        'text-anchor': X(letzte.t) + 6 > W - mr + 4 ? 'end' : 'start',
+        'font-size': 12, 'font-weight': 600, 'font-family': 'var(--mono)',
+        class: 'fv-frei', fill: 'var(--fv-linie)'}, svg).textContent = fmt(letzte.v) + ' %';
+
+      const lot = el('line', {y1: mt, y2: H - mb, stroke: 'var(--fv-mute)',
+        'stroke-opacity': .5, visibility: 'hidden'}, svg);
+      const kugel = el('circle', {r: 4.5, fill: 'var(--fv-linie)', visibility: 'hidden'}, svg);
+      const flaeche = el('rect', {x: ml, y: 0, width: Math.max(1, W - ml - mr), height: H - mb,
+        fill: 'transparent'}, svg);
+
+      const zeigen = (ev) => {
+        const r = svg.getBoundingClientRect(), s = W / r.width;
+        const t = x0 + ((ev.clientX - r.left) * s - ml) / (W - ml - mr) * (x1 - x0);
+        const p = linie.reduce((a, b) => Math.abs(b.t - t) < Math.abs(a.t - t) ? b : a);
+        lot.setAttribute('x1', X(p.t)); lot.setAttribute('x2', X(p.t));
+        lot.setAttribute('visibility', 'visible');
+        kugel.setAttribute('cx', X(p.t)); kugel.setAttribute('cy', Y(p.v));
+        kugel.setAttribute('visibility', 'visible');
+        tip.replaceChildren();
+        const zeile = (txt, cls) => { const z = document.createElement('div');
+          if(cls) z.className = cls; z.textContent = txt; tip.appendChild(z); };
+        zeile(dfmKurz(p.t), 'fv-d');
+        zeile(`${FENSTER}-Tage-Mittel: ${fmt(p.v)} % (${p.n} Umfr.)`, 'fv-m');
+        punkte.filter((q) => q.t === p.t).forEach((q) => zeile(`${q.institut}: ${fmt(q.v)} %`));
+        tip.style.display = 'block';
+        const px = X(p.t) / s, py = Y(p.v) / s, b = tip.offsetWidth, h = tip.offsetHeight;
+        tip.style.left = Math.max(0, Math.min(r.width - b,
+          px + 12 > r.width - b ? px - b - 12 : px + 12)) + 'px';
+        // Oberhalb des Punktes, solange dort Platz ist – sonst darunter. Auf schmalen
+        // Schirmen deckte der Kasten sonst die Hürdenlinie und die Achse zu.
+        tip.style.top = (py - h - 10 >= 0 ? py - h - 10
+          : Math.min(r.height - h, py + 14)) + 'px';
+      };
+      const weg = () => { tip.style.display = 'none';
+        lot.setAttribute('visibility', 'hidden'); kugel.setAttribute('visibility', 'hidden'); };
+      flaeche.addEventListener('pointermove', zeigen);
+      flaeche.addEventListener('pointerdown', zeigen);
+      flaeche.addEventListener('pointerleave', weg);
+      svg.addEventListener('pointerleave', weg);
+    }
+
+    zeichne();
+    let t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(zeichne, 150); });
+  })();
+
+  // ---------- Anstehende Wahlen ----------
+  const grid = document.getElementById('anstehend-grid');
+  const anstehend = gruppen.anstehend.concat(gruppen.ohneTermin);
+  grid.innerHTML = anstehend.map((e) => {
+    const {rows} = umfragen(e);
+    const lz = leitzahl(e, rows);
+    const h = huerdeText(lz.wert);
+    const {typ, land} = teileName(e.name);
+    const tage = tageBis(e.wahltermin);
+    const leer = !rows.length && lz.wert == null;
+    // Erklärt data.json, warum es hier keine Werte gibt (z. B. die FDP wird in diesem
+    // Land nicht separat ausgewiesen), dann sagt die Kachel das – statt "keine Daten"
+    // zu zeigen, was nach einer Lücke oder einem Fehler aussieht.
+    const datenhinweis = leer ? (e.datenhinweis || '') : '';
+    // Der Wahltrend-Hinweis wäre daneben nur Rauschen: ohne ausgewiesene Werte kann
+    // dawum gar keinen Trend bilden.
+    const hw = datenhinweis ? '' : hinweis(e);
+    const basis = lz.art === 'trend'
+      ? 'Wahltrend' + (lz.avg != null ? ' · Ø neueste Umfragen ' + pz(lz.avg) : '')
+      : rows.length
+        ? 'Ø aus ' + rows.length + (rows.length === 1 ? ' Umfrage' : ' Umfragen')
+        : datenhinweis ? '' : 'Noch keine Umfragen bei dawum.';
+    return `<article class="karte kachel${leer ? ' leer' : ''}" id="kachel-${esc(e.id)}">
+      <div class="kkopf">
+        <div>
+          <h3>${esc(land)}</h3>
+          <div class="wann">${esc(typ)}${e.wahltermin ? ' · ' + dfmt(e.wahltermin) : ''}</div>
+        </div>
+        ${tage != null ? `<span class="tage">in ${tage} T.</span>` : ''}
+      </div>
+      <div class="wert">
+        <span class="num">${lz.wert == null ? '–' : pz(lz.wert)}</span>
+        <span class="pill ${h.status}">${esc(datenhinweis ? 'nicht ausgewiesen' : h.kurz)}</span>
+      </div>
+      ${leer ? '' : balken(lz.wert)}
+      ${basis ? `<div class="basis">${basis}</div>` : ''}
+      ${datenhinweis ? `<div class="notiz">${esc(datenhinweis)}</div>` : ''}
+      ${hw ? `<div class="hinweis">${esc(hw)}</div>` : ''}
+    </article>`;
+  }).join('');
+
+  // ---------- Gelaufene Wahlen ----------
+  const gelaufen = gruppen.gelaufen;
+  if(gelaufen.length){
+    document.getElementById('gelaufen').hidden = false;
+    document.getElementById('gelaufen-tabelle').innerHTML = `<table>
+      <thead><tr>
+        <th>Wahl</th><th>Datum</th>
+        <th style="text-align:right">Ergebnis</th>
+        <th style="text-align:right">Letzter Trend</th>
+        <th class="abstand">Abstand zur Hürde</th>
+      </tr></thead>
+      <tbody>${gelaufen.map((e) => {
+        const lz = leitzahl(e, umfragen(e).rows);   // dieselbe Rangfolge wie oben
+        const erg = e.wahlergebnis || {};
+        const t = e.wahltrend || {};
+        return `<tr id="zeile-${esc(e.id)}">
+          <td class="wahl">${esc(teileName(e.name).land)}</td>
+          <td class="mono">${dfmt(e.wahltermin)}</td>
+          <td class="erg">${lz.wert != null ? pz(lz.wert) + (erg.vorlaeufig ? ' *' : '') : '–'}</td>
+          <td class="trend">${t.wert != null ? pz(t.wert) : '–'}</td>
+          <td class="abstand" title="${lz.avg != null ? 'Ø der Umfragen nach der Wahl: ' + pz(lz.avg) : ''}">${balken(lz.wert)}</td>
+        </tr>`;
+      }).join('')}</tbody></table>
+      ${gelaufen.some((e) => (e.wahlergebnis || {}).vorlaeufig)
+        ? '<p class="basis" style="padding:0 20px 14px">* vorläufiges amtliches Ergebnis</p>' : ''}`;
+  }
+})().catch((e) => {
+  // Letzte Instanz: lieber eine erklärte Fehlermeldung als eine leere Seite.
+  console.error('FDP-Monitor:', e);
+  const el = document.getElementById('bund-hero');
+  if(el) el.innerHTML = '<div class="fehler"><strong>Die Seite konnte nicht geladen werden.</strong><br>'
+    + 'Technischer Hinweis: ' + (e && e.message ? e.message : e) + '</div>';
+});
 </script>
 </body>
 </html>

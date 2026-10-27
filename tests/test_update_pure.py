@@ -90,6 +90,18 @@ class TestFdpRows:
         for name in ("Bremen", "Bremische Bürgerschaft"):
             assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="HB"), r"brem")) == 1
 
+    def test_matches_niedersachsen_in_both_spellings(self):
+        # "niedersachsen" als Regex würde "Niedersächsischer Landtag" verfehlen – daher "nieders".
+        for name in ("Niedersachsen", "Niedersächsischer Landtag", "Landtag Niedersachsen"):
+            assert len(update.fdp_rows(self._db(parliament_name=name, shortcut="NI"), r"nieders")) == 1
+
+    def test_niedersachsen_regex_does_not_catch_sachsen_anhalt(self):
+        # Beide enthalten "sachsen" – die Regexe dürfen sich nicht überschneiden.
+        assert update.fdp_rows(self._db(parliament_name="Landtag von Sachsen-Anhalt", shortcut="ST"),
+                               r"nieders") == []
+        assert update.fdp_rows(self._db(parliament_name="Niedersächsischer Landtag", shortcut="NI"),
+                               r"sachsen.anhalt") == []
+
     def test_bremen_regex_does_not_swallow_other_parliaments(self):
         for name in ("Deutscher Bundestag", "Landtag von Schleswig-Holstein", "Abgeordnetenhaus von Berlin"):
             assert update.fdp_rows(self._db(parliament_name=name, shortcut="XX"), r"brem") == []
@@ -110,6 +122,7 @@ class TestFdpRows:
             "saarland": "SL Landtag des Saarlandes",
             "schleswig-holstein": "SH Landtag von Schleswig-Holstein",
             "bremen": "HB Bremische Bürgerschaft",
+            "niedersachsen": "NI Niedersächsischer Landtag",
         }
         for e in ebenen:
             assert e["id"] in namen, f"Testdaten kennen die Ebene '{e['id']}' nicht"
@@ -202,3 +215,202 @@ class TestFilterByAge:
         rows = self._rows("2026-04-01")  # ~148 days before TODAY
         assert update.filter_by_age(rows, 60, today=self.TODAY) == []
         assert len(update.filter_by_age(rows, 180, today=self.TODAY)) == 1
+
+
+class TestFilterTrend:
+    TODAY = date(2026, 10, 12)
+
+    def _t(self, wert=6.2, stand="2026-08-26"):
+        return {"wert": wert, "delta": 0.3, "stand": stand}
+
+    def test_none_max_age_keeps_trend_unfiltered(self):
+        t = self._t()
+        assert update.filter_trend(t, None, today=self.TODAY) is t
+
+    def test_fresh_trend_is_kept(self):
+        t = self._t(stand="2026-10-11")
+        assert update.filter_trend(t, 35, today=self.TODAY) is t
+
+    def test_stale_trend_is_discarded(self):
+        # genau der NRW-Fall: Stand 26.08., 47 Tage alt, Grenze 35 Tage
+        assert update.filter_trend(self._t(), 35, today=self.TODAY) == update.TREND_LEER
+
+    def test_keeps_trend_exactly_at_cutoff(self):
+        t = self._t(stand="2026-09-07")  # genau 35 Tage vor TODAY
+        assert update.filter_trend(t, 35, today=self.TODAY) is t
+
+    def test_discards_one_day_past_cutoff(self):
+        assert update.filter_trend(self._t(stand="2026-09-06"), 35, today=self.TODAY) == update.TREND_LEER
+
+    def test_trend_without_value_is_returned_as_is(self):
+        t = {"wert": None, "delta": None, "stand": None}
+        assert update.filter_trend(t, 35, today=self.TODAY) is t
+
+    def test_trend_with_value_but_no_stand_is_discarded(self):
+        assert update.filter_trend({"wert": 6.2, "delta": None, "stand": None}, 35,
+                                   today=self.TODAY) == update.TREND_LEER
+
+    def test_unparseable_stand_is_discarded(self):
+        assert update.filter_trend(self._t(stand="irgendwann"), 35,
+                                   today=self.TODAY) == update.TREND_LEER
+
+    def test_bund_21_days_is_stricter_than_laender_35(self):
+        t = self._t(stand="2026-09-15")  # 27 Tage alt
+        assert update.filter_trend(t, 21, today=self.TODAY) == update.TREND_LEER
+        assert update.filter_trend(t, 35, today=self.TODAY) is t
+
+
+class TestDropStaleTrends:
+    TODAY = date(2026, 10, 12)
+
+    def test_discards_only_the_stale_ebene(self, capsys):
+        d = {"ebenen": [
+            {"id": "bund", "wahltrend_max_alter_tage": 21,
+             "wahltrend": {"wert": 3.8, "delta": -0.1, "stand": "2026-10-11"}},
+            {"id": "nrw", "wahltrend_max_alter_tage": 35,
+             "wahltrend": {"wert": 6.2, "delta": None, "stand": "2026-08-26"}},
+        ]}
+        update.drop_stale_trends(d, today=self.TODAY)
+        assert d["ebenen"][0]["wahltrend"]["wert"] == 3.8
+        assert d["ebenen"][1]["wahltrend"] == update.TREND_LEER
+        assert "nrw" in capsys.readouterr().out
+
+    def test_ebene_without_max_alter_keeps_even_an_ancient_trend(self):
+        d = {"ebenen": [{"id": "x", "wahltrend": {"wert": 9.9, "delta": None, "stand": "2019-01-01"}}]}
+        update.drop_stale_trends(d, today=self.TODAY)
+        assert d["ebenen"][0]["wahltrend"]["wert"] == 9.9
+
+    def test_ebene_without_any_trend_is_untouched(self):
+        d = {"ebenen": [{"id": "saarland", "wahltrend_max_alter_tage": 35}]}
+        update.drop_stale_trends(d, today=self.TODAY)
+        assert "wahltrend" not in d["ebenen"][0]
+
+    def test_data_json_uses_the_field_on_every_ebene(self):
+        """Ohne das Feld greift die Alterung nicht – es darf keine Ebene fehlen."""
+        import json, os
+        pfad = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data.json")
+        for e in json.load(open(pfad, encoding="utf-8"))["ebenen"]:
+            assert isinstance(e.get("wahltrend_max_alter_tage"), int), e["id"]
+
+
+class TestStandIstPflicht:
+    """--trend ohne --stand hätte das Abrufdatum als Trend-Datum gespeichert. Dann wirkt
+    der Wert aktueller als er ist und filter_trend() altert ihn zu spät aus."""
+
+    def test_trend_ohne_stand_bricht_ab(self, monkeypatch):
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend", "--trend", "bund", "4.4"])
+        try:
+            update.main()
+            assert False, "erwartet: SystemExit"
+        except SystemExit as e:
+            assert "--stand" in str(e)
+
+    def test_ohne_trend_ist_stand_weiter_optional(self, tmp_path, monkeypatch):
+        # Ein Lauf, der nur Umfragen holt, braucht kein Trend-Datum.
+        f = tmp_path / "data.json"
+        monkeypatch.setattr(update, "DATA", str(f))
+        update.save_data({"erstellt": "x", "ebenen": []})
+        monkeypatch.setattr(sys, "argv", ["update.py", "--nur-trend"])
+        update.main()  # darf nicht abbrechen
+
+
+class TestAbgeschlossen:
+    """Eine Wahl mit endgültigem amtlichem Ergebnis wird nicht weiter abgefragt."""
+
+    def test_endgueltiges_ergebnis_schliesst_ab(self):
+        assert update.abgeschlossen({"wahlergebnis": {"fdp": 2.6, "datum": "2026-09-06"}})
+
+    def test_vorlaeufiges_ergebnis_schliesst_nicht_ab(self):
+        # Bis der Landeswahlausschuss entschieden hat, läuft die Aktualisierung weiter.
+        assert not update.abgeschlossen(
+            {"wahlergebnis": {"fdp": 2.5, "datum": "2026-09-20", "vorlaeufig": True}})
+
+    def test_ohne_ergebnis_offen(self):
+        assert not update.abgeschlossen({"wahlergebnis": None})
+        assert not update.abgeschlossen({})
+
+    def test_ergebnis_ohne_wert_offen(self):
+        assert not update.abgeschlossen({"wahlergebnis": {"datum": "2026-09-06"}})
+
+
+class TestErgebnisErsetztUmfragen:
+    def _ebene(self, rows, erg):
+        return {"id": "x", "name": "Testwahl", "wahlergebnis": erg,
+                "umfragen": {"stand": "2026-09-03", "rows": rows}}
+
+    ROWS = [{"institut": "INSA", "datum": "2026-09-02", "fdp": 3.0}]
+
+    def test_verwirft_die_umfragen_und_setzt_den_stand_aufs_wahldatum(self, capsys):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.6, "datum": "2026-09-06"})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"] == {"stand": "2026-09-06", "rows": []}
+        assert "ersetzt" in capsys.readouterr().out
+
+    def test_laesst_eine_offene_wahl_unberuehrt(self):
+        d = {"ebenen": [self._ebene(self.ROWS, None)]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"]["rows"] == self.ROWS
+
+    def test_laesst_ein_vorlaeufiges_ergebnis_unberuehrt(self):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.5, "datum": "2026-09-20", "vorlaeufig": True})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        assert d["ebenen"][0]["umfragen"]["rows"] == self.ROWS
+
+    def test_ist_wiederholbar_ohne_erneute_meldung(self, capsys):
+        d = {"ebenen": [self._ebene(self.ROWS, {"fdp": 2.6, "datum": "2026-09-06"})]}
+        update.ergebnis_ersetzt_umfragen(d)
+        capsys.readouterr()
+        update.ergebnis_ersetzt_umfragen(d)          # zweiter Lauf: nichts mehr zu tun
+        assert capsys.readouterr().out == ""
+
+
+class TestVerlaufRows:
+    """Die Zeitreihe braucht jede Einzelumfrage, nicht nur die neueste je Institut."""
+    TODAY = date(2026, 10, 24)
+
+    def _db(self, *surveys):
+        return {
+            "Parties": {"1": {"Shortcut": "FDP"}},
+            "Parliaments": {"10": {"Shortcut": "BT", "Name": "Deutscher Bundestag"}},
+            "Institutes": {"5": {"Name": "INSA"}, "6": {"Name": "Forsa"}},
+            "Surveys": {str(i): s for i, s in enumerate(surveys)},
+        }
+
+    def _s(self, datum, fdp, inst=5):
+        return {"Parliament_ID": 10, "Institute_ID": inst, "Date": datum, "Results": {"1": fdp}}
+
+    def test_behaelt_mehrere_umfragen_desselben_instituts(self):
+        db = self._db(self._s("2026-10-01", 4.0), self._s("2026-10-08", 5.0),
+                      self._s("2026-10-15", 3.0))
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["datum"] for r in rows] == ["2026-10-01", "2026-10-08", "2026-10-15"]
+
+    def test_sortiert_aelteste_zuerst(self):
+        db = self._db(self._s("2026-10-15", 3.0), self._s("2026-08-01", 4.0))
+        assert [r["datum"] for r in update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)] \
+            == ["2026-08-01", "2026-10-15"]
+
+    def test_schneidet_aelteres_als_das_fenster_ab(self):
+        db = self._db(self._s("2026-10-01", 4.0), self._s("2025-01-01", 9.9))
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["fdp"] for r in rows] == [4.0]
+
+    def test_behaelt_den_wert_genau_am_fensterrand(self):
+        db = self._db(self._s("2026-07-26", 4.0))      # genau 90 Tage vor TODAY
+        assert len(update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)) == 1
+
+    def test_verwirft_einen_tag_jenseits_des_randes(self):
+        db = self._db(self._s("2026-07-25", 4.0))
+        assert update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY) == []
+
+    def test_nimmt_nur_das_eigene_parlament(self):
+        db = self._db(self._s("2026-10-01", 4.0))
+        db["Parliaments"]["20"] = {"Shortcut": "ST", "Name": "Landtag von Sachsen-Anhalt"}
+        db["Surveys"]["9"] = {"Parliament_ID": 20, "Institute_ID": 5,
+                              "Date": "2026-10-02", "Results": {"1": 9.9}}
+        rows = update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)
+        assert [r["fdp"] for r in rows] == [4.0]
+
+    def test_unbrauchbares_datum_faellt_raus(self):
+        db = self._db(self._s(None, 4.0), self._s("2026-10-01", 5.0))
+        assert [r["fdp"] for r in update.verlauf_rows(db, r"bundestag", 90, today=self.TODAY)] == [5.0]
