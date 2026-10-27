@@ -60,7 +60,6 @@
   .kennzahlen .num.rot{color:var(--huerde)}
   .kennzahlen .sub{font-size:13px;color:var(--mute);margin-top:4px}
 
-  .zweier{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:24px}
   .diagramm{padding:24px 28px;min-width:0}
   .diagramm h2{font-size:15px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
   .diagramm .sub{margin:6px 0 14px;font-size:13px;color:var(--mute);max-width:80ch}
@@ -138,24 +137,37 @@
 <main>
   <section class="einleitung">
     <h1>Die FDP im Bund 1998–2026</h1>
-    <p>Wahlergebnisse, Vorsitz und Programme seit 1998 und wie sich die Schwerpunkte der Wahlprogramme verschoben haben. Dazu alle Bundesvorsitzenden seit der Gründung 1948.</p>
+    <p>Wahlergebnisse seit 1998 und wie sich die Schwerpunkte der Wahlprogramme verschoben haben. Darunter Vorsitz, Grundsatzprogramme und alle Bundesvorsitzenden seit der Gründung 1948.</p>
   </section>
 
   <section class="kennzahlen" id="kennzahlen" aria-label="Kennzahlen"></section>
 
-  <div class="zweier">
-    <section class="karte diagramm" aria-labelledby="wahlen-titel">
-      <h2 id="wahlen-titel">Bundestagswahlen</h2>
-      <p class="sub">Zweitstimmen in Prozent. Farbe: Rolle in der folgenden Wahlperiode. Gestrichelt: 5-%-Hürde.</p>
-      <div class="chart" id="chart-wahlen"></div>
-      <div class="legende" id="legende-wahlen"></div>
-    </section>
-    <section class="karte diagramm" aria-labelledby="zeit-titel">
-      <h2 id="zeit-titel">Vorsitz, Programme, Rolle im Bund</h2>
-      <p class="sub">Senkrechte Linien: Bundestagswahlen. Das neue Grundsatzprogramm soll 2027 beschlossen werden.</p>
-      <div class="chart" id="chart-zeit"></div>
-    </section>
-  </div>
+  <section class="karte diagramm" aria-labelledby="wahlen-titel">
+    <h2 id="wahlen-titel">Bundestagswahlen</h2>
+    <p class="sub">Zweitstimmen in Prozent. Farbe: Rolle in der folgenden Wahlperiode. Gestrichelt: 5-%-Hürde.</p>
+    <div class="chart" id="chart-wahlen"></div>
+    <div class="legende" id="legende-wahlen"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="themen-titel">
+    <h2 id="themen-titel">Themengewichtung der Wahlprogramme</h2>
+    <p class="sub">Redaktionelle Einordnung je Programm: 0 kaum vorhanden, 1 Nebenthema, 2 wichtig, 3 Kernthema. Für die Position eine Zelle antippen.</p>
+    <div class="chart" id="chart-themen"></div>
+    <div class="legende" id="legende-themen"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="shift-titel">
+    <h2 id="shift-titel">Verschiebung der Schwerpunkte</h2>
+    <p class="sub">Durchschnitt 2021–2025 minus Durchschnitt 1998–2005, auf der Skala 0–3. Balken nach rechts: heute wichtiger.</p>
+    <div class="chart" id="chart-shift"></div>
+    <div class="legende" id="legende-shift"></div>
+  </section>
+
+  <section class="karte diagramm" aria-labelledby="zeit-titel">
+    <h2 id="zeit-titel">Vorsitz, Programme, Rolle im Bund</h2>
+    <p class="sub">Senkrechte Linien: Bundestagswahlen. Das neue Grundsatzprogramm soll 2027 beschlossen werden.</p>
+    <div class="chart" id="chart-zeit"></div>
+  </section>
 
   <section class="vorsitz" id="vorsitz" aria-labelledby="vorsitz-titel">
     <div class="kopfzeile">
@@ -177,20 +189,6 @@
         </div>
       </details>
     </div>
-  </section>
-
-  <section class="karte diagramm" aria-labelledby="themen-titel">
-    <h2 id="themen-titel">Themengewichtung der Wahlprogramme</h2>
-    <p class="sub">Redaktionelle Einordnung je Programm: 0 kaum vorhanden, 1 Nebenthema, 2 wichtig, 3 Kernthema. Für die Position eine Zelle antippen.</p>
-    <div class="chart" id="chart-themen"></div>
-    <div class="legende" id="legende-themen"></div>
-  </section>
-
-  <section class="karte diagramm" aria-labelledby="shift-titel">
-    <h2 id="shift-titel">Verschiebung der Schwerpunkte</h2>
-    <p class="sub">Durchschnitt 2021–2025 minus Durchschnitt 1998–2005, auf der Skala 0–3. Balken nach rechts: heute wichtiger.</p>
-    <div class="chart" id="chart-shift"></div>
-    <div class="legende" id="legende-shift"></div>
   </section>
 
   <p class="methode" id="methode"></p>
