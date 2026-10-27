@@ -23,6 +23,12 @@ test("Parteiseite zeichnet Kennzahlen und alle Diagramme", async ({ page }) => {
   expect(fehler).toEqual([]);
 });
 
+test("Reihenfolge: Wahlen, Themen, Verschiebung, dann Zeitleiste und Vorsitzende", async ({ page }) => {
+  await page.goto("/partei.html");
+  const ids = await page.locator("main .chart").evaluateAll((els) => els.map((e) => e.id));
+  expect(ids).toEqual(["chart-wahlen", "chart-themen", "chart-shift", "chart-zeit", "chart-vorsitz"]);
+});
+
 test("Tooltip der Themengewichtung zeigt die Position", async ({ page }) => {
   await page.goto("/partei.html");
   await page.locator("#chart-themen rect").first().hover();
